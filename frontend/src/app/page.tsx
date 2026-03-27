@@ -284,10 +284,10 @@ export default function LandingPage() {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/agents" className="text-sm text-gray-400 hover:text-white transition-colors">
+            <Link href="#agents" className="text-sm text-gray-400 hover:text-white transition-colors">
               Agents
             </Link>
-            <Link href="/marketplace" className="text-sm text-gray-400 hover:text-white transition-colors">
+            <Link href="/signup" className="text-sm text-gray-400 hover:text-white transition-colors">
               Marketplace
             </Link>
             <Link
@@ -461,7 +461,7 @@ export default function LandingPage() {
       {/* ═══════════════════════════════════════════════════════════
          4. MEET THE AGENTS
          ═══════════════════════════════════════════════════════════ */}
-      <section className="relative py-20 sm:py-28">
+      <section id="agents" className="relative py-20 sm:py-28 scroll-mt-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <Reveal>
             <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
