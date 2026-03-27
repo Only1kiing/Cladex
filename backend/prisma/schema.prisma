@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agents       Agent[]
+  trades       Trade[]
+  exchanges    Exchange[]
+  activityLogs ActivityLog[]
+}
+
+enum Personality {
+  GUARDIAN
+  ANALYST
+  HUNTER
+  ORACLE
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AgentStatus {
+  RUNNING
+  PAUSED
+  STOPPED
+}
+
+model Agent {
+  id          String      @id @default(cuid())
+  userId      String
+  name        String
+  personality Personality
+  strategy    Json
+  riskLevel   RiskLevel
+  assets      String[]
+  status      AgentStatus @default(STOPPED)
+  profit      Float       @default(0)
+  totalTrades Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades       Trade[]
+  activityLogs ActivityLog[]
+
+  @@index([userId])
+}
+
+enum TradeSide {
+  BUY
+  SELL
+}
+
+model Trade {
+  id        String    @id @default(cuid())
+  agentId   String
+  userId    String
+  symbol    String
+  side      TradeSide
+  amount    Float
+  price     Float
+  profit    Float     @default(0)
+  reason    String
+  createdAt DateTime  @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([agentId])
+}
+
+model Exchange {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  apiKey    String
+  apiSecret String
+  connected Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum ActivityType {
+  TRADE
+  INSIGHT
+  ALERT
+  GUARDIAN
+}
+
+model ActivityLog {
+  id        String       @id @default(cuid())
+  userId    String
+  agentId   String?
+  type      ActivityType
+  message   String
+  data      Json?
+  createdAt DateTime     @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent Agent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([agentId])
+}

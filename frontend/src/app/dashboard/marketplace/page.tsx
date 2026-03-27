@@ -1,0 +1,561 @@
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import { Search, Shield, BarChart3, Target, Eye, TrendingUp, Users, Activity, ArrowRight, Star, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
+import { AgentAvatar } from '@/components/dashboard/AgentAvatar';
+import type { AgentPersonality } from '@/types';
+
+// ---- Types ----
+
+interface MarketplaceAgent {
+  id: string;
+  name: string;
+  creator: string;
+  personality: AgentPersonality;
+  description: string;
+  monthlyReturn: number;
+  winRate: number;
+  totalTrades: number;
+  riskLevel: 'Low' | 'Medium' | 'High';
+  assets: string[];
+  users: number;
+  rating: number;
+  featured?: boolean;
+  price: number; // 0 = free, >0 = monthly subscription in USD
+}
+
+// ---- Constants ----
+
+const PERSONALITY_META: Record<AgentPersonality, {
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  accentBar: string;
+  bgGlow: string;
+}> = {
+  guardian: {
+    label: 'Guardian',
+    icon: <Shield size={16} />,
+    color: 'text-guardian-400',
+    accentBar: 'bg-gradient-to-r from-guardian-500 to-guardian-400',
+    bgGlow: 'group-hover:shadow-guardian-500/10',
+  },
+  analyst: {
+    label: 'Analyst',
+    icon: <BarChart3 size={16} />,
+    color: 'text-analyst-400',
+    accentBar: 'bg-gradient-to-r from-analyst-500 to-analyst-400',
+    bgGlow: 'group-hover:shadow-analyst-500/10',
+  },
+  hunter: {
+    label: 'Hunter',
+    icon: <Target size={16} />,
+    color: 'text-hunter-400',
+    accentBar: 'bg-gradient-to-r from-hunter-500 to-hunter-400',
+    bgGlow: 'group-hover:shadow-hunter-500/10',
+  },
+  oracle: {
+    label: 'Oracle',
+    icon: <Eye size={16} />,
+    color: 'text-oracle-400',
+    accentBar: 'bg-gradient-to-r from-oracle-500 to-oracle-400',
+    bgGlow: 'group-hover:shadow-oracle-500/10',
+  },
+};
+
+const RISK_STYLES: Record<string, string> = {
+  Low: 'text-guardian-400 bg-guardian-500/10',
+  Medium: 'text-amber-400 bg-amber-500/10',
+  High: 'text-hunter-400 bg-hunter-500/10',
+};
+
+const MOCK_AGENTS: MarketplaceAgent[] = [
+  {
+    id: '1',
+    name: 'Raze',
+    creator: 'CladexTeam',
+    personality: 'hunter',
+    description: 'Aggressive momentum scalper that hunts volatile breakouts with lightning-fast entries and tight trailing stops.',
+    monthlyReturn: 18,
+    winRate: 64,
+    totalTrades: 8742,
+    riskLevel: 'High',
+    assets: ['SOL', 'AVAX', 'LINK'],
+    users: 2187,
+    rating: 4.3,
+    price: 0,
+  },
+  {
+    id: '2',
+    name: 'Knox',
+    creator: 'CladexTeam',
+    personality: 'guardian',
+    description: 'Capital preservation specialist focused on minimizing drawdown while steadily compounding returns.',
+    monthlyReturn: 6,
+    winRate: 81,
+    totalTrades: 1247,
+    riskLevel: 'Low',
+    assets: ['BTC', 'ETH'],
+    users: 5234,
+    rating: 4.9,
+    price: 0,
+  },
+  {
+    id: '3',
+    name: 'Byte',
+    creator: 'CladexTeam',
+    personality: 'analyst',
+    description: 'Data-driven trend follower using cross-exchange volume analysis and momentum indicators for precise entries.',
+    monthlyReturn: 12,
+    winRate: 72,
+    totalTrades: 2156,
+    riskLevel: 'Medium',
+    assets: ['BTC', 'ETH', 'SOL'],
+    users: 3421,
+    rating: 4.6,
+    featured: true,
+    price: 15,
+  },
+  {
+    id: '4',
+    name: 'Iris',
+    creator: 'CladexTeam',
+    personality: 'oracle',
+    description: 'Predictive pattern recognition engine using on-chain analytics, whale tracking, and historical cycle data.',
+    monthlyReturn: 22,
+    winRate: 69,
+    totalTrades: 1583,
+    riskLevel: 'Medium',
+    assets: ['BTC', 'ETH', 'SOL', 'DOT'],
+    users: 1845,
+    rating: 4.7,
+    featured: true,
+    price: 25,
+  },
+  {
+    id: '5',
+    name: 'Nova',
+    creator: 'CladexTeam',
+    personality: 'hunter',
+    description: 'High-frequency breakout trader specializing in rapid multi-asset scalps with sub-second execution.',
+    monthlyReturn: 15,
+    winRate: 58,
+    totalTrades: 6891,
+    riskLevel: 'High',
+    assets: ['SOL', 'AVAX', 'MATIC'],
+    users: 987,
+    rating: 4.2,
+    price: 10,
+  },
+  {
+    id: '6',
+    name: 'Luna',
+    creator: 'CladexTeam',
+    personality: 'oracle',
+    description: 'Cosmic cycle predictor leveraging macro patterns, lunar cycles, and sentiment oscillation models.',
+    monthlyReturn: 19,
+    winRate: 74,
+    totalTrades: 1893,
+    riskLevel: 'Medium',
+    assets: ['BTC', 'ETH', 'SOL'],
+    users: 1534,
+    rating: 4.5,
+    price: 20,
+  },
+  {
+    id: '7',
+    name: 'Shield',
+    creator: 'CladexTeam',
+    personality: 'guardian',
+    description: 'Maximum drawdown protection agent that prioritizes capital safety above all else with zero-tolerance risk limits.',
+    monthlyReturn: 4,
+    winRate: 88,
+    totalTrades: 456,
+    riskLevel: 'Low',
+    assets: ['BTC', 'ETH'],
+    users: 4102,
+    rating: 4.8,
+    price: 0,
+  },
+  {
+    id: '8',
+    name: 'Cipher',
+    creator: 'CladexTeam',
+    personality: 'analyst',
+    description: 'On-chain intelligence engine tracking wallet clusters, whale movements, and institutional accumulation patterns.',
+    monthlyReturn: 28,
+    winRate: 66,
+    totalTrades: 2341,
+    riskLevel: 'High',
+    assets: ['BTC', 'ETH', 'SOL', 'LINK'],
+    users: 1256,
+    rating: 4.4,
+    featured: true,
+    price: 30,
+  },
+  {
+    id: '9',
+    name: 'Blitz',
+    creator: 'CladexTeam',
+    personality: 'hunter',
+    description: 'Speed-optimized scalper built for rapid-fire trades on high-volume pairs with ultra-low latency execution.',
+    monthlyReturn: 14,
+    winRate: 61,
+    totalTrades: 3267,
+    riskLevel: 'High',
+    assets: ['SOL', 'AVAX', 'MATIC', 'DOT'],
+    users: 672,
+    rating: 3.9,
+    price: 10,
+  },
+];
+
+type FilterType = 'all' | AgentPersonality;
+
+// ---- Agent Card Component ----
+
+function AgentCard({ agent, onUse, onPreview }: { agent: MarketplaceAgent; onUse: () => void; onPreview: () => void }) {
+  const meta = PERSONALITY_META[agent.personality];
+
+  return (
+    <div className={`group relative bg-[#111118] rounded-2xl border border-[#1e1e2e] overflow-hidden transition-all duration-300 hover:border-[#2e2e3e] hover:shadow-2xl hover:-translate-y-1 ${meta.bgGlow}`}>
+      {/* Accent bar */}
+      <div className={`h-1 ${meta.accentBar}`} />
+
+      {/* Featured badge */}
+      {agent.featured && (
+        <div className="absolute top-4 right-4">
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/20">
+            <Star size={10} className="text-amber-400 fill-amber-400" />
+            <span className="text-[10px] font-medium text-amber-400">Featured</span>
+          </div>
+        </div>
+      )}
+
+      <div className="p-5">
+        {/* Avatar + Header */}
+        <div className="flex justify-center mb-3">
+          <AgentAvatar personality={agent.personality} size={48} />
+        </div>
+        <div className="mb-3 text-center">
+          <h3 className="text-base font-bold text-white mb-0.5">{agent.name}</h3>
+          <p className="text-xs text-gray-500">
+            by <span className={agent.creator === 'CladexTeam' ? 'text-[#B8FF3C]' : 'text-gray-400'}>{agent.creator}</span>
+          </p>
+        </div>
+
+        {/* Personality badge */}
+        <div className="mb-3">
+          <Badge variant={agent.personality} size="sm" dot>
+            {meta.label}
+          </Badge>
+        </div>
+
+        {/* Description */}
+        <p className="text-xs text-gray-400 leading-relaxed mb-4 line-clamp-2">
+          {agent.description}
+        </p>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="bg-[#0a0a0f] rounded-lg px-2.5 py-2 text-center">
+            <div className="flex items-center justify-center gap-1 mb-0.5">
+              <TrendingUp size={10} className="text-guardian-400" />
+              <span className="text-[10px] text-gray-500">Return</span>
+            </div>
+            <div className="text-sm font-bold text-guardian-400">+{agent.monthlyReturn}%</div>
+          </div>
+          <div className="bg-[#0a0a0f] rounded-lg px-2.5 py-2 text-center">
+            <div className="flex items-center justify-center gap-1 mb-0.5">
+              <Activity size={10} className="text-analyst-400" />
+              <span className="text-[10px] text-gray-500">Win Rate</span>
+            </div>
+            <div className="text-sm font-bold text-gray-200">{agent.winRate}%</div>
+          </div>
+          <div className="bg-[#0a0a0f] rounded-lg px-2.5 py-2 text-center">
+            <div className="flex items-center justify-center gap-1 mb-0.5">
+              <Zap size={10} className="text-oracle-400" />
+              <span className="text-[10px] text-gray-500">Trades</span>
+            </div>
+            <div className="text-sm font-bold text-gray-200">{agent.totalTrades.toLocaleString()}</div>
+          </div>
+        </div>
+
+        {/* Risk + Users row */}
+        <div className="flex items-center justify-between mb-4">
+          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${RISK_STYLES[agent.riskLevel]}`}>
+            {agent.riskLevel} Risk
+          </span>
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <Users size={12} />
+            <span>{agent.users.toLocaleString()} users</span>
+          </div>
+        </div>
+
+        {/* Price */}
+        <div className="flex items-center justify-between mb-4">
+          {agent.price === 0 ? (
+            <span className="text-sm font-bold text-guardian-400">FREE</span>
+          ) : (
+            <span className="text-sm font-bold text-white">${agent.price}<span className="text-xs font-normal text-gray-500">/mo</span></span>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          {agent.price === 0 ? (
+            <Button onClick={onUse} size="sm" fullWidth>
+              Use Agent
+            </Button>
+          ) : (
+            <Button onClick={onUse} size="sm" fullWidth>
+              Subscribe &mdash; ${agent.price}/mo
+            </Button>
+          )}
+          <button
+            onClick={onPreview}
+            className="shrink-0 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-white/5 border border-[#2a2a3a] hover:border-[#3a3a4a] transition-all"
+          >
+            Preview
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- Main Page ----
+
+export default function MarketplacePage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [previewAgent, setPreviewAgent] = useState<MarketplaceAgent | null>(null);
+  const [useAgent, setUseAgent] = useState<MarketplaceAgent | null>(null);
+
+  const filteredAgents = useMemo(() => {
+    return MOCK_AGENTS.filter((agent) => {
+      const matchesFilter = activeFilter === 'all' || agent.personality === activeFilter;
+      const matchesSearch =
+        !searchQuery ||
+        agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        agent.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        agent.creator.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesFilter && matchesSearch;
+    });
+  }, [searchQuery, activeFilter]);
+
+  const filters: { id: FilterType; label: string; icon?: React.ReactNode }[] = [
+    { id: 'all', label: 'All Agents' },
+    { id: 'guardian', label: 'Guardian', icon: <Shield size={14} /> },
+    { id: 'analyst', label: 'Analyst', icon: <BarChart3 size={14} /> },
+    { id: 'hunter', label: 'Hunter', icon: <Target size={14} /> },
+    { id: 'oracle', label: 'Oracle', icon: <Eye size={14} /> },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0f] text-gray-100">
+      {/* Header */}
+      <div className="border-b border-[#1e1e2e] bg-[#0a0a0f]/80 backdrop-blur-xl sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <div className="mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">Agent Marketplace</h1>
+            <p className="text-sm text-gray-500">
+              Discover proven trading strategies built by the community and Cladex team
+            </p>
+          </div>
+
+          {/* Search + Filters */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            {/* Search */}
+            <div className="relative w-full sm:flex-1 sm:max-w-md">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search agents, strategies..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#111118] border border-[#1e1e2e] text-sm text-gray-100 placeholder:text-gray-600 focus:outline-none focus:border-[#B8FF3C]/50 focus:ring-1 focus:ring-[#B8FF3C]/20 transition-all"
+              />
+            </div>
+
+            {/* Filter buttons */}
+            <div className="flex items-center gap-2 flex-wrap overflow-x-auto">
+              {filters.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setActiveFilter(f.id)}
+                  className={[
+                    'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all duration-200',
+                    activeFilter === f.id
+                      ? f.id === 'all'
+                        ? 'bg-[#B8FF3C]/10 border-[#B8FF3C]/30 text-[#B8FF3C]'
+                        : `bg-${f.id}-500/15 border-${f.id}-500/30 text-${f.id}-400`
+                      : 'bg-[#111118] border-[#1e1e2e] text-gray-400 hover:text-gray-200 hover:border-[#2e2e3e]',
+                  ].join(' ')}
+                >
+                  {f.icon}
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Agent Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Result count */}
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-sm text-gray-500">
+            {filteredAgents.length} agent{filteredAgents.length !== 1 ? 's' : ''} available
+          </p>
+          <div className="text-xs text-gray-600">Sorted by popularity</div>
+        </div>
+
+        {filteredAgents.length === 0 ? (
+          <div className="text-center py-20">
+            <Search size={48} className="text-gray-700 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-400 mb-2">No agents found</h3>
+            <p className="text-sm text-gray-600">Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredAgents.map((agent) => (
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                onUse={() => setUseAgent(agent)}
+                onPreview={() => setPreviewAgent(agent)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Preview Modal */}
+      <Modal
+        isOpen={!!previewAgent}
+        onClose={() => setPreviewAgent(null)}
+        title={previewAgent?.name}
+        size="lg"
+      >
+        {previewAgent && (
+          <div className="space-y-5">
+            <div className="flex items-center gap-3">
+              <Badge variant={previewAgent.personality} dot>
+                {PERSONALITY_META[previewAgent.personality].label}
+              </Badge>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${RISK_STYLES[previewAgent.riskLevel]}`}>
+                {previewAgent.riskLevel} Risk
+              </span>
+              <span className="text-xs text-gray-500">
+                by {previewAgent.creator}
+              </span>
+            </div>
+
+            <p className="text-sm text-gray-300 leading-relaxed">{previewAgent.description}</p>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-[#0a0a0f] rounded-xl p-4 text-center border border-[#1e1e2e]">
+                <div className="text-xs text-gray-500 mb-1">Monthly Return</div>
+                <div className="text-xl font-bold text-guardian-400">+{previewAgent.monthlyReturn}%</div>
+              </div>
+              <div className="bg-[#0a0a0f] rounded-xl p-4 text-center border border-[#1e1e2e]">
+                <div className="text-xs text-gray-500 mb-1">Win Rate</div>
+                <div className="text-xl font-bold text-white">{previewAgent.winRate}%</div>
+              </div>
+              <div className="bg-[#0a0a0f] rounded-xl p-4 text-center border border-[#1e1e2e]">
+                <div className="text-xs text-gray-500 mb-1">Total Trades</div>
+                <div className="text-xl font-bold text-white">{previewAgent.totalTrades.toLocaleString()}</div>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-500 mb-2 uppercase tracking-wider font-medium">Trading Assets</div>
+              <div className="flex gap-2">
+                {previewAgent.assets.map((a) => (
+                  <span key={a} className="px-2.5 py-1 rounded-lg bg-[#0a0a0f] border border-[#2a2a3a] text-xs text-gray-300 font-medium">
+                    {a}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center gap-1 text-sm text-gray-400">
+                <Users size={14} />
+                <span>{previewAgent.users.toLocaleString()} users</span>
+              </div>
+              <div className="flex items-center gap-1 text-sm text-amber-400">
+                <Star size={14} className="fill-amber-400" />
+                <span>{previewAgent.rating}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mb-3">
+              {previewAgent.price === 0 ? (
+                <span className="text-lg font-bold text-guardian-400">FREE</span>
+              ) : (
+                <span className="text-lg font-bold text-white">${previewAgent.price}<span className="text-sm font-normal text-gray-500">/mo</span></span>
+              )}
+            </div>
+
+            <Button
+              fullWidth
+              onClick={() => {
+                setPreviewAgent(null);
+                setUseAgent(previewAgent);
+              }}
+              icon={<ArrowRight size={16} />}
+              iconPosition="right"
+            >
+              {previewAgent.price === 0 ? 'Use Agent' : `Subscribe \u2014 $${previewAgent.price}/mo`}
+            </Button>
+          </div>
+        )}
+      </Modal>
+
+      {/* Use Agent Confirmation Modal */}
+      <Modal
+        isOpen={!!useAgent}
+        onClose={() => setUseAgent(null)}
+        title="Activate Agent"
+        size="md"
+      >
+        {useAgent && (
+          <div className="space-y-4">
+            <div className="bg-[#0a0a0f] rounded-xl p-4 border border-[#1e1e2e]">
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${PERSONALITY_META[useAgent.personality].color} bg-${useAgent.personality}-500/10`}>
+                  {PERSONALITY_META[useAgent.personality].icon}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">{useAgent.name}</h3>
+                  <p className="text-xs text-gray-500">{PERSONALITY_META[useAgent.personality].label} agent</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400">{useAgent.description}</p>
+            </div>
+
+            <p className="text-xs text-gray-500 leading-relaxed">
+              This agent will be added to your portfolio and begin monitoring the market based on its strategy. You can pause or stop it at any time from your Agents page.
+            </p>
+
+            <div className="flex gap-3">
+              <Button variant="secondary" fullWidth onClick={() => setUseAgent(null)}>
+                Cancel
+              </Button>
+              <Button fullWidth onClick={() => setUseAgent(null)}>
+                Activate Agent
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
