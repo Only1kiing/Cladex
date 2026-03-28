@@ -315,9 +315,9 @@ export function PointsWidget() {
             />
           </div>
         </div>
-        <button className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer">
+        <a href="/pricing" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer block">
           Earn More &rarr;
-        </button>
+        </a>
       </div>
     </FadeSlide>
   );

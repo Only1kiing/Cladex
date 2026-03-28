@@ -609,56 +609,54 @@ export default function LandingPage() {
             </h2>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            {/* Card 1 — Trader */}
-            <Reveal delay={100}>
-              <div className="rounded-2xl bg-[#111118] border border-[#1e1e2e] p-6 sm:p-8 text-center hover:border-[#B8FF3C]/30 transition-all">
-                <h3 className="text-xl font-bold mb-1">Trader</h3>
-                <div className="mt-4 mb-6">
-                  <span className="text-4xl font-black text-white">$25</span>
-                  <span className="ml-2 text-lg text-gray-500 line-through">$99</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
+            {[
+              {
+                name: 'Trader',
+                price: '$25',
+                oldPrice: '$99',
+                features: ['Deploy up to 2 agents', 'Basic AI model', 'Airdrop eligible', 'Base points', 'Agent Comm access'],
+                featured: false,
+              },
+              {
+                name: 'Builder',
+                price: '$80',
+                oldPrice: '$199',
+                features: ['Deploy up to 5 agents', 'Deploy & Earn', 'Smarter AI model', 'Marketplace visibility', 'Higher airdrop eligibility', 'Bonus points'],
+                featured: true,
+              },
+              {
+                name: 'Pro Creator',
+                price: '$200',
+                oldPrice: '$499',
+                features: ['Deploy 10–15 agents', 'Premium AI models', 'Priority ranking', 'Featured placement', 'Advanced analytics', 'Max airdrop eligibility'],
+                featured: false,
+              },
+            ].map((plan, idx) => (
+              <Reveal key={plan.name} delay={100 + idx * 100}>
+                <div className={`rounded-2xl bg-[#111118] border ${plan.featured ? 'border-[#B8FF3C]/30 green-glow' : 'border-[#1e1e2e]'} p-6 sm:p-8 text-center hover:border-[#B8FF3C]/40 transition-all`}>
+                  <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+                  <div className="mt-4 mb-6">
+                    <span className="text-4xl font-black text-white">{plan.price}</span>
+                    <span className="ml-2 text-lg text-gray-500 line-through">{plan.oldPrice}</span>
+                  </div>
+                  <ul className="space-y-2.5 text-sm text-gray-300 text-left">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2">
+                        <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/login"
+                    className="mt-6 inline-block w-full bg-[#B8FF3C] text-black font-bold text-sm px-6 py-3 rounded-xl hover:brightness-110 transition-all"
+                  >
+                    Get Started
+                  </Link>
                 </div>
-                <ul className="space-y-3 text-sm text-gray-300 text-left">
-                  {['Deploy up to 2 agents', 'Basic AI model', 'Airdrop eligible', 'Base points', 'Agent Comm access'].map((f) => (
-                    <li key={f} className="flex items-center gap-2">
-                      <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/login"
-                  className="mt-6 inline-block w-full bg-[#B8FF3C] text-black font-bold text-sm px-6 py-3 rounded-xl hover:brightness-110 transition-all"
-                >
-                  Get Started
-                </Link>
-              </div>
-            </Reveal>
-
-            {/* Card 2 — Builder */}
-            <Reveal delay={200}>
-              <div className="rounded-2xl bg-[#111118] border border-[#B8FF3C]/30 p-6 sm:p-8 text-center green-glow hover:border-[#B8FF3C]/50 transition-all">
-                <h3 className="text-xl font-bold mb-1">Builder</h3>
-                <div className="mt-4 mb-6">
-                  <span className="text-4xl font-black text-white">$80</span>
-                  <span className="ml-2 text-lg text-gray-500 line-through">$199</span>
-                </div>
-                <ul className="space-y-3 text-sm text-gray-300 text-left">
-                  {['Deploy up to 5 agents', 'Deploy & Earn', 'Smarter AI model', 'Marketplace visibility', 'Higher airdrop eligibility', 'Bonus points'].map((f) => (
-                    <li key={f} className="flex items-center gap-2">
-                      <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/login"
-                  className="mt-6 inline-block w-full bg-[#B8FF3C] text-black font-bold text-sm px-6 py-3 rounded-xl hover:brightness-110 transition-all"
-                >
-                  Get Started
-                </Link>
-              </div>
-            </Reveal>
+              </Reveal>
+            ))}
           </div>
 
           {/* Countdown */}

@@ -473,13 +473,19 @@ export default function DashboardPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const drawerMessagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when messages change — scoped to container only
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [chatMessages, isTyping]);
 
   useEffect(() => {
-    drawerMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = drawerMessagesEndRef.current;
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }, [chatMessages, isTyping, chatOpen]);
 
   // Initial welcome message
@@ -765,54 +771,6 @@ export default function DashboardPage() {
             gradient="hover:border-oracle-500/30"
           />
           <ReferralCard />
-        </div>
-      </section>
-
-      {/* Your Plan */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-100">Your Plan</h2>
-          <Link href="/pricing" className="text-sm text-[#B8FF3C] hover:brightness-110 transition-colors">
-            View Plans
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Deployment Plan */}
-          <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Deployment</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-500/15 text-gray-400 border border-gray-500/20">Free Tier</span>
-            </div>
-            <p className="text-sm text-gray-300 mb-3">Deploy agents and trade manually</p>
-            <div className="space-y-2 text-xs text-gray-400">
-              <div className="flex justify-between"><span>Agents deployed</span><span className="text-white font-medium">0 / 1</span></div>
-              <div className="flex justify-between"><span>AI model</span><span className="text-white font-medium">Basic</span></div>
-              <div className="flex justify-between"><span>Airdrop eligible</span><span className="text-[#B8FF3C] font-medium">Yes</span></div>
-            </div>
-            <Link href="/pricing" className="mt-4 block w-full text-center py-2 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-xs font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors">
-              Upgrade to Trader — $25
-            </Link>
-          </div>
-          {/* Subscription */}
-          <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Subscription</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-500/15 text-gray-400 border border-gray-500/20 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-gray-500 inline-block" />
-                Basic
-              </span>
-            </div>
-            <p className="text-sm text-gray-300 mb-1">You&apos;re running in manual mode</p>
-            <p className="text-xs text-gray-500 mb-3">Upgrade to automate your strategy and improve performance</p>
-            <div className="space-y-2 text-xs text-gray-400">
-              <div className="flex justify-between"><span>Automation</span><span className="text-gray-500">Manual only</span></div>
-              <div className="flex justify-between"><span>Execution speed</span><span className="text-gray-500">Normal</span></div>
-              <div className="flex justify-between"><span>Badge</span><span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-500 inline-block" /> Grey</span></div>
-            </div>
-            <Link href="/pricing" className="mt-4 block w-full text-center py-2 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-xs font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors">
-              Subscribe — from $5/mo
-            </Link>
-          </div>
         </div>
       </section>
 
