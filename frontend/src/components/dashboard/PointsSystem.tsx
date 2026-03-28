@@ -315,7 +315,7 @@ export function PointsWidget() {
             />
           </div>
         </div>
-        <a href="/pricing" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer block">
+        <a href="/dashboard/points" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer block">
           Earn More &rarr;
         </a>
       </div>
