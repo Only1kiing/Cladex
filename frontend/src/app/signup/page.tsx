@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Key, ShieldCheck } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
@@ -13,27 +13,20 @@ import { Card } from '@/components/ui/Card';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function WalletIcon() {
+const EXCHANGES = [
+  { id: 'bybit', name: 'Bybit', color: '#F7A600', letter: 'B' },
+  { id: 'binance', name: 'Binance', color: '#F0B90B', letter: 'B' },
+  { id: 'phantom', name: 'Phantom', color: '#AB9FF2', letter: 'P' },
+  { id: 'mask', name: 'Mask', color: '#1C8CF0', letter: 'M' },
+  { id: 'polymarket', name: 'Polymarket', color: '#00D395', letter: 'P' },
+];
+
+function ExchangeIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M21 7H3V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V7Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3 7L5 3H19L21 7"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M17 12C17 12.5523 16.5523 13 16 13C15.4477 13 15 12.5523 15 12C15 11.4477 15.4477 11 16 11C16.5523 11 17 11.4477 17 12Z"
-        fill="currentColor"
-      />
+      <path d="M2 7L12 2L22 7L12 12L2 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -65,7 +58,6 @@ function VerificationStep({
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) {
-      // Handle paste
       const digits = value.replace(/\D/g, '').slice(0, 6).split('');
       const newCode = [...code];
       digits.forEach((d, i) => {
@@ -103,7 +95,6 @@ function VerificationStep({
     }
 
     setVerifying(true);
-    // Simulate verification delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setVerifying(false);
 
@@ -111,7 +102,6 @@ function VerificationStep({
     onVerified();
   }, [code, onVerified]);
 
-  // Auto-submit when all 6 digits entered
   useEffect(() => {
     const fullCode = code.join('');
     if (fullCode.length === 6 && /^\d{6}$/.test(fullCode)) {
@@ -133,7 +123,6 @@ function VerificationStep({
       exit={{ opacity: 0, y: -20 }}
       className="text-center"
     >
-      {/* Email icon */}
       <div className="mx-auto w-16 h-16 rounded-2xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 flex items-center justify-center mb-6">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
@@ -152,7 +141,6 @@ function VerificationStep({
         <span className="text-[#B8FF3C] font-medium">{email}</span>
       </p>
 
-      {/* Code inputs */}
       <div className="flex justify-center gap-2 sm:gap-2.5 mb-6">
         {code.map((digit, i) => (
           <input
@@ -201,9 +189,227 @@ function VerificationStep({
   );
 }
 
-export default function SignupPage() {
+function ConnectExchangeStep() {
   const router = useRouter();
-  const { signup, connectWallet } = useAuth();
+  const { connectExchange } = useAuth();
+
+  const [selectedExchange, setSelectedExchange] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState('');
+  const [apiSecret, setApiSecret] = useState('');
+  const [exchangeLoading, setExchangeLoading] = useState(false);
+  const [exchangeConnected, setExchangeConnected] = useState(false);
+  const [error, setError] = useState('');
+
+  const selectedExchangeData = EXCHANGES.find((e) => e.id === selectedExchange);
+
+  const handleConnect = async () => {
+    if (!selectedExchange || !apiKey.trim() || !apiSecret.trim()) {
+      setError('Please enter both API Key and API Secret.');
+      return;
+    }
+
+    setError('');
+    setExchangeLoading(true);
+    try {
+      const result = await connectExchange(selectedExchange, apiKey, apiSecret);
+      if (result.success) {
+        setExchangeConnected(true);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 800);
+      } else {
+        setError(result.error || 'Exchange connection failed.');
+      }
+    } catch {
+      setError('Failed to connect exchange. Please try again.');
+    } finally {
+      setExchangeLoading(false);
+    }
+  };
+
+  const handleSkipDemo = () => {
+    router.push('/dashboard');
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="space-y-4"
+    >
+      <div className="text-center mb-2">
+        <div className="mx-auto w-12 h-12 rounded-xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 flex items-center justify-center mb-3">
+          <ExchangeIcon />
+        </div>
+        <h2 className="text-lg font-bold text-white">Connect Exchange</h2>
+        <p className="text-xs text-gray-500 mt-1">Link your exchange to enable live trading</p>
+      </div>
+
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="rounded-lg bg-hunter-500/10 border border-hunter-500/20 px-4 py-3 text-sm text-hunter-400"
+        >
+          {error}
+        </motion.div>
+      )}
+
+      {/* Exchange selector grid */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {EXCHANGES.map((exchange) => (
+          <motion.button
+            key={exchange.id}
+            type="button"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              setSelectedExchange(exchange.id);
+              setExchangeConnected(false);
+              setApiKey('');
+              setApiSecret('');
+              setError('');
+            }}
+            className={`relative flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#B8FF3C]/50 ${
+              selectedExchange === exchange.id
+                ? 'border-[#B8FF3C]/60 bg-[#B8FF3C]/[0.08] text-white'
+                : 'border-white/[0.08] bg-white/[0.02] text-gray-400 hover:border-white/[0.15] hover:text-gray-200'
+            }`}
+          >
+            <span
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-black"
+              style={{ backgroundColor: exchange.color }}
+            >
+              {exchange.letter}
+            </span>
+            <span className="truncate">{exchange.name}</span>
+            {selectedExchange === exchange.id && (
+              <motion.div
+                layoutId="signup-exchange-check"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-[#B8FF3C]"
+              />
+            )}
+          </motion.button>
+        ))}
+      </div>
+
+      {/* API Key fields */}
+      <AnimatePresence>
+        {selectedExchange && !exchangeConnected && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-3 overflow-hidden"
+          >
+            <div className="pt-2 space-y-3">
+              <Input
+                label="API Key"
+                type="text"
+                placeholder={`Enter your ${selectedExchangeData?.name} API key`}
+                value={apiKey}
+                onChange={(e) => { setApiKey(e.target.value); setError(''); }}
+                icon={<Key size={16} />}
+                autoComplete="off"
+              />
+
+              <Input
+                label="API Secret"
+                type="password"
+                placeholder={`Enter your ${selectedExchangeData?.name} API secret`}
+                value={apiSecret}
+                onChange={(e) => { setApiSecret(e.target.value); setError(''); }}
+                icon={<Lock size={16} />}
+                autoComplete="off"
+              />
+
+              <button
+                type="button"
+                onClick={handleConnect}
+                disabled={exchangeLoading || !apiKey.trim() || !apiSecret.trim()}
+                className="w-full relative group overflow-hidden rounded-xl p-[1px] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#B8FF3C]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="absolute inset-0 bg-[#B8FF3C] opacity-100 group-hover:brightness-110 transition-opacity" />
+                <div className="relative flex items-center justify-center gap-3 rounded-[11px] bg-[#B8FF3C] px-6 py-3 text-black font-bold text-sm">
+                  {exchangeLoading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <span>Connecting to {selectedExchangeData?.name}...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck size={18} />
+                      <span>Connect Exchange</span>
+                    </>
+                  )}
+                </div>
+              </button>
+
+              {/* Trust microcopy */}
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 pt-1">
+                {[
+                  'Your funds stay on your exchange',
+                  'Cladex cannot withdraw funds',
+                  'Trade-only API access',
+                  'Disconnect anytime',
+                ].map((text) => (
+                  <div key={text} className="flex items-start gap-1.5 text-[11px] text-gray-500">
+                    <svg className="mt-0.5 h-3 w-3 shrink-0 text-[#B8FF3C]/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17L4 12" />
+                    </svg>
+                    <span>{text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Connected status */}
+      <AnimatePresence>
+        {exchangeConnected && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-4 py-3 text-sm font-medium text-emerald-400"
+          >
+            <span>&#x2705; Connected — redirecting...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Divider */}
+      <div className="relative my-2">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[#1e1e2e]" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-[#111118] px-3 text-gray-500">or</span>
+        </div>
+      </div>
+
+      {/* Continue Demo */}
+      <button
+        onClick={handleSkipDemo}
+        className="w-full py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] text-sm font-medium text-gray-400 hover:text-white hover:border-white/[0.15] hover:bg-white/[0.04] transition-all duration-200"
+      >
+        Continue in Demo Mode
+      </button>
+    </motion.div>
+  );
+}
+
+export default function SignupPage() {
+  const { signup } = useAuth();
+
+  // Steps: 'signup' | 'verification' | 'connect-exchange'
+  const [step, setStep] = useState<'signup' | 'verification' | 'connect-exchange'>('signup');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -217,9 +423,6 @@ export default function SignupPage() {
     confirmPassword?: string;
   }>({});
   const [loading, setLoading] = useState(false);
-  const [walletLoading, setWalletLoading] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [showVerification, setShowVerification] = useState(false);
 
   const validateFields = (): boolean => {
     const errors: typeof fieldErrors = {};
@@ -260,7 +463,7 @@ export default function SignupPage() {
     try {
       const result = await signup(name, email, password);
       if (result.success) {
-        setShowVerification(true);
+        setStep('verification');
       } else {
         setError(result.error || 'Signup failed. Please try again.');
       }
@@ -272,27 +475,13 @@ export default function SignupPage() {
   };
 
   const handleVerified = () => {
-    router.push('/onboarding');
+    setStep('connect-exchange');
   };
 
-  const handleConnectWallet = async () => {
-    setError('');
-    setWalletLoading(true);
-    try {
-      const result = await connectWallet();
-      if (result.success && result.address) {
-        setWalletAddress(result.address);
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 800);
-      } else {
-        setError(result.error || 'Wallet connection failed.');
-      }
-    } catch {
-      setError('Failed to connect wallet. Please try again.');
-    } finally {
-      setWalletLoading(false);
-    }
+  const stepSubtitle = {
+    'signup': 'Create your account and start trading',
+    'verification': 'One last step to secure your account',
+    'connect-exchange': 'Connect your exchange to go live',
   };
 
   return (
@@ -315,27 +504,19 @@ export default function SignupPage() {
             <Logo size="lg" />
           </Link>
           <p className="mt-3 text-sm text-gray-500">
-            {showVerification
-              ? 'One last step to secure your account'
-              : 'Create your account and start trading'}
+            {stepSubtitle[step]}
           </p>
         </div>
 
         <Card padding="lg" className="border-white/[0.08] backdrop-blur-xl bg-[#111118]/80">
           <AnimatePresence mode="wait">
-            {showVerification ? (
-              <VerificationStep
-                key="verification"
-                email={email}
-                onVerified={handleVerified}
-              />
-            ) : (
+            {/* ===== STEP 1: SIGNUP FORM ===== */}
+            {step === 'signup' && (
               <motion.div
                 key="signup-form"
                 initial={{ opacity: 1 }}
-                exit={{ opacity: 0, y: -20 }}
+                exit={{ opacity: 0, x: -20 }}
               >
-                {/* Global error */}
                 {error && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -346,50 +527,6 @@ export default function SignupPage() {
                   </motion.div>
                 )}
 
-                {/* Connect Wallet - Primary Auth */}
-                <button
-                  type="button"
-                  onClick={handleConnectWallet}
-                  disabled={walletLoading || !!walletAddress}
-                  className="w-full relative group overflow-hidden rounded-xl p-[1px] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#B8FF3C]/50 disabled:opacity-70"
-                >
-                  <div className="absolute inset-0 bg-[#B8FF3C] opacity-100 group-hover:brightness-110 transition-opacity" />
-                  <div className="relative flex items-center justify-center gap-3 rounded-[11px] bg-[#B8FF3C] px-6 py-3.5 text-black font-bold text-sm">
-                    {walletLoading ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        <span>Connecting Wallet...</span>
-                      </>
-                    ) : walletAddress ? (
-                      <>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span>Connected: {walletAddress}</span>
-                      </>
-                    ) : (
-                      <>
-                        <WalletIcon />
-                        <span>Connect Wallet</span>
-                      </>
-                    )}
-                  </div>
-                </button>
-
-                {/* Divider */}
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[#1e1e2e]" />
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="bg-[#111118] px-3 text-gray-500">or continue with email</span>
-                  </div>
-                </div>
-
-                {/* Signup Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <Input
                     label="Full Name"
@@ -470,6 +607,20 @@ export default function SignupPage() {
                   </Link>
                 </div>
               </motion.div>
+            )}
+
+            {/* ===== STEP 2: EMAIL VERIFICATION ===== */}
+            {step === 'verification' && (
+              <VerificationStep
+                key="verification"
+                email={email}
+                onVerified={handleVerified}
+              />
+            )}
+
+            {/* ===== STEP 3: CONNECT EXCHANGE ===== */}
+            {step === 'connect-exchange' && (
+              <ConnectExchangeStep key="connect-exchange" />
             )}
           </AnimatePresence>
         </Card>
