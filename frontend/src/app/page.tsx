@@ -384,33 +384,90 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-         2.5. WHAT CLADEX ACTUALLY DOES
+         2.5. HOW CLADEX WORKS
          ═══════════════════════════════════════════════════════════ */}
-      <section className="relative py-20 sm:py-28">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+      <section className="relative py-24 sm:py-32">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <Reveal>
-            <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
-              What Cladex Actually Does
+            <h2 className="text-3xl sm:text-4xl font-black text-center mb-3">
+              How It Works
             </h2>
-          </Reveal>
-          <Reveal delay={100}>
-            <p className="text-lg text-gray-400 text-center max-w-2xl mx-auto mb-10">
-              Cladex connects your trading account (like Binance or Bybit) to AI agents that trade on your behalf.
+            <p className="text-gray-500 text-center text-sm sm:text-base mb-16 max-w-lg mx-auto">
+              Three steps. Under 60 seconds. Your funds never leave your exchange.
             </p>
           </Reveal>
-          <Reveal delay={200}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                'You keep full control of your funds',
-                'Agents execute trades automatically',
-                'You can stop or withdraw anytime',
-                'Non-custodial — Cladex never holds funds',
-              ].map((point, i) => (
-                <div key={i} className="flex items-start gap-3 rounded-xl bg-[#111118] border border-[#1e1e2e] p-4">
-                  <svg className="w-5 h-5 mt-0.5 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
+
+          {/* 3-Step Flow */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            {[
+              {
+                step: '01',
+                title: 'Connect Your Exchange',
+                desc: 'Link Binance, Bybit, or any supported exchange via API. Trade-only access — we can never withdraw.',
+                icon: (
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 7L12 2L22 7L12 12L2 7Z" />
+                    <path d="M2 17L12 22L22 17" />
+                    <path d="M2 12L12 17L22 12" />
                   </svg>
-                  <span className="text-gray-300 text-sm sm:text-base">{point}</span>
+                ),
+              },
+              {
+                step: '02',
+                title: 'Deploy an AI Agent',
+                desc: 'Pick a strategy or describe what you want. Your agent starts analyzing markets and executing trades instantly.',
+                icon: (
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="14" rx="2" />
+                    <circle cx="9" cy="10" r="1.5" fill="currentColor" />
+                    <circle cx="15" cy="10" r="1.5" fill="currentColor" />
+                    <path d="M7 20l2-3h6l2 3" />
+                  </svg>
+                ),
+              },
+              {
+                step: '03',
+                title: 'Watch It Trade 24/7',
+                desc: 'Your agent works while you sleep. Monitor live, pause anytime, withdraw whenever you want.',
+                icon: (
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2.25 12.75l4.5-4.5 3 3 6-7.5" />
+                    <path d="M12.75 3.75h3v3" />
+                  </svg>
+                ),
+              },
+            ].map((item, i) => (
+              <Reveal key={item.step} delay={i * 120}>
+                <div className="relative rounded-2xl bg-[#111118] border border-[#1e1e2e] p-6 sm:p-8 group hover:border-[#B8FF3C]/20 transition-all duration-300">
+                  {/* Step number */}
+                  <span className="text-[#B8FF3C]/20 font-black text-5xl absolute top-4 right-5 select-none">{item.step}</span>
+
+                  {/* Icon */}
+                  <div className="w-12 h-12 rounded-xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 flex items-center justify-center text-[#B8FF3C] mb-5">
+                    {item.icon}
+                  </div>
+
+                  <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          {/* Connector line on desktop */}
+          <Reveal delay={400}>
+            <div className="hidden md:flex items-center justify-center mt-10 gap-2">
+              {[
+                'Your funds stay on your exchange',
+                'Cladex cannot withdraw funds',
+                'Disconnect anytime',
+              ].map((text, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <svg className="w-3.5 h-3.5 text-[#B8FF3C]/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  <span>{text}</span>
+                  {i < 2 && <span className="mx-2 text-gray-700">·</span>}
                 </div>
               ))}
             </div>
