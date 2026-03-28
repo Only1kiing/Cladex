@@ -152,32 +152,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         })}
       </nav>
 
-      {/* Pre-Deploy Banner */}
+      {/* Plans Link */}
       <div className="px-3 mb-3">
-        <Link href="/pricing" className="block p-3 rounded-xl bg-gradient-to-br from-[#B8FF3C]/10 to-emerald-500/10 border border-[#B8FF3C]/20 hover:border-[#B8FF3C]/40 transition-all duration-300 group">
-          <div className="flex items-center gap-2 mb-1.5">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#B8FF3C]">
-              <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="text-xs font-semibold text-[#B8FF3C] group-hover:brightness-110 transition-colors">Deployment Plans</span>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="text-gray-400">Trader</span>
-              <span className="text-white font-medium">$25</span>
-            </div>
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="text-gray-400">Builder</span>
-              <span className="text-[#B8FF3C] font-medium">$80</span>
-            </div>
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="text-gray-400">Pro Creator</span>
-              <span className="text-gray-400 font-medium">$200</span>
-            </div>
-          </div>
-          <div className="mt-2 text-[10px] font-semibold text-[#B8FF3C] group-hover:brightness-110 transition-colors">
-            View Plans &rarr;
-          </div>
+        <Link
+          href="/pricing"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-white/[0.04] transition-all duration-200"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Plans
         </Link>
       </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 /* ------------------------------------------------------------------ */
 /*  Inline SVG Icons                                                    */
@@ -157,144 +157,10 @@ const deploymentPlans: DeploymentPlan[] = [
   },
 ];
 
-interface SubscriptionPlan {
-  name: string;
-  price: string;
-  period: string;
-  features: string[];
-  badge: string;
-  badgeColor: string;
-  cta: string;
-  ctaHref: string;
-  featured: boolean;
-}
-
-const subscriptionPlans: SubscriptionPlan[] = [
-  {
-    name: 'Starter',
-    price: '$5',
-    period: '/mo',
-    features: [
-      'Manual/guided AI trading',
-      'Basic Agent Comm',
-      'Normal execution',
-    ],
-    badge: '\u26aa Grey badge',
-    badgeColor: 'text-gray-400',
-    cta: 'Subscribe',
-    ctaHref: '/signup?plan=starter-sub',
-    featured: false,
-  },
-  {
-    name: 'Core',
-    price: '$15',
-    period: '/mo',
-    features: [
-      'Full automation (24/7)',
-      'Real-time execution',
-      'Full Agent Comm',
-      'Standard analytics',
-    ],
-    badge: '\ud83d\udfe2 Blue Verified badge',
-    badgeColor: 'text-blue-400',
-    cta: 'Subscribe',
-    ctaHref: '/signup?plan=core-sub',
-    featured: true,
-  },
-  {
-    name: 'Pro',
-    price: '$35',
-    period: '/mo',
-    features: [
-      'Faster execution',
-      'Advanced analytics',
-      'Smarter AI layer',
-      'Enhanced insights',
-    ],
-    badge: '\ud83d\udfe3 Purple Verified+ badge',
-    badgeColor: 'text-purple-400',
-    cta: 'Subscribe',
-    ctaHref: '/signup?plan=pro-sub',
-    featured: false,
-  },
-  {
-    name: 'Elite',
-    price: '$79',
-    period: '/mo',
-    features: [
-      'Highest execution priority',
-      'Premium AI models',
-      'Risk control tools',
-      'Dedicated support',
-      'Beta features',
-    ],
-    badge: '\ud83d\udfe1 Gold Verified badge',
-    badgeColor: 'text-yellow-400',
-    cta: 'Subscribe',
-    ctaHref: '/signup?plan=elite-sub',
-    featured: false,
-  },
-];
-
-interface ComboDeal {
-  name: string;
-  price: string;
-  features: string[];
-  cta: string;
-  bestValue: boolean;
-}
-
-const comboDeals: ComboDeal[] = [
-  {
-    name: 'Starter Combo',
-    price: '$39',
-    features: [
-      'Trader deployment (2 agents)',
-      '3 months Core subscription',
-    ],
-    cta: 'Get Combo',
-    bestValue: false,
-  },
-  {
-    name: 'Builder Combo',
-    price: '$129',
-    features: [
-      'Builder deployment (5 agents)',
-      '6 months Core subscription',
-      'Blue Verified included',
-    ],
-    cta: 'Get Combo',
-    bestValue: true,
-  },
-  {
-    name: 'Pro Combo',
-    price: '$299',
-    features: [
-      'Pro Creator deployment',
-      '12 months Pro subscription',
-      'Purple Verified+ included',
-    ],
-    cta: 'Get Combo',
-    bestValue: false,
-  },
-];
-
-const badgeLevels = [
-  { emoji: '\u26aa', tier: 'Basic (Grey)', label: 'Unverified' },
-  { emoji: '\ud83d\udfe2', tier: 'Starter (Green)', label: 'Active' },
-  { emoji: '\ud83d\udfe2', tier: 'Core (Blue)', label: 'Verified' },
-  { emoji: '\ud83d\udfe3', tier: 'Pro (Purple)', label: 'Verified+' },
-  { emoji: '\ud83d\udfe1', tier: 'Elite (Gold)', label: 'Top Tier' },
-];
-
 const faqs = [
   {
     q: 'Do I need a subscription to trade?',
-    a: 'No. Deploy an agent and trade manually. Subscription unlocks automation, speed, and verified badges.',
-  },
-  {
-    q: 'What are verification badges?',
-    a: 'Badges show your subscription level. Blue = Verified, Purple = Verified+, Gold = Top Tier. Higher badges = more trust in the marketplace.',
+    a: 'No. Deploy an agent and start trading. One-time payment, no recurring fees.',
   },
   {
     q: 'What exchanges are supported?',
@@ -302,11 +168,15 @@ const faqs = [
   },
   {
     q: 'Can I cancel anytime?',
-    a: 'Yes. Cancel subscription or disconnect exchange anytime.',
+    a: 'Yes. Disconnect your exchange anytime. Your deployment is permanent.',
   },
   {
     q: 'What is airdrop eligibility?',
     a: 'All deployment plans are eligible for future token airdrops. Higher plans get higher allocation.',
+  },
+  {
+    q: 'What does non-custodial mean?',
+    a: 'Cladex never holds your funds. Your assets stay on your exchange at all times.',
   },
 ];
 
@@ -344,19 +214,6 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Section Header Component                                            */
-/* ------------------------------------------------------------------ */
-
-function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div className="text-center mb-10">
-      <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-3">{title}</h2>
-      <p className="text-gray-400 text-base">{subtitle}</p>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Main Page                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -389,18 +246,16 @@ export default function PricingPage() {
 
         <div className="relative max-w-3xl mx-auto">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
-            <span className="text-[#B8FF3C]">Choose Your Plan</span>
+            <span className="text-[#B8FF3C]">Deployment Plans</span>
           </h1>
           <p className="text-gray-400 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Deploy agents with a one-time fee. Upgrade with a subscription for automation, speed, and trust.
+            Deploy AI agents that trade for you. One-time payment, no hidden fees.
           </p>
         </div>
       </section>
 
-      {/* ---- Section 1: Deployment Plans ---- */}
+      {/* ---- Deployment Plans ---- */}
       <section className="max-w-5xl mx-auto px-4 pb-16 sm:pb-24 pt-8">
-        <SectionHeader title="Deployment Plans" subtitle="One-time payment to deploy your agents" />
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
           {deploymentPlans.map((plan) => (
             <div
@@ -467,154 +322,6 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ---- Section 2: Subscription Plans ---- */}
-      <section className="max-w-6xl mx-auto px-4 pb-16 sm:pb-24">
-        <SectionHeader title="Subscription Plans" subtitle="Unlock automation, speed, and verified status" />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
-          {subscriptionPlans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`group relative flex flex-col rounded-2xl border transition-all duration-300 ${
-                plan.featured
-                  ? 'border-[#B8FF3C]/30 bg-[#111118] lg:scale-105 z-10'
-                  : 'border-[#1e1e2e] bg-[#111118] hover:border-[#2a2a3e]'
-              } hover:-translate-y-1 hover:shadow-xl`}
-            >
-              {/* Featured badge */}
-              {plan.featured && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
-                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-[#B8FF3C]/10 text-[#B8FF3C] border border-[#B8FF3C]/30">
-                    <ZapIcon className="w-3 h-3" />
-                    Most Popular
-                  </span>
-                </div>
-              )}
-
-              <div className="relative flex flex-col flex-1 p-6">
-                {/* Header */}
-                <h3 className="text-gray-100 font-semibold text-lg mb-4">{plan.name}</h3>
-
-                {/* Price */}
-                <div className="mb-4">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-gray-100">{plan.price}</span>
-                    <span className="text-gray-500 text-sm">{plan.period}</span>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="h-px bg-[#1e1e2e] mb-4" />
-
-                {/* Features */}
-                <ul className="space-y-2.5 mb-4 flex-1">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <CheckIcon className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
-                      <span className="text-sm leading-snug text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Badge */}
-                <div className={`text-sm font-medium mb-6 ${plan.badgeColor}`}>
-                  {plan.badge}
-                </div>
-
-                {/* CTA */}
-                <Link
-                  href={plan.ctaHref}
-                  className={`block w-full text-center py-3 px-6 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                    plan.featured
-                      ? 'bg-[#B8FF3C] text-black font-bold shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 hover:brightness-110'
-                      : 'border border-[#1e1e2e] bg-transparent text-gray-300 hover:bg-white/5 hover:border-gray-500 hover:text-white'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---- Section 3: Combo Deals ---- */}
-      <section className="max-w-5xl mx-auto px-4 pb-16 sm:pb-24">
-        <SectionHeader title="Combo Deals" subtitle="Best value \u2014 deploy + subscribe in one package" />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
-          {comboDeals.map((combo) => (
-            <div
-              key={combo.name}
-              className={`group relative flex flex-col rounded-2xl border transition-all duration-300 ${
-                combo.bestValue
-                  ? 'border-[#B8FF3C]/30 bg-[#111118] lg:scale-105 z-10'
-                  : 'border-[#1e1e2e] bg-[#111118] hover:border-[#2a2a3e]'
-              } hover:-translate-y-1 hover:shadow-xl`}
-            >
-              {/* Best Value badge */}
-              {combo.bestValue && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
-                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-[#B8FF3C]/10 text-[#B8FF3C] border border-[#B8FF3C]/30">
-                    <ZapIcon className="w-3 h-3" />
-                    Best Value
-                  </span>
-                </div>
-              )}
-
-              <div className="relative flex flex-col flex-1 p-6 sm:p-8">
-                {/* Header */}
-                <h3 className="text-gray-100 font-semibold text-lg mb-4">{combo.name}</h3>
-
-                {/* Price */}
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-100">{combo.price}</span>
-                </div>
-
-                {/* Divider */}
-                <div className="h-px bg-[#1e1e2e] mb-6" />
-
-                {/* Features */}
-                <ul className="space-y-3 mb-8 flex-1">
-                  {combo.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <CheckIcon className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
-                      <span className="text-sm leading-snug text-gray-300">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                <Link
-                  href="/signup"
-                  className={`block w-full text-center py-3 px-6 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                    combo.bestValue
-                      ? 'bg-[#B8FF3C] text-black font-bold shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 hover:brightness-110'
-                      : 'border border-[#1e1e2e] bg-transparent text-gray-300 hover:bg-white/5 hover:border-gray-500 hover:text-white'
-                  }`}
-                >
-                  {combo.cta}
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---- Badge Legend ---- */}
-      <section className="max-w-4xl mx-auto px-4 pb-16 sm:pb-24">
-        <h3 className="text-lg font-semibold text-gray-100 text-center mb-6">Badge Levels</h3>
-        <div className="flex flex-wrap justify-center gap-6 sm:gap-10">
-          {badgeLevels.map((badge) => (
-            <div key={badge.tier} className="flex flex-col items-center gap-1.5 text-center">
-              <span className="text-2xl">{badge.emoji}</span>
-              <span className="text-gray-300 text-xs font-semibold">{badge.tier}</span>
-              <span className="text-gray-500 text-xs">{badge.label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ---- Trust Section ---- */}
       <section className="max-w-3xl mx-auto px-4 pb-16 sm:pb-24">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-100 mb-10">
@@ -656,11 +363,8 @@ export default function PricingPage() {
 
         <div className="relative max-w-xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-3">
-            Start with a deployment plan. Upgrade when you&apos;re ready.
-          </h2>
-          <p className="text-gray-400 mb-8">
             Deploy your first agent today.
-          </p>
+          </h2>
           <Link
             href="/signup"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm bg-[#B8FF3C] text-black shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 hover:brightness-110 transition-all duration-200"
