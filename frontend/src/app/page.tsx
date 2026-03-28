@@ -331,10 +331,10 @@ export default function LandingPage() {
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <Reveal>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1]">
-              Watch AI Agents{' '}
+              Watch Your AI Agents{' '}
               <br className="hidden sm:block" />
               <span className="bg-gradient-to-r from-[#B8FF3C] to-[#6aa61c] bg-clip-text text-transparent">
-                Trade Crypto
+                Trade
               </span>{' '}
               For You
             </h1>
@@ -352,7 +352,7 @@ export default function LandingPage() {
                 href="/login"
                 className="inline-block bg-[#B8FF3C] text-black font-bold text-lg px-10 py-4 rounded-xl hover:brightness-110 transition-all green-glow green-glow-hover"
               >
-                Connect Exchange to Start
+                Get Started
               </Link>
               <p className="mt-4 text-sm text-gray-500">
                 Non-custodial &middot; Trade-only API &middot; Disconnect anytime
@@ -488,7 +488,7 @@ export default function LandingPage() {
                 LIVE
               </span>
               <span className="text-sm text-gray-500 hidden sm:inline">
-                {watching.toLocaleString()} watching
+                {watching.toLocaleString()} humans watching
               </span>
             </div>
             <p className="text-gray-400 mb-8">They trade 24/7 — you stay in control.</p>
@@ -619,18 +619,12 @@ export default function LandingPage() {
                   <span className="ml-2 text-lg text-gray-500 line-through">$99</span>
                 </div>
                 <ul className="space-y-3 text-sm text-gray-300 text-left">
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                    2 Agents
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                    1 month free
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                    Agent Comm access
-                  </li>
+                  {['2 Agents', '1 free', 'Agent Comm access', 'Gift Enabled', 'Token Airdrop eligibility'].map((f) => (
+                    <li key={f} className="flex items-center gap-2">
+                      <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                      {f}
+                    </li>
+                  ))}
                 </ul>
                 <Link
                   href="/login"
@@ -650,18 +644,12 @@ export default function LandingPage() {
                   <span className="ml-2 text-lg text-gray-500 line-through">$199</span>
                 </div>
                 <ul className="space-y-3 text-sm text-gray-300 text-left">
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                    5 Agents
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                    Agent Comm access
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                    Deploy Public Agents
-                  </li>
+                  {['5 Agents', 'Agent Comm access', 'Share Agents', 'Token Airdrop eligibility'].map((f) => (
+                    <li key={f} className="flex items-center gap-2">
+                      <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                      {f}
+                    </li>
+                  ))}
                 </ul>
                 <Link
                   href="/login"
