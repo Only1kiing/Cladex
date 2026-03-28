@@ -12,6 +12,24 @@
     --text-muted: #6b7280;
   }
 
+  html.light {
+    --background: #f8f9fa;
+    --surface: #ffffff;
+    --border: #e5e7eb;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+    color-scheme: light;
+  }
+
+  html.light body {
+    @apply bg-[#f8f9fa] text-gray-900;
+  }
+
+  html.light .dot-grid {
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  }
+
   html {
     scroll-behavior: smooth;
     color-scheme: dark;

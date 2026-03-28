@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
@@ -36,7 +36,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Marketplace',
+    label: 'Explore',
     href: '/dashboard/marketplace',
     icon: (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -70,6 +70,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('cladex_theme');
+    if (saved === 'light') {
+      setIsDark(false);
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newDark = !isDark;
+    setIsDark(newDark);
+    if (newDark) {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('cladex_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      localStorage.setItem('cladex_theme', 'light');
+    }
+  };
 
   const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
 
@@ -130,19 +154,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Pre-Deploy Banner */}
       <div className="px-3 mb-3">
-        <Link
-          href="/dashboard/build"
-          className="block p-3 rounded-xl bg-gradient-to-br from-[#B8FF3C]/10 to-emerald-500/10 border border-[#B8FF3C]/20 hover:border-[#B8FF3C]/40 transition-all duration-300 group"
-        >
+        <Link href="/pricing" className="block p-3 rounded-xl bg-gradient-to-br from-[#B8FF3C]/10 to-emerald-500/10 border border-[#B8FF3C]/20 hover:border-[#B8FF3C]/40 transition-all duration-300 group">
           <div className="flex items-center gap-2 mb-1.5">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#B8FF3C]">
               <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="text-xs font-semibold text-[#B8FF3C] group-hover:brightness-110 transition-colors">Pre-Deploy Special</span>
+            <span className="text-xs font-semibold text-[#B8FF3C] group-hover:brightness-110 transition-colors">Deployment Plans</span>
           </div>
-          <p className="text-[10px] text-gray-500 leading-relaxed">Trader plan $30/mo · Builder plan $100/mo</p>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-gray-400">Trader</span>
+              <span className="text-white font-medium">$25</span>
+            </div>
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-gray-400">Builder</span>
+              <span className="text-[#B8FF3C] font-medium">$80</span>
+            </div>
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-gray-400">Pro Creator</span>
+              <span className="text-gray-400 font-medium">$200</span>
+            </div>
+          </div>
           <div className="mt-2 text-[10px] font-semibold text-[#B8FF3C] group-hover:brightness-110 transition-colors">
-            Deploy Agent &rarr;
+            View Plans &rarr;
           </div>
         </Link>
       </div>
@@ -150,6 +184,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Points Widget */}
       <div className="px-3 mb-3">
         <PointsWidget />
+      </div>
+
+      {/* Theme Toggle */}
+      <div className="px-3 mb-3">
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-white/[0.04] transition-all duration-200"
+        >
+          {isDark ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+            </svg>
+          )}
+          {isDark ? 'Light Mode' : 'Dark Mode'}
+        </button>
       </div>
 
       {/* User section */}
