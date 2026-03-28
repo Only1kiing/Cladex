@@ -140,7 +140,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </svg>
             <span className="text-xs font-semibold text-[#B8FF3C] group-hover:brightness-110 transition-colors">Pre-Deploy Special</span>
           </div>
-          <p className="text-[10px] text-gray-500 leading-relaxed">Mint agents at $20 instead of $100</p>
+          <p className="text-[10px] text-gray-500 leading-relaxed">Trader plan $30/mo · Builder plan $100/mo</p>
           <div className="mt-2 text-[10px] font-semibold text-[#B8FF3C] group-hover:brightness-110 transition-colors">
             Deploy Agent &rarr;
           </div>

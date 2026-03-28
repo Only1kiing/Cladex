@@ -388,7 +388,7 @@ export default function AgentBuilderPage() {
                 >
                   <div
                     className={[
-                      'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                      'max-w-[92%] sm:max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
                       msg.role === 'user'
                         ? 'bg-[#B8FF3C]/10 text-gray-100 border border-[#B8FF3C]/20'
                         : msg.role === 'system'
@@ -522,7 +522,7 @@ export default function AgentBuilderPage() {
                 <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">
                   Personality
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {PERSONALITIES.map((p) => (
                     <button
                       key={p.id}
@@ -632,7 +632,7 @@ export default function AgentBuilderPage() {
 
             {/* Quick stats preview */}
             <Card className="bg-[#111118] border-[#1e1e2e]" padding="md">
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                 <div>
                   <div className="text-xs text-gray-500 mb-1">Personality</div>
                   <Badge variant={draft.personality} size="sm" dot>

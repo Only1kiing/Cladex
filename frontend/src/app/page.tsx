@@ -229,11 +229,11 @@ export default function LandingPage() {
           transform: translateY(0);
         }
         @keyframes breathe {
-          0%, 100% { opacity: 0.04; }
-          50% { opacity: 0.08; }
+          0%, 100% { opacity: 0.06; transform: scale(1); }
+          50% { opacity: 0.1; transform: scale(1.04); }
         }
         .claw-breathe {
-          animation: breathe 6s ease-in-out infinite;
+          animation: breathe 5s ease-in-out infinite;
         }
         @keyframes float-orb {
           0%, 100% { transform: translate(0, 0) scale(1); }
@@ -291,20 +291,20 @@ export default function LandingPage() {
               Marketplace
             </Link>
             <Link
-              href="/signup"
+              href="/login"
               className="bg-[#B8FF3C] text-black font-semibold text-sm px-5 py-2 rounded-lg hover:brightness-110 transition-all green-glow-hover"
             >
-              Launch Agent
+              Connect Exchange
             </Link>
           </div>
 
           {/* Mobile CTA only */}
           <div className="md:hidden">
             <Link
-              href="/signup"
+              href="/login"
               className="bg-[#B8FF3C] text-black font-semibold text-xs px-4 py-2 rounded-lg"
             >
-              Launch Agent
+              Connect Exchange
             </Link>
           </div>
         </div>
@@ -315,47 +315,47 @@ export default function LandingPage() {
          ═══════════════════════════════════════════════════════════ */}
       <section className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
         {/* Background claw marks */}
-        <ClawMark className="claw-breathe" style={{ top: '8%', left: '5%', opacity: 0.04, transform: 'rotate(-15deg) scale(1.8)' }} />
-        <ClawMark className="claw-breathe" style={{ top: '20%', right: '8%', opacity: 0.06, transform: 'rotate(25deg) scale(2.2)', animationDelay: '1s' }} />
-        <ClawMark className="claw-breathe" style={{ top: '55%', left: '15%', opacity: 0.03, transform: 'rotate(-40deg) scale(1.4)', animationDelay: '2s' }} />
-        <ClawMark className="claw-breathe" style={{ bottom: '15%', right: '12%', opacity: 0.05, transform: 'rotate(10deg) scale(2.5)', animationDelay: '3s' }} />
-        <ClawMark className="claw-breathe" style={{ top: '40%', left: '55%', opacity: 0.04, transform: 'rotate(-60deg) scale(1.2)', animationDelay: '1.5s' }} />
-        <ClawMark className="claw-breathe" style={{ bottom: '30%', left: '3%', opacity: 0.07, transform: 'rotate(45deg) scale(1.6)', animationDelay: '4s' }} />
-        <ClawMark className="claw-breathe" style={{ top: '10%', left: '70%', opacity: 0.05, transform: 'rotate(-30deg) scale(2.0)', animationDelay: '2.5s' }} />
+        <ClawMark className="claw-breathe" style={{ top: '8%', left: '5%', opacity: 0.07, transform: 'rotate(-15deg) scale(1.8)' }} />
+        <ClawMark className="claw-breathe" style={{ top: '20%', right: '8%', opacity: 0.09, transform: 'rotate(25deg) scale(2.2)', animationDelay: '1s' }} />
+        <ClawMark className="claw-breathe" style={{ top: '55%', left: '15%', opacity: 0.06, transform: 'rotate(-40deg) scale(1.4)', animationDelay: '2s' }} />
+        <ClawMark className="claw-breathe" style={{ bottom: '15%', right: '12%', opacity: 0.08, transform: 'rotate(10deg) scale(2.5)', animationDelay: '3s' }} />
+        <ClawMark className="claw-breathe" style={{ top: '40%', left: '55%', opacity: 0.07, transform: 'rotate(-60deg) scale(1.2)', animationDelay: '1.5s' }} />
+        <ClawMark className="claw-breathe" style={{ bottom: '30%', left: '3%', opacity: 0.1, transform: 'rotate(45deg) scale(1.6)', animationDelay: '4s' }} />
+        <ClawMark className="claw-breathe" style={{ top: '10%', left: '70%', opacity: 0.08, transform: 'rotate(-30deg) scale(2.0)', animationDelay: '2.5s' }} />
 
         {/* Floating gradient orbs */}
-        <div className="orb absolute top-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-primary-500/[0.08] blur-[120px]" />
-        <div className="orb absolute bottom-1/3 right-1/4 w-[350px] h-[350px] rounded-full bg-primary-600/[0.06] blur-[100px]" style={{ animationDelay: '4s' }} />
-        <div className="orb absolute top-1/2 right-1/3 w-[300px] h-[300px] rounded-full bg-emerald-500/[0.05] blur-[110px]" style={{ animationDelay: '8s' }} />
+        <div className="orb absolute top-1/4 left-1/4 w-[200px] h-[200px] sm:w-[300px] sm:h-[300px] lg:w-[400px] lg:h-[400px] rounded-full bg-primary-500/[0.08] blur-[120px]" />
+        <div className="orb absolute bottom-1/3 right-1/4 w-[175px] h-[175px] sm:w-[250px] sm:h-[250px] lg:w-[350px] lg:h-[350px] rounded-full bg-primary-600/[0.06] blur-[100px]" style={{ animationDelay: '4s' }} />
+        <div className="orb absolute top-1/2 right-1/3 w-[150px] h-[150px] sm:w-[220px] sm:h-[220px] lg:w-[300px] lg:h-[300px] rounded-full bg-emerald-500/[0.05] blur-[110px]" style={{ animationDelay: '8s' }} />
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
           <Reveal>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1]">
-              Where all AI agents{' '}
+              Watch AI Agents{' '}
               <br className="hidden sm:block" />
-              come to{' '}
               <span className="bg-gradient-to-r from-[#B8FF3C] to-[#6aa61c] bg-clip-text text-transparent">
-                trade crypto
-              </span>
+                Trade Crypto
+              </span>{' '}
+              For You
             </h1>
           </Reveal>
 
           <Reveal delay={100}>
             <p className="mt-6 text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto">
-              Any AI agent can trade, earn, and protect capital through Cladex — automatically.
+              Connect your exchange, deploy an agent, and let it execute trades 24/7. No charts. No stress. Just smarter execution.
             </p>
           </Reveal>
 
           <Reveal delay={200}>
             <div className="mt-10">
               <Link
-                href="/signup"
+                href="/login"
                 className="inline-block bg-[#B8FF3C] text-black font-bold text-lg px-10 py-4 rounded-xl hover:brightness-110 transition-all green-glow green-glow-hover"
               >
-                Launch Your First Agent — It&apos;s Free
+                Connect Exchange to Start
               </Link>
               <p className="mt-4 text-sm text-gray-500">
-                No credit card &middot; No KYC &middot; 60 seconds to deploy
+                Non-custodial &middot; Trade-only API &middot; Disconnect anytime
               </p>
             </div>
           </Reveal>
@@ -384,13 +384,48 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
+         2.5. WHAT CLADEX ACTUALLY DOES
+         ═══════════════════════════════════════════════════════════ */}
+      <section className="relative py-20 sm:py-28">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <Reveal>
+            <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
+              What Cladex Actually Does
+            </h2>
+          </Reveal>
+          <Reveal delay={100}>
+            <p className="text-lg text-gray-400 text-center max-w-2xl mx-auto mb-10">
+              Cladex connects your trading account (like Binance or Bybit) to AI agents that trade on your behalf.
+            </p>
+          </Reveal>
+          <Reveal delay={200}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                'You keep full control of your funds',
+                'Agents execute trades automatically',
+                'You can stop or withdraw anytime',
+                'Non-custodial — Cladex never holds funds',
+              ].map((point, i) => (
+                <div key={i} className="flex items-start gap-3 rounded-xl bg-[#111118] border border-[#1e1e2e] p-4">
+                  <svg className="w-5 h-5 mt-0.5 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span className="text-gray-300 text-sm sm:text-base">{point}</span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
          3. LIVE AGENT FEED
          ═══════════════════════════════════════════════════════════ */}
       <section className="relative py-20 sm:py-28">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <Reveal>
-            <div className="flex items-center gap-3 mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold">Agents are trading right now</h2>
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold">Agents are trading live right now</h2>
               <span className="flex items-center gap-1.5 text-xs bg-red-500/10 text-red-400 px-2.5 py-1 rounded-full font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 live-pulse" />
                 LIVE
@@ -399,6 +434,7 @@ export default function LandingPage() {
                 {watching.toLocaleString()} watching
               </span>
             </div>
+            <p className="text-gray-400 mb-8">They trade 24/7 — you stay in control.</p>
           </Reveal>
 
           <Reveal delay={100}>
@@ -448,7 +484,7 @@ export default function LandingPage() {
           <Reveal delay={200}>
             <div className="mt-6 text-center">
               <Link
-                href="/signup"
+                href="/login"
                 className="inline-flex items-center gap-2 text-[#B8FF3C] font-semibold text-sm hover:underline"
               >
                 Deploy your own agent <Arrow />
@@ -469,7 +505,7 @@ export default function LandingPage() {
             </h2>
           </Reveal>
 
-          <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {AGENTS.map((agent, i) => (
               <Reveal key={agent.name} delay={i * 100}>
                 <div className={`rounded-2xl bg-[#111118] border border-[#1e1e2e] p-5 sm:p-6 border-t-2 ${agent.color} group hover:border-[#B8FF3C]/30 transition-all`}>
@@ -495,7 +531,7 @@ export default function LandingPage() {
           <Reveal delay={450}>
             <div className="mt-10 text-center">
               <Link
-                href="/signup"
+                href="/login"
                 className="inline-flex items-center gap-2 text-[#B8FF3C] font-semibold hover:underline"
               >
                 Launch your agent and start earning <Arrow />
@@ -506,69 +542,139 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-         5. URGENCY + PRICING
+         5. PRICING
          ═══════════════════════════════════════════════════════════ */}
       <section className="relative py-20 sm:py-28">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <Reveal>
-            <div className="rounded-2xl bg-[#111118] border border-[#B8FF3C]/20 p-8 sm:p-12 text-center green-glow">
-              <p className="text-2xl sm:text-3xl font-black mb-6">
-                <span className="mr-2">\uD83D\uDE80</span>Pre-Deploy Special — Limited Time
-              </p>
+            <h2 className="text-2xl sm:text-3xl font-black text-center mb-10">
+              Pre-Deploy Special
+            </h2>
+          </Reveal>
 
-              <div className="space-y-3 mb-8">
-                <div className="text-lg">
-                  First agent: <span className="text-[#B8FF3C] font-black text-2xl">FREE</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            {/* Card 1 — Trader */}
+            <Reveal delay={100}>
+              <div className="rounded-2xl bg-[#111118] border border-[#1e1e2e] p-6 sm:p-8 text-center hover:border-[#B8FF3C]/30 transition-all">
+                <h3 className="text-xl font-bold mb-1">Trader</h3>
+                <div className="mt-4 mb-6">
+                  <span className="text-4xl font-black text-white">$30</span>
+                  <span className="ml-2 text-lg text-gray-500 line-through">$99</span>
                 </div>
-                <div className="text-lg text-gray-400">
-                  Additional agents:{' '}
-                  <span className="text-white font-bold">$20</span>
-                  {' '}
-                  <span className="line-through text-gray-600">$100</span>
-                </div>
+                <ul className="space-y-3 text-sm text-gray-300 text-left">
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                    2 Agents
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                    1 month free
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                    Agent Comm access
+                  </li>
+                </ul>
+                <Link
+                  href="/login"
+                  className="mt-6 inline-block w-full bg-[#B8FF3C] text-black font-bold text-sm px-6 py-3 rounded-xl hover:brightness-110 transition-all"
+                >
+                  Get Started
+                </Link>
               </div>
+            </Reveal>
 
-              {/* Countdown */}
-              <div className="mb-8">
-                <p className="text-sm text-gray-500 mb-3 uppercase tracking-wider">Offer ends in</p>
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                  {[
-                    { val: countdown.d, label: 'Days' },
-                    { val: countdown.h, label: 'Hrs' },
-                    { val: countdown.m, label: 'Min' },
-                    { val: countdown.s, label: 'Sec' },
-                  ].map((unit, i) => (
-                    <div key={unit.label} className="flex items-center gap-2 sm:gap-3">
-                      <div className="flex flex-col items-center">
-                        <span className="text-3xl sm:text-4xl font-black font-mono text-white tabular-nums">
-                          {unit.val}
-                        </span>
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wider">{unit.label}</span>
-                      </div>
-                      {i < 3 && <span className="text-2xl text-gray-600 font-light -mt-4">:</span>}
+            {/* Card 2 — Builder */}
+            <Reveal delay={200}>
+              <div className="rounded-2xl bg-[#111118] border border-[#B8FF3C]/30 p-6 sm:p-8 text-center green-glow hover:border-[#B8FF3C]/50 transition-all">
+                <h3 className="text-xl font-bold mb-1">Builder</h3>
+                <div className="mt-4 mb-6">
+                  <span className="text-4xl font-black text-white">$100</span>
+                  <span className="ml-2 text-lg text-gray-500 line-through">$199</span>
+                </div>
+                <ul className="space-y-3 text-sm text-gray-300 text-left">
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                    5 Agents
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                    Agent Comm access
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                    Deploy Public Agents
+                  </li>
+                </ul>
+                <Link
+                  href="/login"
+                  className="mt-6 inline-block w-full bg-[#B8FF3C] text-black font-bold text-sm px-6 py-3 rounded-xl hover:brightness-110 transition-all"
+                >
+                  Get Started
+                </Link>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* Countdown */}
+          <Reveal delay={300}>
+            <div className="mt-10 text-center">
+              <p className="text-sm text-gray-500 mb-3 uppercase tracking-wider">Offer ends in</p>
+              <div className="flex items-center justify-center gap-2 sm:gap-3">
+                {[
+                  { val: countdown.d, label: 'Days' },
+                  { val: countdown.h, label: 'Hrs' },
+                  { val: countdown.m, label: 'Min' },
+                  { val: countdown.s, label: 'Sec' },
+                ].map((unit, i) => (
+                  <div key={unit.label} className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex flex-col items-center">
+                      <span className="text-3xl sm:text-4xl font-black font-mono text-white tabular-nums">
+                        {unit.val}
+                      </span>
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wider">{unit.label}</span>
                     </div>
-                  ))}
+                    {i < 3 && <span className="text-2xl text-gray-600 font-light -mt-4">:</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+         5.5. TRUST SECTION
+         ═══════════════════════════════════════════════════════════ */}
+      <section className="relative py-20 sm:py-28">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <Reveal>
+            <h2 className="text-3xl sm:text-4xl font-black text-center mb-10">
+              Your funds stay yours
+            </h2>
+          </Reveal>
+          <Reveal delay={100}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                { text: 'Non-custodial — Cladex never holds funds', icon: 'shield' },
+                { text: 'Trade-only API access', icon: 'lock' },
+                { text: 'Withdrawals disabled', icon: 'shield' },
+                { text: 'Disconnect anytime', icon: 'lock' },
+              ].map((point, i) => (
+                <div key={i} className="flex items-start gap-3 rounded-xl bg-[#111118] border border-[#1e1e2e] p-4">
+                  {point.icon === 'shield' ? (
+                    <svg className="w-5 h-5 mt-0.5 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 mt-0.5 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                  )}
+                  <span className="text-gray-300 text-sm sm:text-base">{point.text}</span>
                 </div>
-              </div>
-
-              <p className="text-sm text-gray-400 mb-6">
-                Only <span className="text-white font-semibold">847 spots</span> remaining
-              </p>
-
-              <Link
-                href="/signup"
-                className="inline-block bg-[#B8FF3C] text-black font-bold text-lg px-10 py-4 rounded-xl hover:brightness-110 transition-all green-glow green-glow-hover w-full sm:w-auto"
-              >
-                Claim Your Free Agent Now
-              </Link>
-
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                <span>Non-custodial</span>
-                <span>&middot;</span>
-                <span>Trade-only API</span>
-                <span>&middot;</span>
-                <span>On-chain ready</span>
-              </div>
+              ))}
             </div>
           </Reveal>
         </div>
@@ -589,10 +695,10 @@ export default function LandingPage() {
 
           <Reveal delay={100}>
             <Link
-              href="/signup"
+              href="/login"
               className="inline-block bg-[#B8FF3C] text-black font-bold text-lg px-10 py-4 rounded-xl hover:brightness-110 transition-all green-glow green-glow-hover"
             >
-              Launch Agent
+              Connect Exchange
             </Link>
           </Reveal>
 
@@ -608,7 +714,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <p className="mt-6 text-xs text-gray-600 max-w-lg mx-auto">
-                Cladex does not hold user funds. All trading is executed via connected exchanges.
+                Cladex does not hold user funds. All trading is executed via connected exchanges. Trade-only API access.
               </p>
               <p className="mt-2 text-xs text-gray-700">
                 &copy; 2026 Cladex

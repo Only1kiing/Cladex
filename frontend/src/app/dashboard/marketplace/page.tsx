@@ -261,27 +261,27 @@ function AgentCard({ agent, onUse, onPreview }: { agent: MarketplaceAgent; onUse
         </p>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-[#0a0a0f] rounded-lg px-2.5 py-2 text-center">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-3 mb-4">
+          <div className="bg-[#0a0a0f] rounded-lg px-1.5 sm:px-2.5 py-2 text-center">
             <div className="flex items-center justify-center gap-1 mb-0.5">
               <TrendingUp size={10} className="text-guardian-400" />
-              <span className="text-[10px] text-gray-500">Return</span>
+              <span className="text-[10px] text-gray-500 hidden sm:inline">Return</span>
             </div>
-            <div className="text-sm font-bold text-guardian-400">+{agent.monthlyReturn}%</div>
+            <div className="text-xs sm:text-sm font-bold text-guardian-400">+{agent.monthlyReturn}%</div>
           </div>
-          <div className="bg-[#0a0a0f] rounded-lg px-2.5 py-2 text-center">
+          <div className="bg-[#0a0a0f] rounded-lg px-1.5 sm:px-2.5 py-2 text-center">
             <div className="flex items-center justify-center gap-1 mb-0.5">
               <Activity size={10} className="text-analyst-400" />
-              <span className="text-[10px] text-gray-500">Win Rate</span>
+              <span className="text-[10px] text-gray-500 hidden sm:inline">Win Rate</span>
             </div>
-            <div className="text-sm font-bold text-gray-200">{agent.winRate}%</div>
+            <div className="text-xs sm:text-sm font-bold text-gray-200">{agent.winRate}%</div>
           </div>
-          <div className="bg-[#0a0a0f] rounded-lg px-2.5 py-2 text-center">
+          <div className="bg-[#0a0a0f] rounded-lg px-1.5 sm:px-2.5 py-2 text-center">
             <div className="flex items-center justify-center gap-1 mb-0.5">
               <Zap size={10} className="text-oracle-400" />
-              <span className="text-[10px] text-gray-500">Trades</span>
+              <span className="text-[10px] text-gray-500 hidden sm:inline">Trades</span>
             </div>
-            <div className="text-sm font-bold text-gray-200">{agent.totalTrades.toLocaleString()}</div>
+            <div className="text-xs sm:text-sm font-bold text-gray-200">{agent.totalTrades.toLocaleString()}</div>
           </div>
         </div>
 
@@ -459,18 +459,18 @@ export default function MarketplacePage() {
 
             <p className="text-sm text-gray-300 leading-relaxed">{previewAgent.description}</p>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-[#0a0a0f] rounded-xl p-4 text-center border border-[#1e1e2e]">
-                <div className="text-xs text-gray-500 mb-1">Monthly Return</div>
-                <div className="text-xl font-bold text-guardian-400">+{previewAgent.monthlyReturn}%</div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="bg-[#0a0a0f] rounded-xl p-2.5 sm:p-4 text-center border border-[#1e1e2e]">
+                <div className="text-[10px] sm:text-xs text-gray-500 mb-1">Return</div>
+                <div className="text-base sm:text-xl font-bold text-guardian-400">+{previewAgent.monthlyReturn}%</div>
               </div>
-              <div className="bg-[#0a0a0f] rounded-xl p-4 text-center border border-[#1e1e2e]">
-                <div className="text-xs text-gray-500 mb-1">Win Rate</div>
-                <div className="text-xl font-bold text-white">{previewAgent.winRate}%</div>
+              <div className="bg-[#0a0a0f] rounded-xl p-2.5 sm:p-4 text-center border border-[#1e1e2e]">
+                <div className="text-[10px] sm:text-xs text-gray-500 mb-1">Win Rate</div>
+                <div className="text-base sm:text-xl font-bold text-white">{previewAgent.winRate}%</div>
               </div>
-              <div className="bg-[#0a0a0f] rounded-xl p-4 text-center border border-[#1e1e2e]">
-                <div className="text-xs text-gray-500 mb-1">Total Trades</div>
-                <div className="text-xl font-bold text-white">{previewAgent.totalTrades.toLocaleString()}</div>
+              <div className="bg-[#0a0a0f] rounded-xl p-2.5 sm:p-4 text-center border border-[#1e1e2e]">
+                <div className="text-[10px] sm:text-xs text-gray-500 mb-1">Trades</div>
+                <div className="text-base sm:text-xl font-bold text-white">{previewAgent.totalTrades.toLocaleString()}</div>
               </div>
             </div>
 

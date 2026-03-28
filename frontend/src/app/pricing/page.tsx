@@ -49,19 +49,18 @@ function LockIcon({ className = '' }: { className?: string }) {
   );
 }
 
-function ChevronDownIcon({ className = '' }: { className?: string }) {
+function KeyIcon({ className = '' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="6 9 12 15 18 9" />
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
     </svg>
   );
 }
 
-function NonCustodialIcon({ className = '' }: { className?: string }) {
+function ChevronDownIcon({ className = '' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      <polyline points="9 12 11 14 15 10" />
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   );
 }
@@ -71,16 +70,6 @@ function ChainIcon({ className = '' }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-    </svg>
-  );
-}
-
-function ContractIcon({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <path d="M9 15l2 2 4-4" />
     </svg>
   );
 }
@@ -96,112 +85,76 @@ interface PlanFeature {
 
 interface Plan {
   name: string;
-  tier: string;
   icon: React.ReactNode;
-  priceLabel: string;
-  priceSubLabel: string;
-  originalPrice: string | null;
+  price: string;
+  originalPrice: string;
   features: PlanFeature[];
   cta: string;
   ctaHref: string;
-  ctaStyle: 'ghost' | 'blue' | 'purple';
+  ctaStyle: 'ghost' | 'primary';
   popular: boolean;
   glowColor: string;
   borderGlow: string;
-  isSubscription: boolean;
 }
 
 const plans: Plan[] = [
   {
-    name: 'Free Agent',
-    tier: 'Free',
-    icon: <ShieldIcon className="w-6 h-6" />,
-    priceLabel: '$0',
-    priceSubLabel: 'forever',
-    originalPrice: null,
+    name: 'Trader',
+    icon: <ZapIcon className="w-6 h-6" />,
+    price: '$30',
+    originalPrice: '$99',
     features: [
-      { text: '1 free agent deployment', included: true },
-      { text: 'Basic DCA strategy only', included: true },
-      { text: 'Community Agent Comms access', included: true },
-      { text: '5 gifts/day', included: true },
-      { text: 'All strategies', included: false },
-      { text: 'Priority execution', included: false },
-      { text: 'Marketplace access', included: false },
+      { text: '2 Agents', included: true },
+      { text: '1 month free', included: true },
+      { text: 'Agent Comm access', included: true },
+      { text: 'All strategies unlocked', included: true },
+      { text: 'Real-time execution', included: true },
     ],
-    cta: 'Deploy Free Agent',
-    ctaHref: '/signup',
+    cta: 'Start Trading \u2014 $30/mo',
+    ctaHref: '/signup?plan=trader',
     ctaStyle: 'ghost',
     popular: false,
     glowColor: 'from-emerald-500/10 to-emerald-500/0',
     borderGlow: 'group-hover:shadow-emerald-500/20',
-    isSubscription: false,
   },
   {
-    name: 'Agent Mint',
-    tier: 'Per Agent',
-    icon: <ZapIcon className="w-6 h-6" />,
-    priceLabel: '$20',
-    priceSubLabel: 'per agent',
-    originalPrice: '$100',
+    name: 'Builder',
+    icon: <CrownIcon className="w-6 h-6" />,
+    price: '$100',
+    originalPrice: '$199',
     features: [
-      { text: 'Deploy additional custom agents', included: true },
-      { text: 'All strategies unlocked per agent', included: true },
-      { text: 'Real-time execution', included: true },
-      { text: 'Agent lives on-chain', included: true },
-      { text: '15% performance fee on profits', included: true },
-      { text: 'Unlimited mints (free)', included: false },
-      { text: 'Priority execution', included: false },
+      { text: '5 Agents', included: true },
+      { text: 'Agent Comm access', included: true },
+      { text: 'Deploy Public Agents', included: true },
+      { text: 'All strategies unlocked', included: true },
+      { text: 'Priority execution', included: true },
+      { text: 'Marketplace access', included: true },
     ],
-    cta: 'Mint via Smart Contract',
-    ctaHref: '/signup?plan=mint',
-    ctaStyle: 'blue',
+    cta: 'Start Building \u2014 $100/mo',
+    ctaHref: '/signup?plan=builder',
+    ctaStyle: 'primary',
     popular: true,
     glowColor: 'from-[#B8FF3C]/10 to-[#B8FF3C]/0',
     borderGlow: 'group-hover:shadow-[#B8FF3C]/15',
-    isSubscription: false,
-  },
-  {
-    name: 'Pro',
-    tier: 'Subscription',
-    icon: <CrownIcon className="w-6 h-6" />,
-    priceLabel: '$29',
-    priceSubLabel: '/mo',
-    originalPrice: null,
-    features: [
-      { text: 'Unlimited agent mints (free)', included: true },
-      { text: 'Priority execution', included: true },
-      { text: 'Marketplace access', included: true },
-      { text: '5% performance fee (vs 15% free)', included: true },
-      { text: 'Custom AI strategies', included: true },
-      { text: 'API access', included: true },
-      { text: 'All Agent Mint features included', included: true },
-    ],
-    cta: 'Subscribe \u2014 $29/mo',
-    ctaHref: '/signup?plan=pro',
-    ctaStyle: 'purple',
-    popular: false,
-    glowColor: 'from-[#B8FF3C]/10 via-emerald-500/10 to-[#B8FF3C]/0',
-    borderGlow: 'group-hover:shadow-[#B8FF3C]/15',
-    isSubscription: true,
   },
 ];
 
 const faqs = [
   {
-    q: 'How do smart contract payments work?',
-    a: 'All payments go through audited smart contracts on Base network. No middlemen.',
+    q: 'How does Cladex connect to my exchange?',
+    a: 'Via API keys with read and trade permissions only. No withdrawal access.',
   },
   {
-    q: 'What happens to my agent on-chain?',
-    a: 'Your agent config is stored as an NFT. You own it forever.',
+    q: 'Can Cladex withdraw my funds?',
+    a: 'No. Cladex uses trade-only API access. Your funds stay on your exchange.',
   },
   {
-    q: 'Can I sell my agent?',
-    a: 'Yes! Trained agents can be listed on the marketplace.',
+    q: 'What exchanges are supported?',
+    a: 'Bybit, Binance, and more coming soon.',
   },
   {
-    q: "What's the mint fee?",
-    a: 'A one-time $20 fee to deploy your agent on-chain. Your first agent is free.',
+    q: 'Can I cancel anytime?',
+    a: 'Yes. Disconnect your exchange or cancel your subscription at any time.',
   },
   {
     q: 'What does "non-custodial" mean?',
@@ -246,47 +199,18 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 /*  Pricing Card Component                                              */
 /* ------------------------------------------------------------------ */
 
-function PricingCard({
-  plan,
-  annual,
-}: {
-  plan: Plan;
-  annual: boolean;
-}) {
-  const iconColorMap: Record<string, string> = {
-    ghost: 'text-emerald-400',
-    blue: 'text-[#B8FF3C]',
-    purple: 'text-purple-400',
-  };
-
+function PricingCard({ plan }: { plan: Plan }) {
   const ctaClasses: Record<string, string> = {
     ghost: [
       'border border-[#1e1e2e] bg-transparent text-gray-300',
       'hover:bg-white/5 hover:border-gray-500 hover:text-white',
     ].join(' '),
-    blue: [
-      'bg-[#B8FF3C] text-black font-bold',
-      'shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25',
-      'hover:brightness-110',
-    ].join(' '),
-    purple: [
+    primary: [
       'bg-[#B8FF3C] text-black font-bold',
       'shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25',
       'hover:brightness-110',
     ].join(' '),
   };
-
-  // For Pro subscription, apply annual discount
-  let displayPrice = plan.priceLabel;
-  let displaySubLabel = plan.priceSubLabel;
-  let billedNote: string | null = null;
-
-  if (plan.isSubscription && annual) {
-    const monthlyNum = parseInt(plan.priceLabel.replace('$', ''));
-    const discounted = Math.round(monthlyNum * 0.8);
-    displayPrice = `$${discounted}`;
-    billedNote = `Billed $${discounted * 12}/year`;
-  }
 
   return (
     <div
@@ -314,27 +238,21 @@ function PricingCard({
       <div className="relative flex flex-col flex-1 p-6 sm:p-8">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className={`${iconColorMap[plan.ctaStyle]}`}>
+          <div className={plan.popular ? 'text-[#B8FF3C]' : 'text-emerald-400'}>
             {plan.icon}
           </div>
           <div>
             <h3 className="text-gray-100 font-semibold text-lg">{plan.name}</h3>
-            <p className="text-gray-600 text-xs font-medium uppercase tracking-wider">{plan.tier}</p>
           </div>
         </div>
 
         {/* Price */}
         <div className="mb-6">
           <div className="flex items-baseline gap-2">
-            {plan.originalPrice && (
-              <span className="text-gray-600 text-lg line-through">{plan.originalPrice}</span>
-            )}
-            <span className="text-4xl font-bold text-gray-100">{displayPrice}</span>
-            <span className="text-gray-500 text-sm">{displaySubLabel}</span>
+            <span className="text-gray-600 text-lg line-through">{plan.originalPrice}</span>
+            <span className="text-4xl font-bold text-gray-100">{plan.price}</span>
+            <span className="text-gray-500 text-sm">per month</span>
           </div>
-          {billedNote && (
-            <p className="text-gray-600 text-xs mt-1">{billedNote}</p>
-          )}
         </div>
 
         {/* Divider */}
@@ -344,16 +262,8 @@ function PricingCard({
         <ul className="space-y-3 mb-8 flex-1">
           {plan.features.map((feature, i) => (
             <li key={i} className="flex items-start gap-3">
-              {feature.included ? (
-                <CheckIcon className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
-              ) : (
-                <LockIcon className="w-4 h-4 text-gray-700 mt-0.5 shrink-0" />
-              )}
-              <span
-                className={`text-sm leading-snug ${
-                  feature.included ? 'text-gray-300' : 'text-gray-600'
-                }`}
-              >
+              <CheckIcon className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+              <span className="text-sm leading-snug text-gray-300">
                 {feature.text}
               </span>
             </li>
@@ -377,81 +287,50 @@ function PricingCard({
 /* ------------------------------------------------------------------ */
 
 export default function PricingPage() {
-  const [annual, setAnnual] = useState(false);
-
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-gray-100">
       {/* ---- Hero ---- */}
       <section className="relative pt-20 pb-10 sm:pt-32 sm:pb-16 text-center px-4">
         {/* Subtle radial glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#B8FF3C]/5 rounded-full blur-[120px]" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[200px] sm:w-[500px] sm:h-[350px] lg:w-[800px] lg:h-[500px] bg-[#B8FF3C]/5 rounded-full blur-[120px]" />
         </div>
 
         <div className="relative max-w-3xl mx-auto">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
-            Deploy Your{' '}
-            <span className="text-[#B8FF3C]">
-              On-Chain Agents
-            </span>
+            <span className="text-[#B8FF3C]">Pre-Deploy Special</span>
           </h1>
           <p className="text-gray-400 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Your first agent is free. Mint more for $20 each, or go Pro for unlimited deployments.
+            Limited-time pricing before full launch. Lock in your rate now.
           </p>
         </div>
       </section>
 
-      {/* ---- Billing Toggle (for Pro only) ---- */}
-      <section className="flex justify-center items-center gap-4 pb-12 sm:pb-16 px-4">
-        <span className={`text-sm font-medium transition-colors ${!annual ? 'text-gray-100' : 'text-gray-500'}`}>
-          Monthly
-        </span>
-
-        <button
-          onClick={() => setAnnual(!annual)}
-          className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${
-            annual ? 'bg-[#B8FF3C]' : 'bg-[#1e1e2e]'
-          }`}
-          aria-label="Toggle annual billing"
-        >
-          <span
-            className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
-              annual ? 'translate-x-7' : 'translate-x-0'
-            }`}
-          />
-        </button>
-
-        <span className={`text-sm font-medium transition-colors ${annual ? 'text-gray-100' : 'text-gray-500'}`}>
-          Annual
-        </span>
-
-        {annual && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 animate-in">
-            Save 20% on Pro
-          </span>
-        )}
-      </section>
-
       {/* ---- Pricing Cards ---- */}
-      <section className="max-w-6xl mx-auto px-4 pb-16 sm:pb-24">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-4 items-start">
+      <section className="max-w-4xl mx-auto px-4 pb-16 sm:pb-24 pt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 items-start">
           {plans.map((plan) => (
-            <PricingCard key={plan.name} plan={plan} annual={annual} />
+            <PricingCard key={plan.name} plan={plan} />
           ))}
         </div>
       </section>
 
-      {/* ---- Trust Badges ---- */}
+      {/* ---- Trust Section ---- */}
       <section className="max-w-3xl mx-auto px-4 pb-16 sm:pb-24">
-        <div className="flex flex-wrap justify-center gap-6 sm:gap-10">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-100 mb-10">
+          Your funds stay yours
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { icon: <ChainIcon className="w-5 h-5" />, label: 'Decentralized' },
-            { icon: <ContractIcon className="w-5 h-5" />, label: 'Smart Contract Payments' },
-            { icon: <NonCustodialIcon className="w-5 h-5" />, label: 'Non-Custodial' },
-          ].map(({ icon, label }) => (
-            <div key={label} className="flex items-center gap-2.5 text-gray-500">
-              {icon}
-              <span className="text-sm font-medium">{label}</span>
+            { icon: <ShieldIcon className="w-6 h-6" />, label: 'Non-custodial', desc: 'Cladex never holds funds' },
+            { icon: <KeyIcon className="w-6 h-6" />, label: 'Trade-only API access', desc: 'Read and trade permissions only' },
+            { icon: <LockIcon className="w-6 h-6" />, label: 'Withdrawals disabled', desc: 'No withdrawal permissions ever' },
+            { icon: <ChainIcon className="w-6 h-6" />, label: 'Disconnect anytime', desc: 'Revoke access whenever you want' },
+          ].map(({ icon, label, desc }) => (
+            <div key={label} className="flex flex-col items-center text-center gap-3 p-4">
+              <div className="text-[#B8FF3C]">{icon}</div>
+              <span className="text-gray-100 text-sm font-semibold">{label}</span>
+              <span className="text-gray-500 text-xs">{desc}</span>
             </div>
           ))}
         </div>
@@ -472,21 +351,21 @@ export default function PricingPage() {
       {/* ---- Final CTA ---- */}
       <section className="relative pb-24 sm:pb-32 text-center px-4">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#B8FF3C]/5 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[250px] h-[150px] sm:w-[400px] sm:h-[200px] lg:w-[600px] lg:h-[300px] bg-[#B8FF3C]/5 rounded-full blur-[100px]" />
         </div>
 
         <div className="relative max-w-xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-3">
-            Your first agent is free. Deploy in 60 seconds.
+            Connect your exchange and start trading with AI.
           </h2>
           <p className="text-gray-400 mb-8">
-            Connect your wallet and start trading with AI. No credit card required.
+            Set up in minutes. No withdrawal access required.
           </p>
           <Link
-            href="/signup"
+            href="/login"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm bg-[#B8FF3C] text-black shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 hover:brightness-110 transition-all duration-200"
           >
-            Connect Wallet to Start
+            Connect Exchange to Start
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />

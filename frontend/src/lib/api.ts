@@ -7,7 +7,7 @@ interface ApiError {
 class ApiClient {
   private baseURL: string;
 
-  constructor(baseURL: string = '/api') {
+  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || '/api') {
     this.baseURL = baseURL;
   }
 

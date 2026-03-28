@@ -17,6 +17,7 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   connectWallet: () => Promise<{ success: boolean; address?: string; error?: string }>;
+  connectExchange: (exchangeId: string, apiKey: string, apiSecret: string) => Promise<{ success: boolean; exchange?: string; error?: string }>;
   logout: () => void;
   loading: boolean;
 }
@@ -194,6 +195,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true, address: walletAddress };
   }, [state.token]);
 
+  const connectExchange = useCallback(async (exchangeId: string, apiKey: string, apiSecret: string): Promise<{ success: boolean; exchange?: string; error?: string }> => {
+    if (!exchangeId || !apiKey || !apiSecret) {
+      return { success: false, error: 'Please fill in all fields.' };
+    }
+
+    // Simulate connection delay
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const token = state.token || generateToken();
+    if (!state.token) {
+      localStorage.setItem(STORAGE_KEYS.token, token);
+    }
+
+    const now = new Date().toISOString();
+    const user = state.user || {
+      id: generateUserId(),
+      email: `${exchangeId}@cladex.io`,
+      name: exchangeId.charAt(0).toUpperCase() + exchangeId.slice(1) + ' User',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
+
+    setState({
+      user,
+      token,
+      walletAddress: null,
+      isEmailVerified: true,
+      isLoading: false,
+      isAuthenticated: true,
+    });
+
+    return { success: true, exchange: exchangeId };
+  }, [state.token, state.user]);
+
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.token);
     localStorage.removeItem(STORAGE_KEYS.user);
@@ -218,6 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         signup,
         connectWallet,
+        connectExchange,
         logout,
         loading: state.isLoading,
       }}

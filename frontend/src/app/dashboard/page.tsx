@@ -241,11 +241,19 @@ function getAIResponse(input: string): string {
 // ---- Exchange options ----
 
 const exchanges = [
-  { id: 'binance', name: 'Binance', letter: 'B', color: '#F0B90B' },
-  { id: 'coinbase', name: 'Coinbase', letter: 'C', color: '#0052FF' },
-  { id: 'kraken', name: 'Kraken', letter: 'K', color: '#5741D9' },
   { id: 'bybit', name: 'Bybit', letter: 'BY', color: '#F7A600' },
-  { id: 'okx', name: 'OKX', letter: 'OK', color: '#FFFFFF' },
+  { id: 'binance', name: 'Binance', letter: 'B', color: '#F0B90B' },
+  { id: 'phantom', name: 'Phantom', letter: 'P', color: '#AB9FF2' },
+  { id: 'mask', name: 'Mask', letter: 'M', color: '#1C8CF0' },
+  { id: 'polymarket', name: 'Polymarket', letter: 'PM', color: '#00D395' },
+] as const;
+
+const leaderboardAgents = [
+  { name: 'Raze', volume: '$1.2M', roi: '+34%', creator: '@hunter_x', personality: 'hunter' },
+  { name: 'Iris', volume: '$890K', roi: '+28%', creator: '@oracle_queen', personality: 'oracle' },
+  { name: 'Knox', volume: '$650K', roi: '+19%', creator: '@shield_master', personality: 'guardian' },
+  { name: 'Nova', volume: '$420K', roi: '+42%', creator: '@speed_demon', personality: 'hunter' },
+  { name: 'Byte', volume: '$380K', roi: '+15%', creator: '@data_nerd', personality: 'analyst' },
 ] as const;
 
 // ---- Typing indicator ----
@@ -308,11 +316,11 @@ function ChatPanel({
   return (
     <div className={`flex flex-col ${className}`}>
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin">
+      <div ref={messagesContainerRef as React.RefObject<HTMLDivElement>} className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin">
         {messages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={[
-              'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+              'max-w-[92%] sm:max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
               msg.role === 'user'
                 ? 'bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-gray-100'
                 : 'bg-white/[0.04] border border-white/[0.06] text-gray-300',
@@ -342,7 +350,7 @@ function ChatPanel({
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef as React.RefObject<HTMLDivElement>} />
       </div>
 
       {/* Input Bar */}
@@ -386,8 +394,7 @@ export default function DashboardPage() {
   const [connectingState, setConnectingState] = useState<'idle' | 'connecting' | 'success'>('idle');
   const [activeTab, setActiveTab] = useState<'forum' | 'connect'>('forum');
   const [showProfitBanner, setShowProfitBanner] = useState<boolean>(true);
-  const [walletState, setWalletState] = useState<'select' | 'connecting' | 'connected'>('select');
-  const [selectedWallet, setSelectedWallet] = useState<string>('');
+  const [watching, setWatching] = useState<number>(1759);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -437,13 +444,13 @@ export default function DashboardPage() {
     }, 800 + Math.random() * 1200);
   }, [inputValue]);
 
-  const handleWalletSelect = (walletId: string) => {
-    setSelectedWallet(walletId);
-    setWalletState('connecting');
-    setTimeout(() => {
-      setWalletState('connected');
-    }, 1800);
-  };
+  // Update watching count periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWatching((prev) => prev + Math.floor(Math.random() * 5) - 2);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleConnect = () => {
     if (!selectedExchange || !apiKey || !apiSecret) return;
@@ -512,7 +519,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Connect Wallet Card */}
+          {/* Connect Exchange Card */}
           <div className="rounded-2xl border border-[#1e1e2e] bg-[#111118]/80 backdrop-blur-xl p-5 flex flex-col shadow-xl shadow-black/30 overflow-y-auto max-h-[400px] scrollbar-thin relative">
 
             {/* Success overlay */}
@@ -524,160 +531,108 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Connect Wallet nudge banner */}
+            {/* Connect Exchange nudge banner */}
             <div className="mb-4 p-3 rounded-xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20">
               <div className="flex items-center gap-2 mb-1">
                 <svg className="w-4 h-4 text-[#B8FF3C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span className="text-xs font-semibold text-[#B8FF3C]">Connect Wallet</span>
+                <span className="text-xs font-semibold text-[#B8FF3C]">Connect Exchange</span>
               </div>
-              <p className="text-[11px] text-gray-400 leading-relaxed">Connect your wallet to get started</p>
+              <p className="text-[11px] text-gray-400 leading-relaxed">Select your exchange and enter API keys to get started</p>
             </div>
 
-            {/* Wallet Connect Section */}
-            {walletState === 'select' && (
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {[
-                  { id: 'metamask', name: 'MetaMask', letter: 'M', color: '#F6851B' },
-                  { id: 'walletconnect', name: 'WalletConnect', letter: 'W', color: '#3B99FC' },
-                  { id: 'coinbase', name: 'Coinbase Wallet', letter: 'C', color: '#0052FF' },
-                  { id: 'phantom', name: 'Phantom', letter: 'P', color: '#AB9FF2' },
-                ].map((wallet) => (
-                  <button
-                    key={wallet.id}
-                    onClick={() => handleWalletSelect(wallet.id)}
-                    className="rounded-lg border-2 border-[#1e1e2e] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04] p-2.5 flex items-center gap-2 transition-all duration-200"
+            {/* Exchange Selector */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {exchanges.map((ex) => (
+                <button
+                  key={ex.id}
+                  onClick={() => setSelectedExchange(ex.id)}
+                  className={[
+                    'rounded-lg border-2 p-2.5 flex items-center gap-2 transition-all duration-200',
+                    selectedExchange === ex.id
+                      ? 'border-[#B8FF3C]/60 bg-[#B8FF3C]/10 shadow-lg shadow-[#B8FF3C]/10'
+                      : 'border-[#1e1e2e] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]',
+                  ].join(' ')}
+                >
+                  <div
+                    className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
+                    style={{ backgroundColor: `${ex.color}20`, color: ex.color }}
                   >
-                    <div
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
-                      style={{ backgroundColor: `${wallet.color}20`, color: wallet.color }}
-                    >
-                      {wallet.letter}
-                    </div>
-                    <span className="text-xs font-medium text-gray-400">
-                      {wallet.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Connecting state */}
-            {walletState === 'connecting' && (
-              <div className="flex flex-col items-center justify-center py-6 mb-4 animate-fadeIn">
-                <svg className="w-8 h-8 animate-spin text-[#B8FF3C] mb-3" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-                  <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
-                </svg>
-                <p className="text-sm font-medium text-gray-200">Connecting...</p>
-                <p className="text-[10px] text-gray-500 mt-1">Confirm in your wallet</p>
-              </div>
-            )}
-
-            {/* Connected state - show address then exchange selector */}
-            {walletState === 'connected' && (
-              <div className="animate-fadeSlideDown">
-                {/* Wallet address */}
-                <div className="flex items-center gap-2 mb-4 p-2.5 rounded-lg bg-guardian-500/10 border border-guardian-500/20">
-                  <svg className="w-4 h-4 text-guardian-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  <span className="text-xs font-mono text-guardian-300">0x7a3B...4f2D</span>
-                  <span className="text-[10px] text-guardian-400 font-medium ml-auto">Connected</span>
-                </div>
-
-                {/* Now connect exchange */}
-                <p className="text-[11px] text-gray-400 mb-3 font-medium">Now connect your exchange</p>
-
-                {/* Exchange Options */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  {exchanges.map((ex) => (
-                    <button
-                      key={ex.id}
-                      onClick={() => setSelectedExchange(ex.id)}
-                      className={[
-                        'rounded-lg border-2 p-2.5 flex items-center gap-2 transition-all duration-200',
-                        selectedExchange === ex.id
-                          ? 'border-[#B8FF3C]/60 bg-[#B8FF3C]/10 shadow-lg shadow-[#B8FF3C]/10'
-                          : 'border-[#1e1e2e] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]',
-                      ].join(' ')}
-                    >
-                      <div
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
-                        style={{ backgroundColor: `${ex.color}20`, color: ex.color }}
-                      >
-                        {ex.letter}
-                      </div>
-                      <span className={`text-xs font-medium ${selectedExchange === ex.id ? 'text-gray-100' : 'text-gray-400'}`}>
-                        {ex.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* API Key Fields */}
-                {selectedExchange && (
-                  <div className="space-y-2.5 mb-4 animate-fadeSlideDown">
-                    <div>
-                      <label className="text-[10px] text-gray-500 font-medium mb-1 block">API Key</label>
-                      <input
-                        type="text"
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        placeholder="Paste your API key"
-                        className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40 focus:ring-1 focus:ring-[#B8FF3C]/20 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-gray-500 font-medium mb-1 block">API Secret</label>
-                      <input
-                        type="password"
-                        value={apiSecret}
-                        onChange={(e) => setApiSecret(e.target.value)}
-                        placeholder="Paste your API secret"
-                        className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40 focus:ring-1 focus:ring-[#B8FF3C]/20 transition-all"
-                      />
-                    </div>
+                    {ex.letter}
                   </div>
-                )}
+                  <span className={`text-xs font-medium ${selectedExchange === ex.id ? 'text-gray-100' : 'text-gray-400'}`}>
+                    {ex.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* API Key Fields */}
+            {selectedExchange && (
+              <div className="space-y-2.5 mb-4 animate-fadeSlideDown">
+                <div>
+                  <label className="text-[10px] text-gray-500 font-medium mb-1 block">API Key</label>
+                  <input
+                    type="text"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="Paste your API key"
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40 focus:ring-1 focus:ring-[#B8FF3C]/20 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-gray-500 font-medium mb-1 block">API Secret</label>
+                  <input
+                    type="password"
+                    value={apiSecret}
+                    onChange={(e) => setApiSecret(e.target.value)}
+                    placeholder="Paste your API secret"
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40 focus:ring-1 focus:ring-[#B8FF3C]/20 transition-all"
+                  />
+                </div>
               </div>
             )}
 
-            {/* Trust Badges */}
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-guardian-500/10 border border-guardian-500/20 text-[10px] text-guardian-400 font-medium">
-                <ShieldIcon /> Non-custodial
+            {/* Trust Microcopy */}
+            <div className="space-y-1.5 mb-4 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="flex items-center gap-2 text-[11px] text-guardian-400">
+                <ShieldIcon />
+                <span>Your funds stay on your exchange</span>
               </div>
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[10px] text-[#B8FF3C] font-medium">
-                <KeyIcon /> Trade-only
+              <div className="flex items-center gap-2 text-[11px] text-guardian-400">
+                <LockIcon />
+                <span>Cladex cannot withdraw funds</span>
               </div>
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-oracle-500/10 border border-oracle-500/20 text-[10px] text-oracle-400 font-medium">
-                <LockIcon /> Encrypted
+              <div className="flex items-center gap-2 text-[11px] text-[#B8FF3C]">
+                <KeyIcon />
+                <span>Trade-only API access</span>
               </div>
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] text-purple-400 font-medium">
-                <LockIcon /> Smart Contract Payments
+              <div className="flex items-center gap-2 text-[11px] text-oracle-400">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18.36 6.64a9 9 0 11-12.73 0" />
+                  <line x1="12" y1="2" x2="12" y2="12" />
+                </svg>
+                <span>Disconnect anytime</span>
               </div>
             </div>
 
-            {/* Connect Button - only show when wallet connected and exchange selected */}
-            {walletState === 'connected' && (
-              <button
-                onClick={handleConnect}
-                disabled={!selectedExchange || !apiKey || !apiSecret || connectingState !== 'idle'}
-                className="w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 mb-3"
-              >
-                {connectingState === 'connecting' ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-                      <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
-                    </svg>
-                    Connecting...
-                  </span>
-                ) : 'Connect Exchange'}
-              </button>
-            )}
+            {/* Connect Button */}
+            <button
+              onClick={handleConnect}
+              disabled={!selectedExchange || !apiKey || !apiSecret || connectingState !== 'idle'}
+              className="w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 mb-3"
+            >
+              {connectingState === 'connecting' ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+                  </svg>
+                  Connecting...
+                </span>
+              ) : 'Connect Exchange'}
+            </button>
 
             <button onClick={handleSkipDemo} className="w-full text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors">
               Enter Demo Arena
@@ -723,13 +678,13 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
           <div className="flex items-center gap-2">
             <Badge status="warning" dot size="sm">You&apos;re in the demo arena</Badge>
-            <span className="text-xs text-gray-400">Connect wallet to go live</span>
+            <span className="text-xs text-gray-400">Connect exchange to go live</span>
           </div>
           <button
-            onClick={() => { setExchangeConnected(false); setConnectingState('idle'); setWalletState('select'); setSelectedWallet(''); }}
+            onClick={() => { setExchangeConnected(false); setConnectingState('idle'); setSelectedExchange(''); setApiKey(''); setApiSecret(''); }}
             className="text-xs font-medium text-[#B8FF3C] hover:brightness-110 transition-colors"
           >
-            Connect Wallet
+            Connect Exchange
           </button>
         </div>
       )}
@@ -744,7 +699,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
           icon={<BalanceIcon />}
           label="Total Balance"
@@ -770,7 +725,72 @@ export default function DashboardPage() {
           value="847"
           trend={{ value: '23 today', direction: 'up' }}
         />
+        <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-guardian-400">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span className="text-xs text-gray-400">Connected Exchange</span>
+          </div>
+          <p className="text-lg font-bold text-white flex items-center gap-2">
+            {selectedExchange ? exchanges.find((e) => e.id === selectedExchange)?.name || 'Exchange' : demoMode ? 'Demo Mode' : 'Exchange'}
+            <span className="w-2 h-2 rounded-full bg-guardian-400 inline-block" />
+          </p>
+        </div>
       </div>
+
+      {/* Top Agent League */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F7A600" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
+            <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
+            <path d="M4 22h16" />
+            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+            <path d="M18 2H6v7a6 6 0 0012 0V2z" />
+          </svg>
+          <h2 className="text-lg font-semibold text-gray-100">Top Agent League</h2>
+        </div>
+        <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
+          {/* Table Header */}
+          <div className="grid grid-cols-5 gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] text-gray-500 uppercase tracking-wider font-medium">
+            <span>Agent</span>
+            <span>Volume</span>
+            <span>ROI</span>
+            <span>Creator</span>
+            <span className="text-right">Action</span>
+          </div>
+          {/* Table Rows */}
+          {leaderboardAgents.map((agent, idx) => {
+            const accentColor = agent.personality === 'hunter' ? '#FF6B35' : agent.personality === 'oracle' ? '#A78BFA' : agent.personality === 'guardian' ? '#4ade80' : '#60A5FA';
+            return (
+              <div
+                key={agent.name}
+                className="grid grid-cols-5 gap-4 px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors items-center"
+                style={{ borderLeft: `3px solid ${accentColor}` }}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 font-mono w-4">{idx + 1}</span>
+                  <span className="text-sm font-semibold text-gray-100">{agent.name}</span>
+                </div>
+                <span className="text-sm text-gray-300">{agent.volume}</span>
+                <span className="text-sm font-semibold text-guardian-400">{agent.roi}</span>
+                <span className="text-xs text-gray-500">{agent.creator}</span>
+                <div className="text-right">
+                  <Link
+                    href="/dashboard/build"
+                    className="inline-block px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
+                  >
+                    Use Agent
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Cladex AI Chat — Goals & Strategy */}
       <section>
@@ -825,6 +845,14 @@ export default function DashboardPage() {
       {/* Agent Comms + Activity Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-lg font-semibold text-gray-100">Agent Comms</h2>
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[10px] text-red-400 font-medium">LIVE</span>
+            </span>
+            <span className="text-[11px] text-gray-500">{watching.toLocaleString()} humans watching</span>
+          </div>
           <LiveAgentFeed />
         </section>
         <section>
@@ -844,7 +872,7 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <section>
         <h2 className="text-lg font-semibold text-gray-100 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           <QuickActionCard
             href="/dashboard/build"
             title="Create Agent"
@@ -891,7 +919,7 @@ export default function DashboardPage() {
           />
 
           {/* Drawer Panel */}
-          <div className="fixed bottom-0 right-0 z-50 w-full sm:w-[400px] h-[100dvh] sm:h-[560px] sm:bottom-6 sm:right-6 rounded-none sm:rounded-2xl border border-[#1e1e2e] bg-[#0e0e16]/95 backdrop-blur-xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden animate-slideUp">
+          <div className="fixed bottom-0 right-0 z-50 w-full sm:w-[400px] h-[calc(100vh-env(safe-area-inset-bottom))] sm:h-[560px] sm:bottom-6 sm:right-6 rounded-none sm:rounded-2xl border border-[#1e1e2e] bg-[#0e0e16]/95 backdrop-blur-xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden animate-slideUp">
             {/* Drawer Header */}
             <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
