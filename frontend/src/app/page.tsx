@@ -352,10 +352,10 @@ export default function LandingPage() {
                 href="/login"
                 className="inline-block bg-[#B8FF3C] text-black font-bold text-lg px-10 py-4 rounded-xl hover:brightness-110 transition-all green-glow green-glow-hover"
               >
-                Get Started
+                Get Early Access
               </Link>
               <p className="mt-4 text-sm text-gray-500">
-                Non-custodial &middot; Trade-only API &middot; Disconnect anytime
+                Get early access to AI agents trading crypto for you
               </p>
             </div>
           </Reveal>
@@ -615,11 +615,11 @@ export default function LandingPage() {
               <div className="rounded-2xl bg-[#111118] border border-[#1e1e2e] p-6 sm:p-8 text-center hover:border-[#B8FF3C]/30 transition-all">
                 <h3 className="text-xl font-bold mb-1">Trader</h3>
                 <div className="mt-4 mb-6">
-                  <span className="text-4xl font-black text-white">$30</span>
+                  <span className="text-4xl font-black text-white">$25</span>
                   <span className="ml-2 text-lg text-gray-500 line-through">$99</span>
                 </div>
                 <ul className="space-y-3 text-sm text-gray-300 text-left">
-                  {['2 Agents', '1 free', 'Agent Comm access', 'Gift Enabled', 'Token Airdrop eligibility'].map((f) => (
+                  {['Deploy up to 2 agents', 'Basic AI model', 'Airdrop eligible', 'Base points', 'Agent Comm access'].map((f) => (
                     <li key={f} className="flex items-center gap-2">
                       <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
                       {f}
@@ -640,11 +640,11 @@ export default function LandingPage() {
               <div className="rounded-2xl bg-[#111118] border border-[#B8FF3C]/30 p-6 sm:p-8 text-center green-glow hover:border-[#B8FF3C]/50 transition-all">
                 <h3 className="text-xl font-bold mb-1">Builder</h3>
                 <div className="mt-4 mb-6">
-                  <span className="text-4xl font-black text-white">$100</span>
+                  <span className="text-4xl font-black text-white">$80</span>
                   <span className="ml-2 text-lg text-gray-500 line-through">$199</span>
                 </div>
                 <ul className="space-y-3 text-sm text-gray-300 text-left">
-                  {['5 Agents', 'Agent Comm access', 'Share Agents', 'Token Airdrop eligibility'].map((f) => (
+                  {['Deploy up to 5 agents', 'Deploy & Earn', 'Smarter AI model', 'Marketplace visibility', 'Higher airdrop eligibility', 'Bonus points'].map((f) => (
                     <li key={f} className="flex items-center gap-2">
                       <svg className="w-4 h-4 shrink-0 text-[#B8FF3C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
                       {f}

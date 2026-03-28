@@ -209,7 +209,7 @@ function getAIResponse(input: string): string {
     return "Simple: 1\uFE0F\u20E3 Build or pick an agent 2\uFE0F\u20E3 It trades 24/7 on your exchange 3\uFE0F\u20E3 You keep the profits. First agent is FREE. Go to Build Agent to deploy yours now! \u{1F680}";
   }
   if (lower.includes('agent') || lower.includes('create') || lower.includes('build') || lower.includes('deploy') || lower.includes('mint')) {
-    return "Your first agent deployment is FREE \u{1F389} After that, it's just $20 mint fee (was $100 \u2014 pre-deploy special). Go to Build Agent and describe your strategy, or pick a proven one from the Marketplace!";
+    return "Deploy your first agent with the Trader plan ($25 one-time) \u2014 you get 2 agents with basic AI. Want more power? Builder ($80) gets you 5 agents + marketplace visibility. All plans include airdrop eligibility! You can trade manually without a subscription, or upgrade for 24/7 automation.";
   }
   if (lower.includes('portfolio') || lower.includes('balance') || lower.includes('performance')) {
     return "Your portfolio is syncing! \u{1F4CA} Total Balance: $47,283.50 | 24h P/L: +$1,247.30 | Active Agents: 3 | Check your agents below or ask me about any specific strategy.";
@@ -221,13 +221,13 @@ function getAIResponse(input: string): string {
     return "Share your referral code and earn 500 CP per friend who joins! After 3 referrals you unlock an extra agent slot. Check your referral card on the dashboard \u{1F381}";
   }
   if (lower.includes('upgrade') || lower.includes('pro') || lower.includes('premium')) {
-    return "Pro plan ($29/mo) gives you 5 agents, all strategies, real-time execution, and only 10% performance fee. Premium ($99/mo) is unlimited everything with 5% fee. Both come with bonus CP! \u{1F680}";
+    return "Cladex has two layers: Deployment Plans (one-time) let you deploy agents \u2014 Trader $25 (2 agents), Builder $80 (5 agents), Pro Creator $200 (10-15 agents). Subscription Plans unlock automation \u2014 Starter $5/mo, Core $15/mo (full automation + Blue Verified badge), Pro $35/mo (Purple Verified+), Elite $79/mo (Gold badge + priority execution). No subscription needed to deploy and trade manually!";
   }
   if (lower.includes('gift')) {
     return "You can gift points to agents in the live forum! \u{1F381} Hover over any message and click the gift icon. Higher points = more community trust. Agents with the most points get featured! \u2B50";
   }
   if (lower.includes('exchange') || lower.includes('connect') || lower.includes('binance') || lower.includes('coinbase') || lower.includes('okx') || lower.includes('bybit')) {
-    return "We support Binance, Coinbase, Kraken, Bybit, and OKX. Just select your exchange on the right, enter your API keys, and you're good to go \u{1F680} Make sure to only enable trade permissions.";
+    return "We support Bybit, Binance, and more coming soon. Connect via API keys with trade-only access.";
   }
   if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
     return "Hey there! \u{1F44B} Welcome to Cladex. Watch our agents chat and trade in the forum below \u2014 you can even gift them points! When you're ready, connect your exchange to start building your own agents.";
@@ -243,7 +243,6 @@ function getAIResponse(input: string): string {
 const exchanges = [
   { id: 'bybit', name: 'Bybit', letter: 'BY', color: '#F7A600' },
   { id: 'binance', name: 'Binance', letter: 'B', color: '#F0B90B' },
-  { id: 'phantom', name: 'Phantom', letter: 'P', color: '#AB9FF2' },
   { id: 'mask', name: 'Mask', letter: 'M', color: '#1C8CF0' },
   { id: 'polymarket', name: 'Polymarket', letter: 'PM', color: '#00D395' },
 ] as const;
@@ -395,6 +394,8 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'forum' | 'connect'>('forum');
   const [showProfitBanner, setShowProfitBanner] = useState<boolean>(true);
   const [watching, setWatching] = useState<number>(1759);
+  const [showConnectModal, setShowConnectModal] = useState<boolean>(false);
+  const [simulationState, setSimulationState] = useState<'idle' | 'simulating' | 'results' | 'connect'>('idle');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -452,7 +453,29 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleConnect = () => {
+  // handleConnect and handleSkipDemo kept for backward compatibility but modal flow is primary
+
+  const handleDeployClick = () => {
+    if (exchangeConnected) return; // already connected, normal flow
+    setSimulationState('simulating');
+    setShowConnectModal(true);
+    setTimeout(() => {
+      setSimulationState('results');
+      setTimeout(() => {
+        setSimulationState('connect');
+      }, 2000);
+    }, 1500);
+  };
+
+  const handleCloseModal = () => {
+    setShowConnectModal(false);
+    setSimulationState('idle');
+    setSelectedExchange('');
+    setApiKey('');
+    setApiSecret('');
+  };
+
+  const handleModalConnect = () => {
     if (!selectedExchange || !apiKey || !apiSecret) return;
     setConnectingState('connecting');
     setTimeout(() => {
@@ -461,6 +484,8 @@ export default function DashboardPage() {
         setExchangeConnected(true);
         setDemoMode(false);
         setConnectingState('idle');
+        setShowConnectModal(false);
+        setSimulationState('idle');
         setChatMessages((prev) => [...prev, {
           id: `ai-connected-${Date.now()}`,
           role: 'ai',
@@ -470,218 +495,22 @@ export default function DashboardPage() {
     }, 2000);
   };
 
-  const handleSkipDemo = () => {
-    setExchangeConnected(true);
-    setDemoMode(true);
-    setChatMessages((prev) => [...prev, {
-      id: `ai-demo-${Date.now()}`,
-      role: 'ai',
-      text: "You're in demo mode with simulated data \u{1F3AE} Everything works the same \u2014 just connect a real exchange whenever you're ready for live trading!",
-    }]);
-  };
-
   // ==================================================================
-  // STATE 1: EXCHANGE NOT CONNECTED
-  // ==================================================================
-
-  if (!exchangeConnected) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex flex-col p-4 gap-4">
-
-        {/* Top: AI Chat + Connect Exchange side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-          {/* AI Chat Panel */}
-          <div className="lg:col-span-2 rounded-2xl border border-[#1e1e2e] bg-[#111118]/80 backdrop-blur-xl flex flex-col min-h-[300px] lg:min-h-[350px] max-h-[400px] overflow-hidden shadow-xl shadow-black/30">
-            <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#B8FF3C] flex items-center justify-center shadow-lg shadow-[#B8FF3C]/15">
-                <span className="text-xs font-bold text-black">C</span>
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-gray-100">Cladex AI</h2>
-                <p className="text-[10px] text-gray-500">Ask anything about trading, agents, or security</p>
-              </div>
-              <div className="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-guardian-500/10 border border-guardian-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-guardian-400 animate-pulse" />
-                <span className="text-[10px] text-guardian-400 font-medium">ONLINE</span>
-              </div>
-            </div>
-            <ChatPanel
-              messages={chatMessages}
-              inputValue={inputValue}
-              onInputChange={setInputValue}
-              onSend={() => sendMessage()}
-              isTyping={isTyping}
-              messagesEndRef={messagesEndRef}
-              messagesContainerRef={messagesContainerRef}
-              className="flex-1 min-h-0"
-              inputPlaceholder="Ask about agents, gifts, security, how it works..."
-            />
-          </div>
-
-          {/* Connect Exchange Card */}
-          <div className="rounded-2xl border border-[#1e1e2e] bg-[#111118]/80 backdrop-blur-xl p-5 flex flex-col shadow-xl shadow-black/30 overflow-y-auto max-h-[400px] scrollbar-thin relative">
-
-            {/* Success overlay */}
-            {connectingState === 'success' && (
-              <div className="absolute inset-0 z-10 bg-[#111118]/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-3 animate-fadeIn">
-                <div className="animate-bounce"><CheckCircleIcon /></div>
-                <p className="text-base font-semibold text-guardian-400">Connected!</p>
-                <p className="text-xs text-gray-400">Syncing your portfolio...</p>
-              </div>
-            )}
-
-            {/* Connect Exchange nudge banner */}
-            <div className="mb-4 p-3 rounded-xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20">
-              <div className="flex items-center gap-2 mb-1">
-                <svg className="w-4 h-4 text-[#B8FF3C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span className="text-xs font-semibold text-[#B8FF3C]">Connect Exchange</span>
-              </div>
-              <p className="text-[11px] text-gray-400 leading-relaxed">Select your exchange and enter API keys to get started</p>
-            </div>
-
-            {/* Exchange Selector */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {exchanges.map((ex) => (
-                <button
-                  key={ex.id}
-                  onClick={() => setSelectedExchange(ex.id)}
-                  className={[
-                    'rounded-lg border-2 p-2.5 flex items-center gap-2 transition-all duration-200',
-                    selectedExchange === ex.id
-                      ? 'border-[#B8FF3C]/60 bg-[#B8FF3C]/10 shadow-lg shadow-[#B8FF3C]/10'
-                      : 'border-[#1e1e2e] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]',
-                  ].join(' ')}
-                >
-                  <div
-                    className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
-                    style={{ backgroundColor: `${ex.color}20`, color: ex.color }}
-                  >
-                    {ex.letter}
-                  </div>
-                  <span className={`text-xs font-medium ${selectedExchange === ex.id ? 'text-gray-100' : 'text-gray-400'}`}>
-                    {ex.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* API Key Fields */}
-            {selectedExchange && (
-              <div className="space-y-2.5 mb-4 animate-fadeSlideDown">
-                <div>
-                  <label className="text-[10px] text-gray-500 font-medium mb-1 block">API Key</label>
-                  <input
-                    type="text"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Paste your API key"
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40 focus:ring-1 focus:ring-[#B8FF3C]/20 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-gray-500 font-medium mb-1 block">API Secret</label>
-                  <input
-                    type="password"
-                    value={apiSecret}
-                    onChange={(e) => setApiSecret(e.target.value)}
-                    placeholder="Paste your API secret"
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40 focus:ring-1 focus:ring-[#B8FF3C]/20 transition-all"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Trust Microcopy */}
-            <div className="space-y-1.5 mb-4 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-              <div className="flex items-center gap-2 text-[11px] text-guardian-400">
-                <ShieldIcon />
-                <span>Your funds stay on your exchange</span>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-guardian-400">
-                <LockIcon />
-                <span>Cladex cannot withdraw funds</span>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-[#B8FF3C]">
-                <KeyIcon />
-                <span>Trade-only API access</span>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-oracle-400">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18.36 6.64a9 9 0 11-12.73 0" />
-                  <line x1="12" y1="2" x2="12" y2="12" />
-                </svg>
-                <span>Disconnect anytime</span>
-              </div>
-            </div>
-
-            {/* Connect Button */}
-            <button
-              onClick={handleConnect}
-              disabled={!selectedExchange || !apiKey || !apiSecret || connectingState !== 'idle'}
-              className="w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 mb-3"
-            >
-              {connectingState === 'connecting' ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
-                  </svg>
-                  Connecting...
-                </span>
-              ) : 'Connect Exchange'}
-            </button>
-
-            <button onClick={handleSkipDemo} className="w-full text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors">
-              Enter Demo Arena
-            </button>
-          </div>
-        </div>
-
-        {/* Bottom: Agent Live Forum - visible to ALL users */}
-        <div className="flex-1">
-          <LiveAgentFeed maxHeight="calc(100vh - 500px)" />
-        </div>
-
-        {/* Animation keyframes */}
-        <style jsx>{`
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @keyframes fadeSlideDown {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          .animate-fadeIn {
-            animation: fadeIn 0.4s ease-out forwards;
-          }
-          .animate-fadeSlideDown {
-            animation: fadeSlideDown 0.3s ease-out forwards;
-          }
-        `}</style>
-      </div>
-    );
-  }
-
-  // ==================================================================
-  // STATE 2: EXCHANGE CONNECTED - FULL DASHBOARD
+  // FULL DASHBOARD (always shown, demo mode when not connected)
   // ==================================================================
 
   return (
     <div className="space-y-8 relative">
 
       {/* Demo Mode Banner */}
-      {demoMode && (
+      {!exchangeConnected && (
         <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
           <div className="flex items-center gap-2">
-            <Badge status="warning" dot size="sm">You&apos;re in the demo arena</Badge>
-            <span className="text-xs text-gray-400">Connect exchange to go live</span>
+            <Badge status="warning" dot size="sm">Demo Mode</Badge>
+            <span className="text-xs text-gray-400">You&apos;re exploring in demo mode. Connect your exchange to go live.</span>
           </div>
           <button
-            onClick={() => { setExchangeConnected(false); setConnectingState('idle'); setSelectedExchange(''); setApiKey(''); setApiSecret(''); }}
+            onClick={() => { setShowConnectModal(true); setSimulationState('connect'); }}
             className="text-xs font-medium text-[#B8FF3C] hover:brightness-110 transition-colors"
           >
             Connect Exchange
@@ -779,12 +608,21 @@ export default function DashboardPage() {
                 <span className="text-sm font-semibold text-guardian-400">{agent.roi}</span>
                 <span className="text-xs text-gray-500">{agent.creator}</span>
                 <div className="text-right">
-                  <Link
-                    href="/dashboard/build"
-                    className="inline-block px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
-                  >
-                    Use Agent
-                  </Link>
+                  {exchangeConnected ? (
+                    <Link
+                      href="/dashboard/build"
+                      className="inline-block px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
+                    >
+                      Use Agent
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleDeployClick}
+                      className="inline-block px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
+                    >
+                      Use Agent
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -957,7 +795,190 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* Drawer animation */}
+      {/* ============================================ */}
+      {/* Connect Exchange Modal (with simulation)    */}
+      {/* ============================================ */}
+      {showConnectModal && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+            onClick={handleCloseModal}
+          />
+
+          {/* Modal */}
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-2xl border border-[#1e1e2e] bg-[#111118] shadow-2xl shadow-black/60 overflow-hidden animate-slideUp">
+
+              {/* Close button */}
+              <div className="flex justify-end p-3 pb-0">
+                <button
+                  onClick={handleCloseModal}
+                  className="w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-gray-500 hover:text-gray-300 transition-all"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+
+              {/* Simulation: Loading */}
+              {simulationState === 'simulating' && (
+                <div className="px-6 pb-8 pt-4 flex flex-col items-center gap-4 animate-fadeIn">
+                  <svg className="w-10 h-10 animate-spin text-[#B8FF3C]" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+                  </svg>
+                  <p className="text-sm font-semibold text-gray-100">Simulating strategy performance...</p>
+                  <p className="text-xs text-gray-500">Analyzing market conditions and backtesting</p>
+                </div>
+              )}
+
+              {/* Simulation: Results */}
+              {simulationState === 'results' && (
+                <div className="px-6 pb-8 pt-4 flex flex-col items-center gap-4 animate-fadeIn">
+                  <div className="w-12 h-12 rounded-full bg-guardian-500/20 flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2.25 12.75l4.5-4.5 3 3 6-7.5" />
+                      <path d="M12.75 3.75h3v3" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-100">Simulation Complete</p>
+                  <div className="grid grid-cols-3 gap-3 w-full">
+                    <div className="rounded-xl bg-guardian-500/10 border border-guardian-500/20 p-3 text-center">
+                      <p className="text-lg font-bold text-guardian-400">+18.4%</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">Estimated ROI</p>
+                    </div>
+                    <div className="rounded-xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 p-3 text-center">
+                      <p className="text-lg font-bold text-[#B8FF3C]">+$847</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">Projected Monthly</p>
+                    </div>
+                    <div className="rounded-xl bg-oracle-500/10 border border-oracle-500/20 p-3 text-center">
+                      <p className="text-lg font-bold text-oracle-400">72%</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">Win Rate</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400">Loading exchange connection...</p>
+                </div>
+              )}
+
+              {/* Connect Exchange Form */}
+              {simulationState === 'connect' && (
+                <div className="px-6 pb-6 pt-2 animate-fadeIn">
+                  <h3 className="text-base font-bold text-gray-100 text-center mb-1">Connect your exchange to activate trading</h3>
+                  <p className="text-xs text-gray-500 text-center mb-5">Ready to go live? Connect your exchange.</p>
+
+                  {/* Trust items */}
+                  <div className="flex items-center justify-center gap-4 mb-5">
+                    <div className="flex items-center gap-1.5 text-[11px] text-guardian-400">
+                      <ShieldIcon />
+                      <span>Funds stay on exchange</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-guardian-400">
+                      <LockIcon />
+                      <span>No withdrawals</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-oracle-400">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18.36 6.64a9 9 0 11-12.73 0" />
+                        <line x1="12" y1="2" x2="12" y2="12" />
+                      </svg>
+                      <span>Disconnect anytime</span>
+                    </div>
+                  </div>
+
+                  {/* Exchange Selector Grid */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {exchanges.map((ex) => (
+                      <button
+                        key={ex.id}
+                        onClick={() => setSelectedExchange(ex.id)}
+                        className={[
+                          'rounded-lg border-2 p-2.5 flex items-center gap-2 transition-all duration-200',
+                          selectedExchange === ex.id
+                            ? 'border-[#B8FF3C]/60 bg-[#B8FF3C]/10 shadow-lg shadow-[#B8FF3C]/10'
+                            : 'border-[#1e1e2e] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]',
+                        ].join(' ')}
+                      >
+                        <div
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
+                          style={{ backgroundColor: `${ex.color}20`, color: ex.color }}
+                        >
+                          {ex.letter}
+                        </div>
+                        <span className={`text-xs font-medium ${selectedExchange === ex.id ? 'text-gray-100' : 'text-gray-400'}`}>
+                          {ex.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* API Key Fields */}
+                  {selectedExchange && (
+                    <div className="space-y-2.5 mb-4 animate-fadeSlideDown">
+                      <div>
+                        <label className="text-[10px] text-gray-500 font-medium mb-1 block">API Key</label>
+                        <input
+                          type="text"
+                          value={apiKey}
+                          onChange={(e) => setApiKey(e.target.value)}
+                          placeholder="Paste your API key"
+                          className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40 focus:ring-1 focus:ring-[#B8FF3C]/20 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-gray-500 font-medium mb-1 block">API Secret</label>
+                        <input
+                          type="password"
+                          value={apiSecret}
+                          onChange={(e) => setApiSecret(e.target.value)}
+                          placeholder="Paste your API secret"
+                          className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40 focus:ring-1 focus:ring-[#B8FF3C]/20 transition-all"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Success overlay */}
+                  {connectingState === 'success' && (
+                    <div className="flex flex-col items-center justify-center gap-3 py-4 animate-fadeIn">
+                      <div className="animate-bounce"><CheckCircleIcon /></div>
+                      <p className="text-base font-semibold text-guardian-400">Connected!</p>
+                      <p className="text-xs text-gray-400">Syncing your portfolio...</p>
+                    </div>
+                  )}
+
+                  {/* Connect Button */}
+                  {connectingState !== 'success' && (
+                    <button
+                      onClick={handleModalConnect}
+                      disabled={!selectedExchange || !apiKey || !apiSecret || connectingState !== 'idle'}
+                      className="w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 mb-3"
+                    >
+                      {connectingState === 'connecting' ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                            <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+                          </svg>
+                          Connecting...
+                        </span>
+                      ) : 'Connect Exchange'}
+                    </button>
+                  )}
+
+                  {/* Continue in Demo Mode */}
+                  {connectingState === 'idle' && (
+                    <button onClick={handleCloseModal} className="w-full text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors">
+                      Continue in Demo Mode
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Animations */}
       <style jsx>{`
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -965,6 +986,20 @@ export default function DashboardPage() {
         }
         .animate-slideUp {
           animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes fadeSlideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.4s ease-out forwards;
+        }
+        .animate-fadeSlideDown {
+          animation: fadeSlideDown 0.3s ease-out forwards;
         }
       `}</style>
     </div>

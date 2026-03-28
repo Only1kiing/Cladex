@@ -189,6 +189,79 @@ function VerificationStep({
   );
 }
 
+const AGENT_MESSAGES = [
+  { agent: 'Raze', message: 'SOL +4.2% in 20 min \u26A1', color: 'text-red-400', profit: '+$127' },
+  { agent: 'Knox', message: 'Portfolio secured. 0.8% drawdown \uD83D\uDEE1\uFE0F', color: 'text-emerald-400', profit: null },
+  { agent: 'Iris', message: 'Called BTC reversal at $66.8k \uD83D\uDD2E', color: 'text-violet-400', profit: '+$340' },
+  { agent: 'Byte', message: 'ETH volume up 34%. Bull flag \uD83D\uDCCA', color: 'text-cyan-400', profit: null },
+];
+
+function AgentCommPreviewStep({ onConnectExchange }: { onConnectExchange: () => void }) {
+  const router = useRouter();
+  const [visibleCount, setVisibleCount] = useState(0);
+
+  useEffect(() => {
+    if (visibleCount >= AGENT_MESSAGES.length) return;
+    const timer = setTimeout(() => {
+      setVisibleCount((prev) => prev + 1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [visibleCount]);
+
+  // Kick off the first message
+  useEffect(() => {
+    const timer = setTimeout(() => setVisibleCount(1), 400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="text-center"
+    >
+      <h2 className="text-xl font-bold text-white mb-6">Your agents are waiting</h2>
+
+      <div className="space-y-2.5 mb-8 text-left">
+        {AGENT_MESSAGES.map((msg, i) => (
+          <motion.div
+            key={msg.agent}
+            initial={{ opacity: 0, x: -16 }}
+            animate={i < visibleCount ? { opacity: 1, x: 0 } : { opacity: 0, x: -16 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-2.5"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className={`font-bold text-sm ${msg.color}`}>{msg.agent}:</span>
+              <span className="text-sm text-gray-300 truncate">{msg.message}</span>
+            </div>
+            {msg.profit && (
+              <span className="ml-3 shrink-0 text-xs font-semibold text-[#B8FF3C]">{msg.profit}</span>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => router.push('/dashboard')}
+        className="w-full rounded-xl bg-[#B8FF3C] px-6 py-3 text-sm font-bold text-black hover:brightness-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#B8FF3C]/50"
+      >
+        Continue to Dashboard
+      </button>
+
+      <button
+        type="button"
+        onClick={onConnectExchange}
+        className="inline-block mt-3 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+      >
+        Connect Exchange Now
+      </button>
+    </motion.div>
+  );
+}
+
 function ConnectExchangeStep() {
   const router = useRouter();
   const { connectExchange } = useAuth();
@@ -408,8 +481,8 @@ function ConnectExchangeStep() {
 export default function SignupPage() {
   const { signup } = useAuth();
 
-  // Steps: 'signup' | 'verification' | 'connect-exchange'
-  const [step, setStep] = useState<'signup' | 'verification' | 'connect-exchange'>('signup');
+  // Steps: 'signup' | 'verification' | 'agent-comm-preview' | 'connect-exchange'
+  const [step, setStep] = useState<'signup' | 'verification' | 'agent-comm-preview' | 'connect-exchange'>('signup');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -475,12 +548,13 @@ export default function SignupPage() {
   };
 
   const handleVerified = () => {
-    setStep('connect-exchange');
+    setStep('agent-comm-preview');
   };
 
   const stepSubtitle = {
-    'signup': 'Create your account and start trading',
+    'signup': 'Get early access to AI agents trading crypto for you',
     'verification': 'One last step to secure your account',
+    'agent-comm-preview': 'See what your agents have been up to',
     'connect-exchange': 'Connect your exchange to go live',
   };
 
@@ -618,7 +692,12 @@ export default function SignupPage() {
               />
             )}
 
-            {/* ===== STEP 3: CONNECT EXCHANGE ===== */}
+            {/* ===== STEP 3: AGENT COMM PREVIEW ===== */}
+            {step === 'agent-comm-preview' && (
+              <AgentCommPreviewStep key="agent-comm-preview" onConnectExchange={() => setStep('connect-exchange')} />
+            )}
+
+            {/* ===== STEP 4: CONNECT EXCHANGE ===== */}
             {step === 'connect-exchange' && (
               <ConnectExchangeStep key="connect-exchange" />
             )}
