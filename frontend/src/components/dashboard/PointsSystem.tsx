@@ -327,16 +327,16 @@ export function PointsWidget() {
 
 export function ReferralCard() {
   const [copied, setCopied] = useState(false);
-  const referralCode = 'CLADEX-X7K9';
+  const referralLink = 'https://cladex.io/r/X7K9';
   const friendsJoined = 2;
   const friendsRequired = 3;
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(referralCode).then(() => {
+    navigator.clipboard.writeText(referralLink).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }).catch(() => {});
-  }, [referralCode]);
+  }, [referralLink]);
 
   return (
     <FadeSlide delay={160}>
@@ -344,30 +344,36 @@ export function ReferralCard() {
         {/* Amber glow */}
         <div className="pointer-events-none absolute -top-12 -right-12 h-36 w-36 rounded-full bg-amber-500/8 blur-3xl" />
 
-        <h3 className="text-base font-bold text-white mb-1">Unlock more power</h3>
+        <h3 className="text-base font-bold text-white mb-1">Invite friends, earn rewards</h3>
         <p className="text-sm text-gray-400 mb-5">
-          Invite {friendsRequired} friends and unlock 1 extra agent slot
+          Share your link — earn 500 CP per friend who joins
         </p>
 
-        {/* Referral code */}
+        {/* Referral link */}
         <div className="flex items-center gap-2 mb-5">
-          <div className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 font-mono text-sm text-gray-200 tracking-wider">
-            {referralCode}
+          <div className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-gray-200 truncate">
+            {referralLink}
           </div>
           <button
             onClick={handleCopy}
-            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/[0.06] hover:bg-white/[0.1] transition-colors cursor-pointer"
-            title="Copy referral code"
+            className="flex h-10 px-3 flex-shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 hover:bg-[#B8FF3C]/20 transition-colors cursor-pointer"
+            title="Copy referral link"
           >
             {copied ? (
-              <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 20 20" fill="none">
-                <path d="M4 10.5L8 14.5L16 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <>
+                <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 20 20" fill="none">
+                  <path d="M4 10.5L8 14.5L16 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-xs font-medium text-emerald-400">Copied!</span>
+              </>
             ) : (
-              <svg className="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="none">
-                <rect x="6" y="6" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M4 14V5a2 2 0 012-2h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <>
+                <svg className="w-4 h-4 text-[#B8FF3C]" viewBox="0 0 20 20" fill="none">
+                  <rect x="6" y="6" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M4 14V5a2 2 0 012-2h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <span className="text-xs font-medium text-[#B8FF3C]">Copy</span>
+              </>
             )}
           </button>
         </div>

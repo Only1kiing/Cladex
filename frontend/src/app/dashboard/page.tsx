@@ -337,28 +337,6 @@ function TypingIndicator() {
   );
 }
 
-// ---- Quick Action Card ----
-
-function QuickActionCard({ href, title, description, gradient }: {
-  href: string;
-  title: string;
-  description: string;
-  gradient: string;
-}) {
-  return (
-    <Link href={href} className="block group">
-      <div className={[
-        'rounded-xl border border-[#1e1e2e] bg-[#111118] p-5',
-        'transition-all duration-300 hover:border-white/[0.15] hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5',
-        gradient,
-      ].join(' ')}>
-        <h3 className="text-sm font-semibold text-gray-100 group-hover:text-white transition-colors">{title}</h3>
-        <p className="text-xs text-gray-500 mt-1">{description}</p>
-      </div>
-    </Link>
-  );
-}
-
 // ---- Shared Chat Component ----
 
 function ChatPanel({
@@ -656,27 +634,6 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Balance & Deposit Widget */}
-      <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-white">$250.00</p>
-            <p className="text-[10px] text-gray-500">Balance — for fees & minting</p>
-          </div>
-        </div>
-        <Link
-          href="/dashboard/settings"
-          className="px-4 py-2 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-xs font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
-        >
-          Gas Balance
-        </Link>
-      </div>
-
       {/* Cladex AI Chat — Goals & Strategy */}
       <section>
         <div className="rounded-2xl border border-[#1e1e2e] bg-[#111118]/80 backdrop-blur-xl overflow-hidden">
@@ -793,39 +750,9 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Quick Actions */}
+      {/* Referral */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-100 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {!exchangeConnected ? (
-            <button onClick={handleDeployClick} className="block group w-full text-left">
-              <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-5 transition-all duration-300 hover:border-white/[0.15] hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 hover:border-[#B8FF3C]/30">
-                <h3 className="text-sm font-semibold text-gray-100 group-hover:text-white transition-colors">Create Agent</h3>
-                <p className="text-xs text-gray-500 mt-1">Connect exchange to deploy agents</p>
-              </div>
-            </button>
-          ) : (
-            <QuickActionCard
-              href="/dashboard/build"
-              title="Create Agent"
-              description="Build and deploy a new AI trading agent"
-              gradient="hover:border-[#B8FF3C]/30"
-            />
-          )}
-          <QuickActionCard
-            href="/dashboard/settings"
-            title="Connect Exchange"
-            description="Link your exchange API for live trading"
-            gradient="hover:border-guardian-500/30"
-          />
-          <QuickActionCard
-            href="/dashboard/marketplace"
-            title="Browse Marketplace"
-            description="Discover top-performing community agents"
-            gradient="hover:border-oracle-500/30"
-          />
-          <ReferralCard />
-        </div>
+        <ReferralCard />
       </section>
 
       {/* ============================================ */}
