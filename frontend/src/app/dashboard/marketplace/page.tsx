@@ -334,6 +334,7 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [showAllLeague, setShowAllLeague] = useState(false);
+  const [showConnectPrompt, setShowConnectPrompt] = useState(false);
   const [previewAgent, setPreviewAgent] = useState<MarketplaceAgent | null>(null);
   const [useAgent, setUseAgent] = useState<MarketplaceAgent | null>(null);
 
@@ -413,9 +414,12 @@ export default function MarketplacePage() {
                     {agent.loves.toLocaleString()}
                   </span>
                   <div className="text-right">
-                    <a href="/dashboard/build" className="inline-block px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors">
+                    <button
+                      onClick={() => setShowConnectPrompt(true)}
+                      className="inline-block px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
+                    >
                       Use Agent
-                    </a>
+                    </button>
                   </div>
                 </div>
               );
@@ -631,6 +635,46 @@ export default function MarketplacePage() {
           </div>
         )}
       </Modal>
+
+      {/* Connect Exchange Prompt */}
+      {showConnectPrompt && (
+        <>
+          <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm" onClick={() => setShowConnectPrompt(false)} />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="w-full max-w-sm rounded-2xl border border-[#1e1e2e] bg-[#111118] shadow-2xl p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 flex items-center justify-center mx-auto mb-4">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B8FF3C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 7L12 2L22 7L12 12L2 7Z" />
+                  <path d="M2 17L12 22L22 17" />
+                  <path d="M2 12L12 17L22 12" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Connect Exchange to Continue</h3>
+              <p className="text-sm text-gray-400 mb-5">Connect your exchange to deploy and use this agent for live trading.</p>
+              <div className="flex flex-col gap-2 mb-4 text-left">
+                {['Your funds stay on your exchange', 'No withdrawals allowed', 'Disconnect anytime'].map((t) => (
+                  <div key={t} className="flex items-center gap-2 text-xs text-gray-500">
+                    <svg className="w-3.5 h-3.5 text-[#B8FF3C]/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17L4 12" /></svg>
+                    <span>{t}</span>
+                  </div>
+                ))}
+              </div>
+              <a
+                href="/dashboard/settings"
+                className="block w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all mb-2"
+              >
+                Connect Exchange
+              </a>
+              <button
+                onClick={() => setShowConnectPrompt(false)}
+                className="w-full text-xs text-gray-500 hover:text-gray-300 transition-colors py-1"
+              >
+                Continue Exploring
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
