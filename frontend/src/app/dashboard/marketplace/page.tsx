@@ -336,6 +336,17 @@ export default function MarketplacePage() {
   const [previewAgent, setPreviewAgent] = useState<MarketplaceAgent | null>(null);
   const [useAgent, setUseAgent] = useState<MarketplaceAgent | null>(null);
 
+  const leaderboardAgents = [
+    { name: 'Raze', volume: '$1.2M', roi: '+34%', creator: '@hunter_x', personality: 'hunter', loves: 2847 },
+    { name: 'Iris', volume: '$890K', roi: '+28%', creator: '@oracle_queen', personality: 'oracle', loves: 2103 },
+    { name: 'Knox', volume: '$650K', roi: '+19%', creator: '@shield_master', personality: 'guardian', loves: 1876 },
+    { name: 'Nova', volume: '$420K', roi: '+42%', creator: '@speed_demon', personality: 'hunter', loves: 1654 },
+    { name: 'Byte', volume: '$380K', roi: '+15%', creator: '@data_nerd', personality: 'analyst', loves: 1432 },
+    { name: 'Luna', volume: '$310K', roi: '+22%', creator: '@moon_caller', personality: 'oracle', loves: 1201 },
+    { name: 'Shield', volume: '$280K', roi: '+11%', creator: '@safe_hands', personality: 'guardian', loves: 987 },
+    { name: 'Poly', volume: '$240K', roi: '+31%', creator: '@prediction_king', personality: 'analyst', loves: 876 },
+  ];
+
   const filteredAgents = useMemo(() => {
     return MOCK_AGENTS.filter((agent) => {
       const matchesFilter = activeFilter === 'all' || agent.personality === activeFilter;
@@ -358,11 +369,65 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-gray-100">
+      {/* Top Agent League */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
+        <section className="mb-10">
+          <div className="flex items-center gap-3 mb-4">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F7A600" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
+              <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
+              <path d="M4 22h16" />
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+              <path d="M18 2H6v7a6 6 0 0012 0V2z" />
+            </svg>
+            <h2 className="text-lg font-semibold text-gray-100">Top Agent League</h2>
+          </div>
+          <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
+            <div className="grid grid-cols-6 gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] text-gray-500 uppercase tracking-wider font-medium">
+              <span>Agent</span>
+              <span>Volume</span>
+              <span>ROI</span>
+              <span>Creator</span>
+              <span>Loves</span>
+              <span className="text-right">Action</span>
+            </div>
+            {leaderboardAgents.map((agent, idx) => {
+              const accentColor = agent.personality === 'hunter' ? '#FF6B35' : agent.personality === 'oracle' ? '#A78BFA' : agent.personality === 'guardian' ? '#4ade80' : '#60A5FA';
+              return (
+                <div
+                  key={agent.name}
+                  className="grid grid-cols-6 gap-4 px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors items-center"
+                  style={{ borderLeft: `3px solid ${accentColor}` }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 font-mono w-4">{idx + 1}</span>
+                    <span className="text-sm font-semibold text-gray-100">{agent.name}</span>
+                  </div>
+                  <span className="text-sm text-gray-300">{agent.volume}</span>
+                  <span className="text-sm font-semibold text-emerald-400">{agent.roi}</span>
+                  <span className="text-xs text-gray-500">{agent.creator}</span>
+                  <span className="text-xs text-red-400 flex items-center gap-1">
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    {agent.loves.toLocaleString()}
+                  </span>
+                  <div className="text-right">
+                    <a href="/dashboard/build" className="inline-block px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors">
+                      Use Agent
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+
       {/* Header */}
       <div className="border-b border-[#1e1e2e] bg-[#0a0a0f]/80 backdrop-blur-xl sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">Agent Marketplace</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">Explore Agents</h1>
             <p className="text-sm text-gray-500">
               Discover proven trading strategies built by the community and Cladex team
             </p>

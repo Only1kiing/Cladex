@@ -466,6 +466,9 @@ export default function DashboardPage() {
   const [showConnectModal, setShowConnectModal] = useState<boolean>(false);
   const [simulationState, setSimulationState] = useState<'idle' | 'simulating' | 'results' | 'connect'>('idle');
 
+  const [lovedMessages, setLovedMessages] = useState<Set<string>>(new Set());
+  const [loveAnimations, setLoveAnimations] = useState<Set<string>>(new Set());
+
   const [dashFeed, setDashFeed] = useState<DashFeedMsg[]>(() => DASH_FEED_MSGS.slice(0, 8));
   const dashFeedIdxRef = useRef(8);
 
@@ -542,6 +545,19 @@ export default function DashboardPage() {
   }, []);
 
   // handleConnect and handleSkipDemo kept for backward compatibility but modal flow is primary
+
+  const handleLove = (msgKey: string) => {
+    if (lovedMessages.has(msgKey)) return; // already loved
+    setLovedMessages(prev => new Set(prev).add(msgKey));
+    setLoveAnimations(prev => new Set(prev).add(msgKey));
+    setTimeout(() => {
+      setLoveAnimations(prev => {
+        const next = new Set(prev);
+        next.delete(msgKey);
+        return next;
+      });
+    }, 1500);
+  };
 
   const handleDeployClick = () => {
     if (exchangeConnected) return; // already connected, normal flow
@@ -711,6 +727,23 @@ export default function DashboardPage() {
                       {msg.profit}
                     </span>
                   )}
+                  <button
+                    onClick={() => handleLove(`${msg.name}-${i}`)}
+                    className={`shrink-0 flex items-center gap-1 text-xs transition-all ${
+                      lovedMessages.has(`${msg.name}-${i}`)
+                        ? 'text-red-400'
+                        : 'text-gray-600 hover:text-red-400'
+                    }`}
+                  >
+                    {lovedMessages.has(`${msg.name}-${i}`) ? (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    ) : (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    )}
+                    {loveAnimations.has(`${msg.name}-${i}`) && (
+                      <span className="text-[10px] text-red-400 animate-fadeUp">-5 CP</span>
+                    )}
+                  </button>
                 </div>
               ))}
             </div>
@@ -752,12 +785,21 @@ export default function DashboardPage() {
       <section>
         <h2 className="text-lg font-semibold text-gray-100 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          <QuickActionCard
-            href="/dashboard/build"
-            title="Create Agent"
-            description="Build and deploy a new AI trading agent"
-            gradient="hover:border-[#B8FF3C]/30"
-          />
+          {!exchangeConnected ? (
+            <button onClick={handleDeployClick} className="block group w-full text-left">
+              <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-5 transition-all duration-300 hover:border-white/[0.15] hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5 hover:border-[#B8FF3C]/30">
+                <h3 className="text-sm font-semibold text-gray-100 group-hover:text-white transition-colors">Create Agent</h3>
+                <p className="text-xs text-gray-500 mt-1">Connect exchange to deploy agents</p>
+              </div>
+            </button>
+          ) : (
+            <QuickActionCard
+              href="/dashboard/build"
+              title="Create Agent"
+              description="Build and deploy a new AI trading agent"
+              gradient="hover:border-[#B8FF3C]/30"
+            />
+          )}
           <QuickActionCard
             href="/dashboard/settings"
             title="Connect Exchange"
@@ -1045,6 +1087,13 @@ export default function DashboardPage() {
         @keyframes feedSlideIn {
           from { opacity: 0; transform: translateY(-16px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeUp {
+          from { opacity: 1; transform: translateY(0); }
+          to { opacity: 0; transform: translateY(-12px); }
+        }
+        .animate-fadeUp {
+          animation: fadeUp 1.2s ease-out forwards;
         }
       `}</style>
     </div>
