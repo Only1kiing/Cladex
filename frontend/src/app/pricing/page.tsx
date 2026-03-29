@@ -276,7 +276,7 @@ export default function PricingPage() {
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
                   <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-[#B8FF3C]/10 text-[#B8FF3C] border border-[#B8FF3C]/30">
                     <ZapIcon className="w-3 h-3" />
-                    Most Popular
+                    Recommended
                   </span>
                 </div>
               )}

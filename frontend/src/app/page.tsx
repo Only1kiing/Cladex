@@ -609,36 +609,48 @@ export default function LandingPage() {
             </h2>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-4xl mx-auto items-start">
             {[
               {
                 name: 'Trader',
                 price: '$25',
                 oldPrice: '$99',
-                features: ['Deploy up to 2 agents', 'Basic AI model', 'Airdrop eligible', 'Base points', 'Agent Comm access'],
+                features: ['Deploy up to 2 agents', 'Basic AI model', 'Limited visibility', 'Airdrop eligible', 'Base points'],
                 featured: false,
+                cta: 'Get Trader',
               },
               {
                 name: 'Builder',
                 price: '$80',
                 oldPrice: '$199',
-                features: ['Deploy up to 5 agents', 'Deploy & Earn', 'Smarter AI model', 'Marketplace visibility', 'Higher airdrop eligibility', 'Bonus points'],
+                features: ['Deploy up to 5 agents', 'Deploy & Earn', 'Smarter AI model', 'Marketplace visibility boost', 'Basic analytics', 'Higher airdrop eligibility', 'Bonus points'],
                 featured: true,
+                cta: 'Get Builder — Recommended',
               },
               {
                 name: 'Pro Creator',
                 price: '$200',
                 oldPrice: '$499',
-                features: ['Deploy 10–15 agents', 'Premium AI models', 'Priority ranking', 'Featured placement', 'Advanced analytics', 'Max airdrop eligibility'],
+                features: ['Deploy 10–15 agents', 'Premium AI models', 'Priority ranking', 'Featured placement', 'Higher revenue share', 'Advanced analytics', 'Max airdrop eligibility', 'Premium points'],
                 featured: false,
+                cta: 'Get Pro Creator',
               },
             ].map((plan, idx) => (
               <Reveal key={plan.name} delay={100 + idx * 100}>
-                <div className={`rounded-2xl bg-[#111118] border ${plan.featured ? 'border-[#B8FF3C]/30 green-glow' : 'border-[#1e1e2e]'} p-6 sm:p-8 text-center hover:border-[#B8FF3C]/40 transition-all`}>
+                <div className={`relative rounded-2xl bg-[#111118] border ${plan.featured ? 'border-[#B8FF3C]/30 green-glow sm:scale-105 z-10' : 'border-[#1e1e2e]'} p-6 sm:p-8 text-center hover:border-[#B8FF3C]/40 transition-all`}>
+                  {plan.featured && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-semibold bg-[#B8FF3C]/10 text-[#B8FF3C] border border-[#B8FF3C]/30">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                        Recommended
+                      </span>
+                    </div>
+                  )}
                   <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
                   <div className="mt-4 mb-6">
                     <span className="text-4xl font-black text-white">{plan.price}</span>
                     <span className="ml-2 text-lg text-gray-500 line-through">{plan.oldPrice}</span>
+                    <span className="block text-xs text-gray-500 mt-1">one-time</span>
                   </div>
                   <ul className="space-y-2.5 text-sm text-gray-300 text-left">
                     {plan.features.map((f) => (
@@ -650,9 +662,13 @@ export default function LandingPage() {
                   </ul>
                   <Link
                     href="/login"
-                    className="mt-6 inline-block w-full bg-[#B8FF3C] text-black font-bold text-sm px-6 py-3 rounded-xl hover:brightness-110 transition-all"
+                    className={`mt-6 inline-block w-full font-bold text-sm px-6 py-3 rounded-xl transition-all ${
+                      plan.featured
+                        ? 'bg-[#B8FF3C] text-black hover:brightness-110 shadow-lg shadow-[#B8FF3C]/15'
+                        : 'bg-white/[0.06] text-gray-300 border border-[#1e1e2e] hover:bg-white/[0.1] hover:text-white'
+                    }`}
                   >
-                    Get Started
+                    {plan.cta}
                   </Link>
                 </div>
               </Reveal>
