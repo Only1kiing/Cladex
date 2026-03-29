@@ -328,7 +328,7 @@ export default function AgentBuilderPage() {
   }
 
   function handleDeploy() {
-    setShowMintModal(true);
+    window.location.href = '/pricing';
   }
 
   function handleMintConfirm() {
@@ -626,7 +626,7 @@ export default function AgentBuilderPage() {
                 disabled={!draft.strategy || draft.assets.length === 0}
                 className="bg-[#B8FF3C] hover:brightness-110 text-black text-base font-bold py-3.5"
               >
-                Deploy Agent
+                Select Deployment Plan
               </Button>
             </Card>
 
