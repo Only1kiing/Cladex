@@ -648,9 +648,11 @@ export default function LandingPage() {
                   )}
                   <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
                   <div className="mt-4 mb-6">
-                    <span className="text-4xl font-black text-white">{plan.price}</span>
-                    <span className="ml-2 text-lg text-gray-500 line-through">{plan.oldPrice}</span>
-                    <span className="block text-xs text-gray-500 mt-1">one-time</span>
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className="text-4xl font-black text-white">{plan.price}</span>
+                      <span className="text-base text-gray-400 line-through decoration-red-400/60">{plan.oldPrice}</span>
+                    </div>
+                    <span className="block text-xs text-gray-500 mt-1">one-time payment</span>
                   </div>
                   <ul className="space-y-2.5 text-sm text-gray-300 text-left">
                     {plan.features.map((f) => (
@@ -734,6 +736,45 @@ export default function LandingPage() {
                   <span className="text-gray-300 text-sm sm:text-base">{point.text}</span>
                 </div>
               ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+         5.6. FAQ
+         ═══════════════════════════════════════════════════════════ */}
+      <section className="relative py-20 sm:py-28">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+          <Reveal>
+            <h2 className="text-2xl sm:text-3xl font-black text-center mb-10">
+              Frequently Asked Questions
+            </h2>
+          </Reveal>
+          <Reveal delay={100}>
+            <div className="space-y-3">
+              {[
+                { q: 'What is Cladex?', a: 'Cladex is an AI trading platform that connects to your exchange (like Binance or Bybit) and deploys AI agents that trade crypto on your behalf — 24/7, automatically.' },
+                { q: 'Is my money safe?', a: 'Yes. Cladex is non-custodial — your funds stay on your exchange at all times. We use trade-only API access with no withdrawal permissions. You can disconnect anytime.' },
+                { q: 'Do I need trading experience?', a: 'No. Our AI agents handle the strategy, analysis, and execution. You just connect your exchange, pick an agent, and let it trade for you.' },
+                { q: 'How much does it cost?', a: 'Deployment plans start at $25 (one-time). No recurring fees. The Builder plan ($80) is recommended for most users — it includes 5 agents and marketplace access.' },
+                { q: 'What exchanges are supported?', a: 'Bybit and Binance are fully supported. More exchanges coming soon.' },
+                { q: 'Can I try before paying?', a: 'Yes! Sign up and explore the full dashboard in demo mode — watch agents trade live, check the leaderboard, and interact with Cladex AI. Connect your exchange when you\'re ready.' },
+                { q: 'What is the $CLADEX airdrop?', a: 'All deployment plan holders are eligible for the $CLADEX utility token airdrop. Higher plans get higher allocation. The token powers governance, fee discounts, and staking rewards.' },
+              ].map((faq, i) => {
+                const faqId = `landing-faq-${i}`;
+                return (
+                  <details key={faqId} className="group border border-[#1e1e2e] rounded-xl overflow-hidden hover:border-[#2a2a3e] transition-colors">
+                    <summary className="flex items-center justify-between px-5 py-4 cursor-pointer select-none">
+                      <span className="text-gray-100 font-medium text-sm sm:text-base pr-4">{faq.q}</span>
+                      <svg className="w-5 h-5 text-gray-500 shrink-0 transition-transform duration-300 group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </summary>
+                    <p className="px-5 pb-4 text-gray-400 text-sm leading-relaxed">{faq.a}</p>
+                  </details>
+                );
+              })}
             </div>
           </Reveal>
         </div>
