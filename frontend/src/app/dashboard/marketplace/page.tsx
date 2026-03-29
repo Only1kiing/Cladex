@@ -386,7 +386,7 @@ export default function MarketplacePage() {
             <h2 className="text-lg font-semibold text-gray-100">Top Agent League</h2>
           </div>
           <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
-            <div className="grid grid-cols-6 gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] text-gray-500 uppercase tracking-wider font-medium">
+            <div className="hidden sm:grid grid-cols-6 gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] text-gray-500 uppercase tracking-wider font-medium">
               <span>Agent</span>
               <span>Volume</span>
               <span>ROI</span>
@@ -399,27 +399,36 @@ export default function MarketplacePage() {
               return (
                 <div
                   key={agent.name}
-                  className="grid grid-cols-6 gap-4 px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors items-center"
+                  className="flex flex-col sm:grid sm:grid-cols-6 gap-2 sm:gap-4 px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors sm:items-center"
                   style={{ borderLeft: `3px solid ${accentColor}` }}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 font-mono w-4">{idx + 1}</span>
-                    <span className="text-sm font-semibold text-gray-100">{agent.name}</span>
+                  {/* Mobile: stacked layout / Desktop: grid */}
+                  <div className="flex items-center justify-between sm:contents">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 font-mono w-4">{idx + 1}</span>
+                      <span className="text-sm font-semibold text-gray-100">{agent.name}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-emerald-400 sm:order-none">{agent.roi}</span>
                   </div>
-                  <span className="text-sm text-gray-300">{agent.volume}</span>
-                  <span className="text-sm font-semibold text-emerald-400">{agent.roi}</span>
-                  <span className="text-xs text-gray-500">{agent.creator}</span>
-                  <span className="text-xs text-red-400 flex items-center gap-1">
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    {agent.loves.toLocaleString()}
-                  </span>
-                  <div className="text-right">
-                    <button
-                      onClick={() => setShowConnectPrompt(true)}
-                      className="inline-block px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
-                    >
-                      Use Agent
-                    </button>
+                  <div className="flex items-center justify-between sm:contents">
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <span className="sm:hidden">Vol:</span>
+                      <span className="text-sm text-gray-300">{agent.volume}</span>
+                      <span className="sm:hidden">·</span>
+                      <span>{agent.creator}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-red-400 flex items-center gap-1">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        {agent.loves.toLocaleString()}
+                      </span>
+                      <button
+                        onClick={() => setShowConnectPrompt(true)}
+                        className="px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
+                      >
+                        Use Agent
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

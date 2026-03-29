@@ -298,16 +298,48 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Mobile CTA only */}
-          <div className="md:hidden">
+          {/* Mobile: hamburger + CTA */}
+          <div className="flex items-center gap-3 md:hidden">
             <Link
               href="/login"
               className="bg-[#B8FF3C] text-black font-semibold text-xs px-4 py-2 rounded-lg"
             >
+              Get Started
+            </Link>
+            <button
+              onClick={() => setMobileMenu(!mobileMenu)}
+              className="w-9 h-9 rounded-lg bg-white/[0.06] flex items-center justify-center text-gray-400"
+            >
+              {mobileMenu ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile nav dropdown */}
+        {mobileMenu && (
+          <div className="md:hidden border-t border-[#1e1e2e]/60 bg-[#0a0a0f]/95 backdrop-blur-xl px-4 py-3 space-y-2">
+            <Link href="#agents" onClick={() => setMobileMenu(false)} className="block py-2 text-sm text-gray-400 hover:text-white transition-colors">
+              Agents
+            </Link>
+            <Link href="/signup" onClick={() => setMobileMenu(false)} className="block py-2 text-sm text-gray-400 hover:text-white transition-colors">
+              Explore
+            </Link>
+            <Link href="/pricing" onClick={() => setMobileMenu(false)} className="block py-2 text-sm text-gray-400 hover:text-white transition-colors">
+              Plans
+            </Link>
+            <Link
+              href="/login"
+              onClick={() => setMobileMenu(false)}
+              className="block w-full text-center bg-[#B8FF3C] text-black font-semibold text-sm px-5 py-2.5 rounded-lg hover:brightness-110 transition-all mt-2"
+            >
               Connect Exchange
             </Link>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* ═══════════════════════════════════════════════════════════
