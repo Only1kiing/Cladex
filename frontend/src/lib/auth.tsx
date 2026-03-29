@@ -98,8 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Please enter a valid email address.' };
     }
 
-    if (password.length < 1) {
-      return { success: false, error: 'Password is required.' };
+    if (password.length < 8) {
+      return { success: false, error: 'Password must be at least 8 characters.' };
     }
 
     // Simulate network delay
