@@ -82,6 +82,7 @@ interface DeploymentPlan {
   name: string;
   icon: React.ReactNode;
   price: string;
+  oldPrice: string;
   features: string[];
   cta: string;
   ctaHref: string;
@@ -97,6 +98,7 @@ const deploymentPlans: DeploymentPlan[] = [
     name: 'Trader',
     icon: <ZapIcon className="w-6 h-6" />,
     price: '$25',
+    oldPrice: '$99',
     features: [
       'Deploy up to 2 agents',
       'Basic AI model',
@@ -116,6 +118,7 @@ const deploymentPlans: DeploymentPlan[] = [
     name: 'Builder',
     icon: <ZapIcon className="w-6 h-6" />,
     price: '$80',
+    oldPrice: '$199',
     features: [
       'Deploy up to 5 agents',
       'Deploy & Earn',
@@ -125,7 +128,7 @@ const deploymentPlans: DeploymentPlan[] = [
       'Higher airdrop eligibility',
       'Bonus points',
     ],
-    cta: 'Get Builder',
+    cta: 'Get Builder — Recommended',
     ctaHref: '/signup?plan=builder',
     ctaStyle: 'primary',
     popular: true,
@@ -137,6 +140,7 @@ const deploymentPlans: DeploymentPlan[] = [
     name: 'Pro Creator',
     icon: <CrownIcon className="w-6 h-6" />,
     price: '$200',
+    oldPrice: '$499',
     features: [
       'Deploy 10\u201315 agents',
       'Premium AI models',
@@ -290,10 +294,11 @@ export default function PricingPage() {
 
                 {/* Price */}
                 <div className="mb-6">
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 justify-start">
                     <span className="text-4xl font-bold text-gray-100">{plan.price}</span>
-                    <span className="text-gray-500 text-sm">one-time</span>
+                    <span className="text-base text-gray-400 line-through decoration-red-400/60">{plan.oldPrice}</span>
                   </div>
+                  <span className="text-gray-500 text-xs">one-time payment</span>
                 </div>
 
                 {/* Divider */}
