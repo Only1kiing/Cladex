@@ -264,7 +264,7 @@ const exchanges = [
 
 // ---- Dashboard Feed Messages ----
 
-type DashFeedMsg = { name: string; color: string; msg: string; profit?: string };
+type DashFeedMsg = { id?: string; name: string; color: string; msg: string; profit?: string };
 const DASH_FEED_MSGS: DashFeedMsg[] = [
   // Hunter agents - fast, cocky
   { name: 'Raze', color: 'text-red-400', msg: 'SOL +4.2% in 20 min. Humans could never ⚡', profit: '+$127' },
@@ -469,7 +469,10 @@ export default function DashboardPage() {
   const [lovedMessages, setLovedMessages] = useState<Set<string>>(new Set());
   const [loveAnimations, setLoveAnimations] = useState<Set<string>>(new Set());
 
-  const [dashFeed, setDashFeed] = useState<DashFeedMsg[]>(() => DASH_FEED_MSGS.slice(0, 8));
+  const feedCounterRef = useRef(100);
+  const [dashFeed, setDashFeed] = useState<DashFeedMsg[]>(() =>
+    DASH_FEED_MSGS.slice(0, 8).map((m, i) => ({ ...m, id: `feed-${i}` }))
+  );
   const dashFeedIdxRef = useRef(8);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -537,8 +540,10 @@ export default function DashboardPage() {
   // Cycle dashboard feed messages
   useEffect(() => {
     const id = setInterval(() => {
-      const nextMsg = DASH_FEED_MSGS[dashFeedIdxRef.current % DASH_FEED_MSGS.length];
+      const base = DASH_FEED_MSGS[dashFeedIdxRef.current % DASH_FEED_MSGS.length];
+      feedCounterRef.current++;
       dashFeedIdxRef.current++;
+      const nextMsg = { ...base, id: `feed-${feedCounterRef.current}` };
       setDashFeed(prev => [nextMsg, ...prev].slice(0, 12));
     }, 3500 + Math.random() * 2500);
     return () => clearInterval(id);
@@ -665,6 +670,27 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Balance & Deposit Widget */}
+      <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-white">$250.00</p>
+            <p className="text-[10px] text-gray-500">Balance — for fees & minting</p>
+          </div>
+        </div>
+        <Link
+          href="/dashboard/settings"
+          className="px-4 py-2 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-xs font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
+        >
+          Deposit
+        </Link>
+      </div>
+
       {/* Cladex AI Chat — Goals & Strategy */}
       <section>
         <div className="rounded-2xl border border-[#1e1e2e] bg-[#111118]/80 backdrop-blur-xl overflow-hidden">
@@ -716,7 +742,7 @@ export default function DashboardPage() {
             <div className="divide-y divide-[#1e1e2e]/60">
               {dashFeed.map((msg, i) => (
                 <div
-                  key={`${msg.name}-${i}-${dashFeedIdxRef.current}`}
+                  key={msg.id!}
                   className="flex items-center gap-3 px-4 py-2.5 transition-all"
                   style={{ animation: i === 0 ? 'feedSlideIn 0.5s ease-out' : undefined }}
                 >
@@ -728,19 +754,19 @@ export default function DashboardPage() {
                     </span>
                   )}
                   <button
-                    onClick={() => handleLove(`${msg.name}-${i}`)}
+                    onClick={() => handleLove(msg.id!)}
                     className={`shrink-0 flex items-center gap-1 text-xs transition-all ${
-                      lovedMessages.has(`${msg.name}-${i}`)
+                      lovedMessages.has(msg.id!)
                         ? 'text-red-400'
                         : 'text-gray-600 hover:text-red-400'
                     }`}
                   >
-                    {lovedMessages.has(`${msg.name}-${i}`) ? (
+                    {lovedMessages.has(msg.id!) ? (
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     ) : (
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                     )}
-                    {loveAnimations.has(`${msg.name}-${i}`) && (
+                    {loveAnimations.has(msg.id!) && (
                       <span className="text-[10px] text-red-400 animate-fadeUp">-5 CP</span>
                     )}
                   </button>
