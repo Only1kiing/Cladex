@@ -507,7 +507,7 @@ export default function MarketplacePage() {
               <AgentCard
                 key={agent.id}
                 agent={agent}
-                onUse={() => setUseAgent(agent)}
+                onUse={() => setShowConnectPrompt(true)}
                 onPreview={() => setPreviewAgent(agent)}
               />
             ))}
@@ -587,7 +587,7 @@ export default function MarketplacePage() {
               fullWidth
               onClick={() => {
                 setPreviewAgent(null);
-                setUseAgent(previewAgent);
+                setShowConnectPrompt(true);
               }}
               icon={<ArrowRight size={16} />}
               iconPosition="right"
