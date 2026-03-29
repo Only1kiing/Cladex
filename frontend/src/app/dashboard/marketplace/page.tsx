@@ -333,6 +333,7 @@ function AgentCard({ agent, onUse, onPreview }: { agent: MarketplaceAgent; onUse
 export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [showAllLeague, setShowAllLeague] = useState(false);
   const [previewAgent, setPreviewAgent] = useState<MarketplaceAgent | null>(null);
   const [useAgent, setUseAgent] = useState<MarketplaceAgent | null>(null);
 
@@ -392,7 +393,7 @@ export default function MarketplacePage() {
               <span>Loves</span>
               <span className="text-right">Action</span>
             </div>
-            {leaderboardAgents.map((agent, idx) => {
+            {(showAllLeague ? leaderboardAgents : leaderboardAgents.slice(0, 3)).map((agent, idx) => {
               const accentColor = agent.personality === 'hunter' ? '#FF6B35' : agent.personality === 'oracle' ? '#A78BFA' : agent.personality === 'guardian' ? '#4ade80' : '#60A5FA';
               return (
                 <div
@@ -420,6 +421,15 @@ export default function MarketplacePage() {
               );
             })}
           </div>
+          {leaderboardAgents.length > 3 && (
+            <button
+              onClick={() => setShowAllLeague(!showAllLeague)}
+              className="mt-3 w-full py-2 rounded-lg border border-[#1e1e2e] bg-white/[0.02] text-xs font-medium text-gray-400 hover:text-white hover:border-white/[0.1] transition-all flex items-center justify-center gap-1.5"
+            >
+              {showAllLeague ? 'Show Less' : `View All (${leaderboardAgents.length})`}
+              <svg className={`w-3.5 h-3.5 transition-transform ${showAllLeague ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </button>
+          )}
         </section>
       </div>
 
