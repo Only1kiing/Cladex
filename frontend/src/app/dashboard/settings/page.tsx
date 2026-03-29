@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const EXCHANGES = [
@@ -20,6 +20,28 @@ export default function SettingsPage() {
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [connecting, setConnecting] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('cladex_theme');
+    if (saved === 'light') {
+      setIsDark(false);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newDark = !isDark;
+    setIsDark(newDark);
+    if (newDark) {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('cladex_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      localStorage.setItem('cladex_theme', 'light');
+    }
+  };
 
   const handleDeposit = () => {
     const amount = parseFloat(depositAmount);
@@ -235,6 +257,43 @@ export default function SettingsPage() {
               <p className="text-xs text-gray-500">Pay directly from your connected wallet (MetaMask, etc.)</p>
             </div>
           </label>
+        </div>
+      </section>
+
+      {/* Appearance */}
+      <section className="rounded-2xl border border-[#1e1e2e] bg-[#111118] p-6">
+        <h2 className="text-lg font-semibold text-gray-100 mb-1">Appearance</h2>
+        <p className="text-xs text-gray-500 mb-4">Switch between dark and light mode</p>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {isDark ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-400">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            )}
+            <span className="text-sm text-gray-300">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${isDark ? 'bg-[#1e1e2e]' : 'bg-[#B8FF3C]'}`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 ${isDark ? 'translate-x-0' : 'translate-x-6'}`}
+            />
+          </button>
         </div>
       </section>
     </div>
