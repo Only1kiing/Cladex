@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { PointsWidget } from '@/components/dashboard/PointsSystem';
+// Points widget moved to /dashboard/points page
 import { Logo } from '@/components/ui/Logo';
 
 const navItems = [
@@ -165,9 +165,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Link>
       </div>
 
-      {/* Points Widget */}
+      {/* Fund */}
       <div className="px-3 mb-3">
-        <PointsWidget />
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-white/[0.04] transition-all duration-200"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+          </svg>
+          Fund
+        </Link>
+      </div>
+
+      {/* Settings */}
+      <div className="px-3 mb-3">
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-white/[0.04] transition-all duration-200"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+          </svg>
+          Settings
+        </Link>
       </div>
 
       {/* Theme Toggle */}
@@ -205,10 +227,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-200 truncate">{user?.name || 'User'}</p>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-500/15 text-gray-400 border border-gray-500/20 font-medium">Free Plan</span>
-              <span className="text-[10px] text-gray-600">1/1 agents</span>
-            </div>
+            <p className="text-[10px] text-gray-500 truncate">{user?.email || 'user@cladex.io'}</p>
           </div>
         </div>
         <button
