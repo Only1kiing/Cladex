@@ -394,14 +394,6 @@ function ChatPanel({
                 ? 'bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-gray-100'
                 : 'bg-white/[0.04] border border-white/[0.06] text-gray-300',
             ].join(' ')}>
-              {msg.role === 'ai' && (
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div className="w-5 h-5 rounded-full bg-[#B8FF3C] flex items-center justify-center">
-                    <span className="text-[9px] font-bold text-black">C</span>
-                  </div>
-                  <span className="text-[10px] font-medium text-[#B8FF3C]/80 uppercase tracking-wider">Cladex AI</span>
-                </div>
-              )}
               {msg.text}
             </div>
           </div>
@@ -409,12 +401,6 @@ function ChatPanel({
         {isTyping && (
           <div className="flex justify-start">
             <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 py-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="w-5 h-5 rounded-full bg-[#B8FF3C] flex items-center justify-center">
-                  <span className="text-[9px] font-bold text-black">C</span>
-                </div>
-                <span className="text-[10px] font-medium text-[#B8FF3C]/80 uppercase tracking-wider">Cladex AI</span>
-              </div>
               <TypingIndicator />
             </div>
           </div>
