@@ -174,7 +174,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
           </svg>
-          Fund
+          Gas Balance
         </Link>
       </div>
 

@@ -687,7 +687,7 @@ export default function DashboardPage() {
           href="/dashboard/settings"
           className="px-4 py-2 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-xs font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
         >
-          Fund
+          Gas Balance
         </Link>
       </div>
 
