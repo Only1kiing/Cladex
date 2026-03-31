@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { DeploymentModal } from '@/components/dashboard/DeploymentModal';
 
 /* ------------------------------------------------------------------ */
 /*  Inline SVG Icons                                                    */
@@ -221,7 +222,21 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 /*  Main Page                                                           */
 /* ------------------------------------------------------------------ */
 
+const planData: Record<string, { name: string; price: number; agents: number }> = {
+  'Trader': { name: 'Trader', price: 25, agents: 2 },
+  'Builder': { name: 'Builder', price: 80, agents: 5 },
+  'Pro Creator': { name: 'Pro Creator', price: 200, agents: 15 },
+};
+
 export default function PricingPage() {
+  const [deployModalOpen, setDeployModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number; agents: number } | null>(null);
+
+  const handlePlanClick = (planName: string) => {
+    setSelectedPlan(planData[planName] || null);
+    setDeployModalOpen(true);
+  };
+
   const deployCta: Record<string, string> = {
     ghost: [
       'border border-[#1e1e2e] bg-transparent text-gray-300',
@@ -315,12 +330,12 @@ export default function PricingPage() {
                 </ul>
 
                 {/* CTA */}
-                <Link
-                  href={plan.ctaHref}
+                <button
+                  onClick={() => handlePlanClick(plan.name)}
                   className={`block w-full text-center py-3 px-6 rounded-xl font-semibold text-sm transition-all duration-200 ${deployCta[plan.ctaStyle]}`}
                 >
                   {plan.cta}
-                </Link>
+                </button>
               </div>
             </div>
           ))}
@@ -382,6 +397,13 @@ export default function PricingPage() {
           </Link>
         </div>
       </section>
+
+      {/* Deployment Modal */}
+      <DeploymentModal
+        isOpen={deployModalOpen}
+        onClose={() => setDeployModalOpen(false)}
+        plan={selectedPlan}
+      />
     </div>
   );
 }
