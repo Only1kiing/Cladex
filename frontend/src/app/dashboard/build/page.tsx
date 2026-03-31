@@ -265,9 +265,7 @@ export default function AgentBuilderPage() {
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [showDeployModal, setShowDeployModal] = useState(false);
-  const [showMintModal, setShowMintModal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [hasFreeAgent, setHasFreeAgent] = useState(true);
   const [draft, setDraft] = useState<AgentDraft>({
     name: 'My Trading Agent',
     personality: 'analyst',
@@ -354,7 +352,6 @@ export default function AgentBuilderPage() {
 
     if (count >= limit) {
       // Hit limit — show upgrade
-      setShowMintModal(false);
       setShowDeployModal(false);
       alert(`You've reached your ${plan} plan limit (${limit} agents). Upgrade your plan for more agent slots.`);
       window.location.href = '/pricing';
@@ -362,10 +359,6 @@ export default function AgentBuilderPage() {
     }
 
     // Has capacity — deploy directly
-    const personalityColors: Record<AgentPersonality, string> = {
-      hunter: 'text-red-400', oracle: 'text-violet-400', guardian: 'text-emerald-400', analyst: 'text-cyan-400'
-    };
-
     addDeployedAgent({
       id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       name: draft.name,
@@ -386,11 +379,6 @@ export default function AgentBuilderPage() {
     setShowDeployModal(true);
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3500);
-  }
-
-  function handleMintConfirm() {
-    setShowMintModal(false);
-    handleDeploy();
   }
 
   const riskColor =
@@ -714,69 +702,6 @@ export default function AgentBuilderPage() {
         </div>
       </div>
 
-      {/* Mint Confirmation Modal */}
-      <Modal
-        isOpen={showMintModal}
-        onClose={() => setShowMintModal(false)}
-        title="Mint Your Agent"
-        size="md"
-      >
-        <div className="py-4">
-          <p className="text-sm text-gray-400 text-center mb-5">Deploy <span className="text-white font-semibold">{draft.name}</span> on-chain</p>
-
-          {/* Agent preview */}
-          <div className="bg-[#0a0a0f] rounded-xl p-4 border border-[#2a2a3a] mb-5 space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Name</span>
-              <span className="text-white font-medium">{draft.name}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Personality</span>
-              <Badge variant={draft.personality} size="sm">{selectedPersonality.label}</Badge>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Strategy</span>
-              <span className="text-gray-300 text-right max-w-[200px] truncate">{draft.strategy || 'Custom strategy'}</span>
-            </div>
-          </div>
-
-          {/* Price section */}
-          <div className="bg-[#0a0a0f] rounded-xl p-4 border border-[#2a2a3a] mb-5 text-center">
-            {hasFreeAgent ? (
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-guardian-500/15 border border-guardian-500/30 mb-2">
-                  <span className="text-guardian-400 font-bold text-sm">FREE</span>
-                </div>
-                <p className="text-xs text-gray-400">Your first agent deployment</p>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <span className="text-white font-bold text-lg">$20</span>
-                  <span className="text-xs text-gray-500">Mint Fee</span>
-                  <span className="text-xs text-gray-600 line-through">$100</span>
-                </div>
-                <p className="text-xs text-gray-400">Early access pricing</p>
-              </div>
-            )}
-          </div>
-
-          {/* Mint button */}
-          <Button
-            onClick={handleMintConfirm}
-            size="lg"
-            fullWidth
-            icon={<Rocket size={18} />}
-            className="bg-[#B8FF3C] hover:brightness-110 text-black text-base font-bold py-3.5 mb-4"
-          >
-            Mint via Smart Contract
-          </Button>
-
-          <p className="text-[11px] text-gray-500 text-center mb-1">Your agent will be stored as an NFT you own forever</p>
-          <p className="text-[11px] text-gray-500 text-center">Powered by Base network</p>
-        </div>
-      </Modal>
-
       {/* Deploy Success Modal */}
       <Modal
         isOpen={showDeployModal}
@@ -811,7 +736,7 @@ export default function AgentBuilderPage() {
             <Button variant="secondary" fullWidth onClick={() => setShowDeployModal(false)}>
               Build Another
             </Button>
-            <Button fullWidth onClick={() => setShowDeployModal(false)}>
+            <Button fullWidth onClick={() => { setShowDeployModal(false); window.location.href = '/dashboard/agents'; }}>
               View Agent
             </Button>
           </div>

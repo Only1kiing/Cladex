@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Shield, BarChart3, Target, Eye, Play, Pause, Square, MessageCircle,
-  Send, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Clock,
-  Calendar, Sparkles, Rocket,
+  Send, Calendar, Rocket,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
@@ -72,7 +71,6 @@ function getAskResponse(name: string, personality: AgentPersonality, question: s
 // ---- Agent Card ----
 
 function AgentCard({ agent }: { agent: DeployedAgent }) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [status, setStatus] = useState<AgentStatus>(agent.status);
   const [askInput, setAskInput] = useState('');
   const [askResponse, setAskResponse] = useState<string | null>(null);

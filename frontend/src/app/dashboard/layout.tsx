@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-// Points widget moved to /dashboard/points page
 import { Logo } from '@/components/ui/Logo';
 import { ActiveTradesWidget } from '@/components/dashboard/ActiveTrades';
 
@@ -72,7 +71,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const { user, logout, isAuthenticated, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDark, setIsDark] = useState(true);
 
   // Auth guard — redirect to login if not authenticated
   useEffect(() => {
@@ -80,29 +78,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.push('/login');
     }
   }, [isLoading, isAuthenticated, router]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('cladex_theme');
-    if (saved === 'light') {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newDark = !isDark;
-    setIsDark(newDark);
-    if (newDark) {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('cladex_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-      localStorage.setItem('cladex_theme', 'light');
-    }
-  };
 
   const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
 
