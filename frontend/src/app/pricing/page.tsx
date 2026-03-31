@@ -86,7 +86,6 @@ interface DeploymentPlan {
   oldPrice: string;
   features: string[];
   cta: string;
-  ctaHref: string;
   ctaStyle: 'ghost' | 'primary' | 'purple';
   popular: boolean;
   iconColor: string;
@@ -108,7 +107,6 @@ const deploymentPlans: DeploymentPlan[] = [
       'Base points',
     ],
     cta: 'Get Trader',
-    ctaHref: '/signup?plan=trader',
     ctaStyle: 'ghost',
     popular: false,
     iconColor: 'text-gray-400',
@@ -130,7 +128,6 @@ const deploymentPlans: DeploymentPlan[] = [
       'Bonus points',
     ],
     cta: 'Get Builder — Recommended',
-    ctaHref: '/signup?plan=builder',
     ctaStyle: 'primary',
     popular: true,
     iconColor: 'text-[#B8FF3C]',
@@ -153,7 +150,6 @@ const deploymentPlans: DeploymentPlan[] = [
       'Premium points',
     ],
     cta: 'Get Pro Creator',
-    ctaHref: '/signup?plan=pro-creator',
     ctaStyle: 'purple',
     popular: false,
     iconColor: 'text-purple-400',
