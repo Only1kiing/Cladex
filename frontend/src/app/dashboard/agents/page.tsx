@@ -12,6 +12,7 @@ import { AgentAvatar } from '@/components/dashboard/AgentAvatar';
 import { getDeployedAgents, updateAgentStatus, publishAgent, unpublishAgent } from '@/lib/agents-store';
 import type { DeployedAgent } from '@/lib/agents-store';
 import type { AgentPersonality } from '@/types';
+import { api } from '@/lib/api';
 
 // ---- Constants ----
 
@@ -106,9 +107,28 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
   const isPositive = pnl >= 0;
   const isPending = status === 'pending';
 
-  const handleStatusChange = (newStatus: AgentStatus) => {
-    setStatus(newStatus);
-    updateAgentStatus(agent.id, newStatus);
+  const [statusLoading, setStatusLoading] = useState(false);
+
+  const handleStatusChange = async (newStatus: AgentStatus) => {
+    if (statusLoading) return;
+    setStatusLoading(true);
+    const backendStatusMap: Record<AgentStatus, string> = {
+      active: 'RUNNING',
+      paused: 'PAUSED',
+      stopped: 'STOPPED',
+      pending: 'RUNNING',
+    };
+    try {
+      await api.patch(`/agents/${agent.id}`, { status: backendStatusMap[newStatus] });
+      setStatus(newStatus);
+      updateAgentStatus(agent.id, newStatus);
+    } catch {
+      // Fallback to localStorage-only update if API fails
+      setStatus(newStatus);
+      updateAgentStatus(agent.id, newStatus);
+    } finally {
+      setStatusLoading(false);
+    }
   };
 
   const handleAsk = () => {
@@ -475,11 +495,83 @@ function EmptyState() {
 
 // ---- Main Page ----
 
+// Map backend status to frontend status
+function mapBackendStatus(status: string): AgentStatus {
+  const map: Record<string, AgentStatus> = {
+    RUNNING: 'active',
+    PAUSED: 'paused',
+    STOPPED: 'stopped',
+  };
+  return map[status] || 'active';
+}
+
+// Map backend personality to frontend personality
+function mapBackendPersonality(personality: string): AgentPersonality {
+  return personality.toLowerCase() as AgentPersonality;
+}
+
+// Convert a backend agent to the DeployedAgent format
+function backendToDeployedAgent(agent: Record<string, unknown>): DeployedAgent {
+  return {
+    id: agent.id as string,
+    name: agent.name as string,
+    personality: mapBackendPersonality(agent.personality as string),
+    status: mapBackendStatus(agent.status as string),
+    plan: (agent as Record<string, unknown>).plan as string || 'Trader',
+    walletAddress: null,
+    deployMethod: 'gas-balance',
+    pnl: (agent.profit as number) || 0,
+    pnlPercent: 0,
+    totalTrades: (agent.totalTrades as number) || 0,
+    winRate: 0,
+    assets: (agent.assets as string[]) || [],
+    createdAt: new Date(agent.createdAt as string).getTime(),
+    strategy: (agent as Record<string, unknown>).strategy as string || undefined,
+  };
+}
+
 export default function MyAgentsPage() {
   const [agents, setAgents] = useState<DeployedAgent[]>([]);
 
-  const refresh = useCallback(() => {
-    setAgents(getDeployedAgents());
+  const refresh = useCallback(async () => {
+    // Start with localStorage agents
+    const localAgents = getDeployedAgents();
+
+    try {
+      const data = await api.get<{ agents: Record<string, unknown>[] }>('/agents');
+      const backendAgents = (data.agents || []).map(backendToDeployedAgent);
+
+      // Merge: use backend agents as primary, add localStorage-only agents (by id)
+      const backendIds = new Set(backendAgents.map(a => a.id));
+      const localOnly = localAgents.filter(a => !backendIds.has(a.id));
+
+      // For backend agents that also exist in localStorage, preserve localStorage fields (plan, walletAddress, etc.)
+      const merged = backendAgents.map(ba => {
+        const local = localAgents.find(la => la.id === ba.id);
+        if (local) {
+          return {
+            ...ba,
+            plan: local.plan || ba.plan,
+            walletAddress: local.walletAddress,
+            deployMethod: local.deployMethod,
+            pnlPercent: local.pnlPercent || ba.pnlPercent,
+            winRate: local.winRate || ba.winRate,
+            strategy: local.strategy || ba.strategy,
+            published: local.published,
+            publishedAt: local.publishedAt,
+            subscribers: local.subscribers,
+            description: local.description,
+            price: local.price,
+          };
+        }
+        return ba;
+      });
+
+      setAgents([...merged, ...localOnly]);
+    } catch {
+      // If API fails, fall back to localStorage only
+      setAgents(localAgents);
+    }
   }, []);
 
   useEffect(() => {

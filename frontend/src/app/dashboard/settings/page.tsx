@@ -11,7 +11,7 @@ const EXCHANGES = [
 ];
 
 export default function SettingsPage() {
-  const [balance, setBalance] = useState(250.00);
+  const [balance, setBalance] = useState(0);
   const [depositAmount, setDepositAmount] = useState('');
   const [showDeposit, setShowDeposit] = useState(false);
   const [depositing, setDepositing] = useState(false);

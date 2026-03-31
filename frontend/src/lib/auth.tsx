@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
 import type { User } from '@/types';
 
 interface AuthState {
@@ -30,6 +31,8 @@ const STORAGE_KEYS = {
   wallet: 'cladex_wallet',
 } as const;
 
+// --- Demo/mock helpers used as offline fallback when the backend is unreachable ---
+
 function generateToken(): string {
   const rand = Math.random().toString(36).substring(2, 10);
   return `demo-token-${rand}`;
@@ -37,6 +40,10 @@ function generateToken(): string {
 
 function generateUserId(): string {
   return `user_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+}
+
+function isNetworkError(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && (err as { status?: number }).status === 0;
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -52,41 +59,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: false,
   });
 
-  // Restore session from localStorage on mount
+  // Restore session on mount by verifying the token with the backend.
+  // Falls back to localStorage-only restore if the backend is unreachable so the
+  // app still works offline / in demo mode.
   useEffect(() => {
-    try {
-      const storedToken = localStorage.getItem(STORAGE_KEYS.token);
-      const storedUser = localStorage.getItem(STORAGE_KEYS.user);
-      const storedWallet = localStorage.getItem(STORAGE_KEYS.wallet);
+    async function restoreSession() {
+      try {
+        const storedToken = localStorage.getItem(STORAGE_KEYS.token);
+        const storedUser = localStorage.getItem(STORAGE_KEYS.user);
+        const storedWallet = localStorage.getItem(STORAGE_KEYS.wallet);
 
-      if (storedToken && storedUser) {
-        const user = JSON.parse(storedUser) as User;
-        setState({
-          user,
-          token: storedToken,
-          walletAddress: storedWallet,
-          isEmailVerified: true,
-          isLoading: false,
-          isAuthenticated: true,
-        });
-      } else if (storedWallet) {
-        setState({
-          user: null,
-          token: storedToken,
-          walletAddress: storedWallet,
-          isEmailVerified: false,
-          isLoading: false,
-          isAuthenticated: true,
-        });
-      } else {
+        if (storedToken) {
+          try {
+            // Verify the token is still valid with the backend
+            const { user } = await api.get<{ user: User }>('/auth/me');
+            localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
+            setState({
+              user,
+              token: storedToken,
+              walletAddress: storedWallet,
+              isEmailVerified: true,
+              isLoading: false,
+              isAuthenticated: true,
+            });
+            return;
+          } catch (err) {
+            if (isNetworkError(err)) {
+              // Backend unreachable – fall back to cached localStorage data so the
+              // app still works offline / in demo mode.
+              if (storedUser) {
+                const user = JSON.parse(storedUser) as User;
+                setState({
+                  user,
+                  token: storedToken,
+                  walletAddress: storedWallet,
+                  isEmailVerified: true,
+                  isLoading: false,
+                  isAuthenticated: true,
+                });
+                return;
+              }
+            }
+            // Token invalid (401 etc.) – clear stored credentials
+            localStorage.removeItem(STORAGE_KEYS.token);
+            localStorage.removeItem(STORAGE_KEYS.user);
+          }
+        }
+
+        // No token but wallet present – keep wallet-only auth
+        if (storedWallet) {
+          setState({
+            user: null,
+            token: null,
+            walletAddress: storedWallet,
+            isEmailVerified: false,
+            isLoading: false,
+            isAuthenticated: true,
+          });
+          return;
+        }
+
+        setState((prev) => ({ ...prev, isLoading: false }));
+      } catch {
+        localStorage.removeItem(STORAGE_KEYS.token);
+        localStorage.removeItem(STORAGE_KEYS.user);
+        localStorage.removeItem(STORAGE_KEYS.wallet);
         setState((prev) => ({ ...prev, isLoading: false }));
       }
-    } catch {
-      localStorage.removeItem(STORAGE_KEYS.token);
-      localStorage.removeItem(STORAGE_KEYS.user);
-      localStorage.removeItem(STORAGE_KEYS.wallet);
-      setState((prev) => ({ ...prev, isLoading: false }));
     }
+
+    restoreSession();
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
@@ -102,33 +144,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Password must be at least 8 characters.' };
     }
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const { user, token } = await api.post<{ user: User; token: string }>('/auth/login', { email, password });
 
-    const now = new Date().toISOString();
-    const token = generateToken();
-    const user: User = {
-      id: generateUserId(),
-      email,
-      name: email.split('@')[0],
-      createdAt: now,
-      updatedAt: now,
-    };
+      localStorage.setItem(STORAGE_KEYS.token, token);
+      localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
 
-    localStorage.setItem(STORAGE_KEYS.token, token);
-    localStorage.setItem(STORAGE_KEYS.user, JSON.stringify({ email, name: user.name, token }));
+      setState((prev) => ({
+        ...prev,
+        user,
+        token,
+        isEmailVerified: true,
+        isLoading: false,
+        isAuthenticated: true,
+      }));
 
-    setState({
-      user,
-      token,
-      walletAddress: state.walletAddress,
-      isEmailVerified: true,
-      isLoading: false,
-      isAuthenticated: true,
-    });
+      return { success: true };
+    } catch (err) {
+      // If backend is unreachable (network error), fall back to demo/mock behavior
+      // so the app still works offline during development.
+      if (isNetworkError(err)) {
+        const now = new Date().toISOString();
+        const mockToken = generateToken();
+        const user: User = {
+          id: generateUserId(),
+          email,
+          name: email.split('@')[0],
+          createdAt: now,
+          updatedAt: now,
+        };
 
-    return { success: true };
-  }, [state.walletAddress]);
+        localStorage.setItem(STORAGE_KEYS.token, mockToken);
+        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
+
+        setState((prev) => ({
+          ...prev,
+          user,
+          token: mockToken,
+          isEmailVerified: true,
+          isLoading: false,
+          isAuthenticated: true,
+        }));
+
+        return { success: true };
+      }
+
+      const message = (err as { message?: string }).message || 'Login failed. Please try again.';
+      return { success: false, error: message };
+    }
+  }, []);
 
   const signup = useCallback(async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     if (!name || !email || !password) {
@@ -143,34 +207,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Password must be at least 8 characters.' };
     }
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const { user, token } = await api.post<{ user: User; token: string }>('/auth/signup', { name, email, password });
 
-    const now = new Date().toISOString();
-    const token = generateToken();
-    const user: User = {
-      id: generateUserId(),
-      email,
-      name,
-      createdAt: now,
-      updatedAt: now,
-    };
+      localStorage.setItem(STORAGE_KEYS.token, token);
+      localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
 
-    localStorage.setItem(STORAGE_KEYS.token, token);
-    localStorage.setItem(STORAGE_KEYS.user, JSON.stringify({ email, name, token }));
+      setState((prev) => ({
+        ...prev,
+        user,
+        token,
+        isEmailVerified: true,
+        isLoading: false,
+        isAuthenticated: true,
+      }));
 
-    setState({
-      user,
-      token,
-      walletAddress: state.walletAddress,
-      isEmailVerified: false,
-      isLoading: false,
-      isAuthenticated: true,
-    });
+      return { success: true };
+    } catch (err) {
+      // If backend is unreachable (network error), fall back to demo/mock behavior
+      // so the app still works offline during development.
+      if (isNetworkError(err)) {
+        const now = new Date().toISOString();
+        const mockToken = generateToken();
+        const user: User = {
+          id: generateUserId(),
+          email,
+          name,
+          createdAt: now,
+          updatedAt: now,
+        };
 
-    return { success: true };
-  }, [state.walletAddress]);
+        localStorage.setItem(STORAGE_KEYS.token, mockToken);
+        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
 
+        setState((prev) => ({
+          ...prev,
+          user,
+          token: mockToken,
+          isEmailVerified: true,
+          isLoading: false,
+          isAuthenticated: true,
+        }));
+
+        return { success: true };
+      }
+
+      const message = (err as { message?: string }).message || 'Signup failed. Please try again.';
+      return { success: false, error: message };
+    }
+  }, []);
+
+  // Simulated wallet connection – no backend endpoint exists yet.
+  // Keeps the same behavior as before (mock address stored in localStorage).
   const connectWallet = useCallback(async (): Promise<{ success: boolean; address?: string; error?: string }> => {
     // Simulate MetaMask connection delay
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -200,35 +288,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Please fill in all fields.' };
     }
 
-    // Simulate connection delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      await api.post('/exchange/connect', { name: exchangeId, apiKey, apiSecret });
 
-    const token = state.token || generateToken();
-    if (!state.token) {
-      localStorage.setItem(STORAGE_KEYS.token, token);
+      setState((prev) => ({
+        ...prev,
+        isEmailVerified: true,
+        isLoading: false,
+        isAuthenticated: true,
+      }));
+
+      return { success: true, exchange: exchangeId };
+    } catch (err) {
+      // If backend is unreachable (network error), fall back to demo/mock behavior
+      // so the app still works offline during development.
+      if (isNetworkError(err)) {
+        const token = state.token || generateToken();
+        if (!state.token) {
+          localStorage.setItem(STORAGE_KEYS.token, token);
+        }
+
+        const now = new Date().toISOString();
+        const user = state.user || {
+          id: generateUserId(),
+          email: `${exchangeId}@cladex.io`,
+          name: exchangeId.charAt(0).toUpperCase() + exchangeId.slice(1) + ' User',
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
+
+        setState({
+          user,
+          token,
+          walletAddress: null,
+          isEmailVerified: true,
+          isLoading: false,
+          isAuthenticated: true,
+        });
+
+        return { success: true, exchange: exchangeId };
+      }
+
+      const message = (err as { message?: string }).message || 'Failed to connect exchange. Please try again.';
+      return { success: false, error: message };
     }
-
-    const now = new Date().toISOString();
-    const user = state.user || {
-      id: generateUserId(),
-      email: `${exchangeId}@cladex.io`,
-      name: exchangeId.charAt(0).toUpperCase() + exchangeId.slice(1) + ' User',
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
-
-    setState({
-      user,
-      token,
-      walletAddress: null,
-      isEmailVerified: true,
-      isLoading: false,
-      isAuthenticated: true,
-    });
-
-    return { success: true, exchange: exchangeId };
   }, [state.token, state.user]);
 
   const logout = useCallback(() => {

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { getDeployedAgents, addDeployedAgent } from '@/lib/agents-store';
 import type { AgentPersonality } from '@/types';
+import { api } from '@/lib/api';
 
 // ---- Types ----
 
@@ -339,7 +340,9 @@ export default function AgentBuilderPage() {
     return getDeployedAgents().length;
   }
 
-  function handleDeploy() {
+  const [isDeploying, setIsDeploying] = useState(false);
+
+  async function handleDeploy() {
     const plan = getUserPlan();
     if (!plan) {
       // No plan — go to pricing
@@ -358,27 +361,74 @@ export default function AgentBuilderPage() {
       return;
     }
 
-    // Has capacity — deploy directly
-    addDeployedAgent({
-      id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      name: draft.name,
-      personality: draft.personality,
-      status: 'pending',
-      plan,
-      walletAddress: localStorage.getItem('cladex_connected_wallet') ? JSON.parse(localStorage.getItem('cladex_connected_wallet')!).address : null,
-      deployMethod: localStorage.getItem('cladex_connected_wallet') ? 'wallet' : 'gas-balance',
-      pnl: 0,
-      pnlPercent: 0,
-      totalTrades: 0,
-      winRate: 0,
-      assets: draft.assets,
-      createdAt: Date.now(),
-      strategy: draft.strategy,
-    });
+    if (isDeploying) return;
+    setIsDeploying(true);
 
-    setShowDeployModal(true);
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 3500);
+    // Map risk level to backend enum
+    const riskLevelMap = (level: number): string => {
+      if (level <= 3) return 'LOW';
+      if (level <= 6) return 'MEDIUM';
+      return 'HIGH';
+    };
+
+    try {
+      // Call backend API to create agent
+      const data = await api.post<{ agent: Record<string, unknown> }>('/agents', {
+        name: draft.name,
+        personality: draft.personality.toUpperCase(),
+        strategy: draft.strategy,
+        riskLevel: riskLevelMap(draft.riskLevel),
+        assets: draft.assets,
+      });
+
+      const backendAgent = data.agent;
+
+      // Also add to localStorage for immediate local access
+      addDeployedAgent({
+        id: (backendAgent?.id as string) || `agent-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: draft.name,
+        personality: draft.personality,
+        status: 'pending',
+        plan,
+        walletAddress: localStorage.getItem('cladex_connected_wallet') ? JSON.parse(localStorage.getItem('cladex_connected_wallet')!).address : null,
+        deployMethod: localStorage.getItem('cladex_connected_wallet') ? 'wallet' : 'gas-balance',
+        pnl: 0,
+        pnlPercent: 0,
+        totalTrades: 0,
+        winRate: 0,
+        assets: draft.assets,
+        createdAt: Date.now(),
+        strategy: draft.strategy,
+      });
+
+      setShowDeployModal(true);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3500);
+    } catch {
+      // Fallback: save to localStorage only if API fails
+      addDeployedAgent({
+        id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: draft.name,
+        personality: draft.personality,
+        status: 'pending',
+        plan,
+        walletAddress: localStorage.getItem('cladex_connected_wallet') ? JSON.parse(localStorage.getItem('cladex_connected_wallet')!).address : null,
+        deployMethod: localStorage.getItem('cladex_connected_wallet') ? 'wallet' : 'gas-balance',
+        pnl: 0,
+        pnlPercent: 0,
+        totalTrades: 0,
+        winRate: 0,
+        assets: draft.assets,
+        createdAt: Date.now(),
+        strategy: draft.strategy,
+      });
+
+      setShowDeployModal(true);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3500);
+    } finally {
+      setIsDeploying(false);
+    }
   }
 
   const riskColor =

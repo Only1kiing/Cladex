@@ -848,6 +848,9 @@ export default function LandingPage() {
               <p className="mt-6 text-xs text-gray-600 max-w-lg mx-auto">
                 Cladex does not hold user funds. All trading is executed via connected exchanges. Trade-only API access.
               </p>
+              <p className="mt-2 text-xs text-gray-600 max-w-lg mx-auto">
+                Simulated data shown for demonstration purposes only. Past performance does not guarantee future results.
+              </p>
               <p className="mt-2 text-xs text-gray-700">
                 &copy; 2026 Cladex
               </p>

@@ -5,6 +5,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { getDeployedAgents } from '@/lib/agents-store';
 import type { DeployedAgent } from '@/lib/agents-store';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
+import { api } from '@/lib/api';
 
 import { Badge } from '@/components/ui/Badge';
 import { ReferralCard } from '@/components/dashboard/PointsSystem';
@@ -18,23 +19,13 @@ import type { TradeSignal } from '@/hooks/useSignalGenerator';
 import type { AgentPersonality } from '@/types';
 import type { ActivityItem } from '@/components/dashboard/ActivityFeed';
 
-const now = new Date();
-function minutesAgo(m: number): string {
-  return new Date(now.getTime() - m * 60000).toISOString();
+// Dashboard stats shape from API
+interface DashboardStats {
+  totalBalance: number;
+  totalProfit: number;
+  activeAgents: number;
+  totalTrades: number;
 }
-
-const mockActivities: ActivityItem[] = [
-  { id: 'a1', type: 'trade', tradeDirection: 'buy', message: 'Knox: Protecting capital. Risk reduced \u2014 you\u2019re safe. \uD83D\uDEE1\uFE0F', timestamp: minutesAgo(2) },
-  { id: 'a2', type: 'signal', message: 'Byte: Trend forming on ETH/USDT 4H. Data suggests upward momentum. \uD83D\uDCCA', timestamp: minutesAgo(8) },
-  { id: 'a3', type: 'trade', tradeDirection: 'sell', message: 'Raze: Movement detected on SOL. Entering fast. Profit secured. \u26A1', timestamp: minutesAgo(15) },
-  { id: 'a4', type: 'signal', message: 'Iris: Signals align on BTC. Probability favors entry. \uD83D\uDD2E', timestamp: minutesAgo(22) },
-  { id: 'a5', type: 'system', agentPersonality: 'oracle', message: 'Iris updated strategy parameters based on market shift', timestamp: minutesAgo(35) },
-  { id: 'a6', type: 'trade', tradeDirection: 'buy', message: 'Byte opened long position on ETH at $3,456.78', timestamp: minutesAgo(42) },
-  { id: 'a7', type: 'alert', message: 'Portfolio drawdown limit at 80% - consider reviewing risk settings', timestamp: minutesAgo(58) },
-  { id: 'a8', type: 'trade', tradeDirection: 'sell', message: 'Knox closed BTC position at $67,890 (P/L: +$156.20)', timestamp: minutesAgo(75) },
-  { id: 'a9', type: 'signal', message: 'Iris forecasts high volatility window in next 4 hours', timestamp: minutesAgo(90) },
-  { id: 'a10', type: 'error', message: 'Raze paused: consecutive loss limit reached', timestamp: minutesAgo(120) },
-];
 
 // ---- Icons ----
 
@@ -507,6 +498,10 @@ export default function DashboardPage() {
   const [deployedAgents, setDeployedAgents] = useState<DeployedAgent[]>([]);
   const [showAllTrades, setShowAllTrades] = useState(false);
 
+  // Real data from backend API
+  const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
+  const [tradeLogItems, setTradeLogItems] = useState<ActivityItem[]>([]);
+
   // Signal system
   const { signals, missedCount, missedPnl, manualTradeCount, executedTrades, executeSignal, dismissSignal, hasOwnAgents } = useSignalGenerator();
   const [selectedSignal, setSelectedSignal] = useState<TradeSignal | null>(null);
@@ -528,6 +523,50 @@ export default function DashboardPage() {
     refresh();
     window.addEventListener('cladex_agents_updated', refresh);
     return () => window.removeEventListener('cladex_agents_updated', refresh);
+  }, []);
+
+  // Fetch dashboard stats and recent trades from backend
+  useEffect(() => {
+    // Fetch dashboard stats
+    (async () => {
+      try {
+        const data = await api.get<{ stats: DashboardStats }>('/dashboard/stats');
+        if (data?.stats) {
+          setDashStats(data.stats);
+        }
+      } catch {
+        // Backend unreachable or error — keep defaults (null = show placeholders)
+      }
+    })();
+
+    // Fetch recent trades for trade log
+    (async () => {
+      try {
+        const data = await api.get<{ trades: Array<{
+          id: string;
+          pair?: string;
+          side?: string;
+          price?: number;
+          profit?: number;
+          status?: string;
+          createdAt?: string;
+          agent?: { name?: string; personality?: string };
+        }> }>('/trades/recent');
+        if (data?.trades && data.trades.length > 0) {
+          const items: ActivityItem[] = data.trades.map((t) => ({
+            id: t.id,
+            type: 'trade' as const,
+            tradeDirection: (t.side === 'sell' ? 'sell' : 'buy') as 'buy' | 'sell',
+            agentPersonality: (t.agent?.personality?.toLowerCase() || undefined) as ActivityItem['agentPersonality'],
+            message: `${t.agent?.name || 'Agent'}: ${(t.side || 'buy').toUpperCase()} ${t.pair || 'Unknown'} at $${(t.price ?? 0).toLocaleString()}${t.profit != null ? ` (P/L: ${t.profit >= 0 ? '+' : ''}$${t.profit.toFixed(2)})` : ''}`,
+            timestamp: t.createdAt || new Date().toISOString(),
+          }));
+          setTradeLogItems(items);
+        }
+      } catch {
+        // Backend unreachable — trade log stays empty
+      }
+    })();
   }, []);
 
   const feedCounterRef = useRef(100);
@@ -697,27 +736,23 @@ export default function DashboardPage() {
         <StatCard
           icon={<BalanceIcon />}
           label="Total Balance"
-          value="$47,283.50"
-          trend={{ value: '12.5% from last month', direction: 'up' }}
+          value={dashStats ? `$${dashStats.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '\u2014'}
         />
         <StatCard
           icon={<PnlIcon />}
           label="24h Profit/Loss"
-          value="+$1,247.30"
-          valueColor="text-guardian-400"
-          trend={{ value: '3.2%', direction: 'up' }}
+          value={dashStats ? `${dashStats.totalProfit >= 0 ? '+' : ''}$${dashStats.totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '\u2014'}
+          valueColor={dashStats && dashStats.totalProfit >= 0 ? 'text-guardian-400' : dashStats && dashStats.totalProfit < 0 ? 'text-red-400' : undefined}
         />
         <StatCard
           icon={<AgentsIcon />}
           label="Active Agents"
-          value="3"
-          trend={{ value: '1 paused', direction: 'down' }}
+          value={dashStats ? String(dashStats.activeAgents) : '0'}
         />
         <StatCard
           icon={<TradesIcon />}
           label="Total Trades"
-          value="847"
-          trend={{ value: '23 today', direction: 'up' }}
+          value={dashStats ? String(dashStats.totalTrades) : '0'}
         />
       </div>
 
@@ -982,7 +1017,7 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-gray-500">{mockActivities.length + executedTrades.length} trades</span>
+              <span className="text-[11px] text-gray-500">{tradeLogItems.length + executedTrades.length} trades</span>
               <svg className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${showAllTrades ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
@@ -1001,7 +1036,7 @@ export default function DashboardPage() {
                   message: `${t.signal.agentName}: ${t.signal.side.toUpperCase()} ${t.signal.pair} at $${t.signal.entryPrice.toLocaleString()} — ${t.result >= 0 ? '+' : ''}$${t.result.toFixed(2)} ${t.result >= 0 ? '✅' : '❌'} (manual)`,
                   timestamp: new Date(Date.now() - i * 120000).toISOString(),
                 })).reverse(),
-                ...mockActivities,
+                ...tradeLogItems,
               ]} />
             </div>
           </div>
