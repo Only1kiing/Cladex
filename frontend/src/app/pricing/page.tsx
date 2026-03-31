@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { DeploymentModal } from '@/components/dashboard/DeploymentModal';
+import { Logo } from '@/components/ui/Logo';
 
 /* ------------------------------------------------------------------ */
 /*  Inline SVG Icons                                                    */
@@ -252,8 +253,23 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-gray-100">
+      {/* Nav */}
+      <nav className="sticky top-0 z-40 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.06]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <Link href="/dashboard">
+            <Logo size="sm" />
+          </Link>
+          <Link href="/dashboard" className="text-xs font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-1.5">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Dashboard
+          </Link>
+        </div>
+      </nav>
+
       {/* ---- Hero ---- */}
-      <section className="relative pt-20 pb-10 sm:pt-32 sm:pb-16 text-center px-4">
+      <section className="relative pt-12 pb-10 sm:pt-20 sm:pb-16 text-center px-4">
         {/* Subtle radial glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[200px] sm:w-[500px] sm:h-[350px] lg:w-[800px] lg:h-[500px] bg-[#B8FF3C]/5 rounded-full blur-[120px]" />
