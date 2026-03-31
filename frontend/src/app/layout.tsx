@@ -13,7 +13,19 @@ export const metadata: Metadata = {
   title: 'Cladex - AI Crypto Trading',
   description: 'Autonomous AI-powered crypto trading platform with multi-personality agents',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/icon.svg',
+    apple: '/apple-icon.svg',
+  },
+  openGraph: {
+    title: 'Cladex - AI Crypto Trading',
+    description: 'Deploy AI agents that trade crypto for you 24/7. On-chain, autonomous, yours.',
+    siteName: 'Cladex',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Cladex - AI Crypto Trading',
+    description: 'Deploy AI agents that trade crypto for you 24/7. On-chain, autonomous, yours.',
   },
 };
 
