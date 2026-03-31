@@ -374,66 +374,122 @@ export default function MarketplacePage() {
       {/* Top Agent League */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
         <section className="mb-10">
-          <div className="flex items-center gap-3 mb-4">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F7A600" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
-              <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
-              <path d="M4 22h16" />
-              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-              <path d="M18 2H6v7a6 6 0 0012 0V2z" />
-            </svg>
-            <h2 className="text-lg font-semibold text-gray-100">Top Agent League</h2>
-          </div>
-          <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
-            <div className="hidden sm:grid grid-cols-6 gap-4 px-4 py-2.5 border-b border-white/[0.06] text-[10px] text-gray-500 uppercase tracking-wider font-medium">
-              <span>Agent</span>
-              <span>Volume</span>
-              <span>ROI</span>
-              <span>Creator</span>
-              <span>Loves</span>
-              <span className="text-right">Action</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F7A600" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                <path d="M18 2H6v7a6 6 0 0012 0V2z" />
+              </svg>
+              <h2 className="text-lg font-semibold text-gray-100">Top Agent League</h2>
             </div>
-            {(showAllLeague ? leaderboardAgents : leaderboardAgents.slice(0, 3)).map((agent, idx) => {
-              const accentColor = agent.personality === 'hunter' ? '#FF6B35' : agent.personality === 'oracle' ? '#A78BFA' : agent.personality === 'guardian' ? '#4ade80' : '#60A5FA';
+            <span className="text-[10px] text-gray-500">{leaderboardAgents.length} agents ranked</span>
+          </div>
+
+          {/* Top 3 podium */}
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            {leaderboardAgents.slice(0, 3).map((agent, idx) => {
+              const rank = idx + 1;
+              const medalColors = ['from-amber-400 to-yellow-500', 'from-gray-300 to-gray-400', 'from-amber-600 to-amber-700'];
+              const borderColors = ['border-amber-500/30', 'border-gray-400/20', 'border-amber-700/20'];
+              const bgColors = ['bg-amber-500/[0.06]', 'bg-gray-400/[0.04]', 'bg-amber-700/[0.04]'];
+              const personalityColor = agent.personality === 'hunter' ? 'text-red-400' : agent.personality === 'oracle' ? 'text-violet-400' : agent.personality === 'guardian' ? 'text-emerald-400' : 'text-cyan-400';
+
               return (
                 <div
                   key={agent.name}
-                  className="flex flex-col sm:grid sm:grid-cols-6 gap-2 sm:gap-4 px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors sm:items-center"
-                  style={{ borderLeft: `3px solid ${accentColor}` }}
+                  className={`rounded-xl border ${borderColors[idx]} ${bgColors[idx]} p-4 text-center relative overflow-hidden transition-all hover:scale-[1.02]`}
                 >
-                  {/* Mobile: stacked layout / Desktop: grid */}
-                  <div className="flex items-center justify-between sm:contents">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500 font-mono w-4">{idx + 1}</span>
-                      <span className="text-sm font-semibold text-gray-100">{agent.name}</span>
-                    </div>
-                    <span className="text-sm font-semibold text-emerald-400 sm:order-none">{agent.roi}</span>
+                  {/* Rank medal */}
+                  <div className={`mx-auto w-8 h-8 rounded-full bg-gradient-to-b ${medalColors[idx]} flex items-center justify-center text-sm font-black text-black mb-3 shadow-lg`}>
+                    {rank}
                   </div>
-                  <div className="flex items-center justify-between sm:contents">
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span className="sm:hidden">Vol:</span>
-                      <span className="text-sm text-gray-300">{agent.volume}</span>
-                      <span className="sm:hidden">·</span>
-                      <span>{agent.creator}</span>
+
+                  {/* Avatar */}
+                  <div className="flex justify-center mb-2">
+                    <AgentAvatar personality={agent.personality as AgentPersonality} size={42} active />
+                  </div>
+
+                  {/* Name */}
+                  <h3 className={`text-sm font-bold ${personalityColor} mb-0.5`}>{agent.name}</h3>
+                  <p className="text-[10px] text-gray-500 mb-2">{agent.creator}</p>
+
+                  {/* Stats */}
+                  <div className="space-y-1.5 mb-3">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-gray-500">ROI</span>
+                      <span className="font-bold text-emerald-400">{agent.roi}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-red-400 flex items-center gap-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-gray-500">Volume</span>
+                      <span className="font-semibold text-gray-300">{agent.volume}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-gray-500">Loves</span>
+                      <span className="text-red-400 flex items-center gap-1">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        {agent.loves.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setShowConnectPrompt(true)}
+                    className="w-full py-2 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-all"
+                  >
+                    Use Agent
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Remaining agents - compact list */}
+          <div className={`overflow-hidden transition-all duration-300 ease-out ${showAllLeague ? 'max-h-[500px]' : 'max-h-0'}`}>
+            <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
+              {leaderboardAgents.slice(3).map((agent, idx) => {
+                const rank = idx + 4;
+                const personalityColor = agent.personality === 'hunter' ? 'text-red-400' : agent.personality === 'oracle' ? 'text-violet-400' : agent.personality === 'guardian' ? 'text-emerald-400' : 'text-cyan-400';
+
+                return (
+                  <div
+                    key={agent.name}
+                    className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-colors"
+                  >
+                    <span className="text-xs text-gray-600 font-mono w-5 text-center">{rank}</span>
+                    <AgentAvatar personality={agent.personality as AgentPersonality} size={28} active />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-semibold ${personalityColor}`}>{agent.name}</span>
+                        <span className="text-[10px] text-gray-600">{agent.creator}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 shrink-0">
+                      <div className="text-right hidden sm:block">
+                        <span className="text-xs font-bold text-emerald-400">{agent.roi}</span>
+                        <span className="text-[10px] text-gray-600 ml-2">{agent.volume}</span>
+                      </div>
+                      <span className="text-xs text-emerald-400 font-bold sm:hidden">{agent.roi}</span>
+                      <span className="text-[10px] text-red-400 flex items-center gap-0.5">
                         <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                         {agent.loves.toLocaleString()}
                       </span>
                       <button
                         onClick={() => setShowConnectPrompt(true)}
-                        className="px-3 py-1 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-medium text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[10px] font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-all"
                       >
-                        Use Agent
+                        Use
                       </button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
+
           {leaderboardAgents.length > 3 && (
             <button
               onClick={() => setShowAllLeague(!showAllLeague)}
