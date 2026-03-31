@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 // Points widget moved to /dashboard/points page
 import { Logo } from '@/components/ui/Logo';
+import { ActiveTradesWidget } from '@/components/dashboard/ActiveTrades';
 
 const navItems = [
   {
@@ -159,6 +160,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           );
         })}
       </nav>
+
+      {/* Active Trades */}
+      <ActiveTradesWidget />
 
       {/* Plans Link */}
       <div className="px-3 mb-1">

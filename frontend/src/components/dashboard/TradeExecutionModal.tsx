@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { AgentAvatar } from './AgentAvatar';
+import { addActiveTrade } from './ActiveTrades';
 import type { TradeSignal } from '@/hooks/useSignalGenerator';
 
 interface TradeExecutionModalProps {
@@ -63,6 +64,20 @@ function TradeExecutionModal({ isOpen, signal, onClose, onExecute, exchangeConne
     setPnlResult(result);
     setStage('result');
     setTimeout(() => setShowPnl(true), 400);
+
+    // Add to active trades sidebar
+    addActiveTrade({
+      id: `trade-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      agentName: signal.agentName,
+      personality: signal.personality,
+      pair: signal.pair,
+      side: signal.side,
+      entryPrice: signal.entryPrice,
+      stopLoss: signal.stopLoss,
+      takeProfit: signal.takeProfit,
+      positionSize,
+      openedAt: Date.now(),
+    });
   };
 
   return (
