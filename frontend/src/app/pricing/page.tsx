@@ -397,16 +397,24 @@ export default function PricingPage() {
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-3">
             Deploy your first agent today.
           </h2>
-          <Link
-            href="/signup"
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm bg-[#B8FF3C] text-black shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 hover:brightness-110 transition-all duration-200"
-          >
-            Get Early Access
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-          </Link>
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm bg-[#B8FF3C] text-black shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 hover:brightness-110 transition-all duration-200"
+            >
+              Go to Dashboard
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </Link>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-6 py-3.5 rounded-xl text-sm font-medium text-gray-400 border border-white/[0.08] hover:text-white hover:border-white/[0.15] transition-all"
+            >
+              Cancel
+            </Link>
+          </div>
         </div>
       </section>
 
