@@ -885,42 +885,49 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Trade Log */}
+      {/* Trade Log — collapsible dropdown */}
       <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-100">Trade Log</h2>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-guardian-400 animate-pulse" />
-            <span className="text-xs text-gray-500">Live</span>
-            {executedTrades.length > 0 && (
-              <span className="ml-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#B8FF3C]/10 text-[#B8FF3C] border border-[#B8FF3C]/20">
-                {executedTrades.length} manual
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-2">
-          <ActivityFeed items={[
-            ...executedTrades.map((t, i) => ({
-              id: `manual-${i}-${t.signal.id}`,
-              type: 'trade' as const,
-              tradeDirection: (t.signal.side === 'long' ? 'buy' : 'sell') as 'buy' | 'sell',
-              agentPersonality: t.signal.personality,
-              message: `${t.signal.agentName}: ${t.signal.side.toUpperCase()} ${t.signal.pair} at $${t.signal.entryPrice.toLocaleString()} — ${t.result >= 0 ? '+' : ''}$${t.result.toFixed(2)} ${t.result >= 0 ? '✅' : '❌'} (manual)`,
-              timestamp: new Date(Date.now() - i * 120000).toISOString(),
-            })).reverse(),
-            ...(showAllTrades ? mockActivities : mockActivities.slice(0, 5)),
-          ]} />
-        </div>
-        {mockActivities.length > 5 && (
+        <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
+          {/* Header — clickable to toggle */}
           <button
             onClick={() => setShowAllTrades(!showAllTrades)}
-            className="mt-3 w-full py-2 rounded-lg border border-[#1e1e2e] bg-white/[0.02] text-xs font-medium text-gray-400 hover:text-white hover:border-white/[0.1] transition-all flex items-center justify-center gap-1.5"
+            className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
           >
-            {showAllTrades ? 'Show Less' : `View All (${mockActivities.length})`}
-            <svg className={`w-3.5 h-3.5 transition-transform ${showAllTrades ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-gray-100">Trade Log</h2>
+              <span className="w-2 h-2 rounded-full bg-guardian-400 animate-pulse" />
+              <span className="text-[10px] text-gray-500">Live</span>
+              {executedTrades.length > 0 && (
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#B8FF3C]/10 text-[#B8FF3C] border border-[#B8FF3C]/20">
+                  {executedTrades.length} manual
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-500">{mockActivities.length + executedTrades.length} trades</span>
+              <svg className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${showAllTrades ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           </button>
-        )}
+
+          {/* Trade list — collapsible */}
+          <div className={`overflow-hidden transition-all duration-300 ease-out ${showAllTrades ? 'max-h-[500px] border-t border-white/[0.04]' : 'max-h-0'}`}>
+            <div className="max-h-[500px] overflow-y-auto scrollbar-thin p-2">
+              <ActivityFeed items={[
+                ...executedTrades.map((t, i) => ({
+                  id: `manual-${i}-${t.signal.id}`,
+                  type: 'trade' as const,
+                  tradeDirection: (t.signal.side === 'long' ? 'buy' : 'sell') as 'buy' | 'sell',
+                  agentPersonality: t.signal.personality,
+                  message: `${t.signal.agentName}: ${t.signal.side.toUpperCase()} ${t.signal.pair} at $${t.signal.entryPrice.toLocaleString()} — ${t.result >= 0 ? '+' : ''}$${t.result.toFixed(2)} ${t.result >= 0 ? '✅' : '❌'} (manual)`,
+                  timestamp: new Date(Date.now() - i * 120000).toISOString(),
+                })).reverse(),
+                ...mockActivities,
+              ]} />
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Referral */}
