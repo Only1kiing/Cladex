@@ -833,73 +833,131 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Your Agents */}
+      {/* My Agents */}
       <section>
         {deployedAgents.length > 0 ? (
           <>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-gray-100">Your Agents</h2>
+                <h2 className="text-sm font-semibold text-gray-100">My Agents</h2>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-gray-400 font-medium">{deployedAgents.length}</span>
+                <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {deployedAgents.filter(a => a.status === 'active').length} active
+                </span>
               </div>
               <a href="/dashboard/agents" className="text-[11px] font-medium text-[#B8FF3C] hover:brightness-110 transition-colors">
                 Manage →
               </a>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {deployedAgents.slice(0, 3).map(agent => {
-                const statusColor = agent.status === 'active' ? 'bg-emerald-400 animate-pulse' : agent.status === 'pending' ? 'bg-amber-400 animate-pulse' : 'bg-gray-500';
+                const statusColor = agent.status === 'active' ? 'bg-emerald-400 animate-pulse' : agent.status === 'pending' ? 'bg-amber-400 animate-pulse' : agent.status === 'paused' ? 'bg-amber-400' : 'bg-gray-500';
                 const statusLabel = agent.status === 'active' ? 'Active' : agent.status === 'pending' ? 'Deploying' : agent.status === 'paused' ? 'Paused' : 'Stopped';
                 const pColor = agent.personality === 'hunter' ? 'text-red-400' : agent.personality === 'oracle' ? 'text-violet-400' : agent.personality === 'guardian' ? 'text-emerald-400' : 'text-cyan-400';
+                const pBorder = agent.personality === 'hunter' ? 'border-red-500/15' : agent.personality === 'oracle' ? 'border-violet-500/15' : agent.personality === 'guardian' ? 'border-emerald-500/15' : 'border-cyan-500/15';
+                const pBg = agent.personality === 'hunter' ? 'bg-red-500/[0.03]' : agent.personality === 'oracle' ? 'bg-violet-500/[0.03]' : agent.personality === 'guardian' ? 'bg-emerald-500/[0.03]' : 'bg-cyan-500/[0.03]';
+                const personalityLabel = agent.personality === 'hunter' ? 'Hunter' : agent.personality === 'oracle' ? 'Oracle' : agent.personality === 'guardian' ? 'Guardian' : 'Analyst';
+                const intel = agent.personality === 'hunter'
+                  ? 'Scanning for breakouts...'
+                  : agent.personality === 'oracle'
+                  ? 'Reading market patterns...'
+                  : agent.personality === 'guardian'
+                  ? 'Monitoring risk levels...'
+                  : 'Crunching data points...';
+
                 return (
-                  <div key={agent.id} className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-3.5 flex items-center gap-3 hover:border-white/[0.08] transition-colors">
-                    <AgentAvatar personality={agent.personality} size={36} active={agent.status === 'active'} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-sm font-semibold ${pColor} truncate`}>{agent.name}</span>
-                        <span className={`w-1.5 h-1.5 rounded-full ${statusColor} shrink-0`} />
-                        <span className="text-[9px] text-gray-500">{statusLabel}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] text-gray-500">{agent.plan}</span>
-                        {agent.walletAddress && (
-                          <span className="text-[9px] text-emerald-400/60 truncate">{agent.walletAddress}</span>
-                        )}
+                  <a key={agent.id} href="/dashboard/agents" className={`block rounded-xl border ${pBorder} ${pBg} p-4 hover:border-white/[0.12] transition-all group`}>
+                    {/* Header */}
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <AgentAvatar personality={agent.personality} size={40} active={agent.status === 'active'} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-sm font-bold ${pColor}`}>{agent.name}</span>
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] text-gray-500">{personalityLabel}</span>
+                          <span className="text-[10px] text-gray-600">·</span>
+                          <span className="text-[10px] text-gray-500">{agent.plan}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <span className={`text-xs font-bold ${agent.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {agent.pnl >= 0 ? '+' : ''}${agent.pnl.toFixed(0)}
-                      </span>
+
+                    {/* Live intelligence */}
+                    {agent.status === 'active' && (
+                      <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+                        <svg className="w-3 h-3 text-[#B8FF3C] animate-pulse shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        <span className="text-[10px] text-gray-400 italic">{intel}</span>
+                      </div>
+                    )}
+
+                    {agent.status === 'pending' && (
+                      <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-lg bg-amber-500/[0.06] border border-amber-500/10">
+                        <svg className="w-3 h-3 animate-spin text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                          <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+                        </svg>
+                        <span className="text-[10px] text-amber-400">Deploying on-chain...</span>
+                      </div>
+                    )}
+
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center">
+                        <span className={`text-sm font-bold ${agent.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {agent.pnl >= 0 ? '+' : ''}${agent.pnl.toFixed(0)}
+                        </span>
+                        <p className="text-[9px] text-gray-600">P&L</p>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-sm font-bold text-white">{agent.totalTrades}</span>
+                        <p className="text-[9px] text-gray-600">Trades</p>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-sm font-bold text-white">{agent.winRate > 0 ? `${agent.winRate}%` : '—'}</span>
+                        <p className="text-[9px] text-gray-600">Win Rate</p>
+                      </div>
                     </div>
-                  </div>
+
+                    {/* Wallet */}
+                    {agent.walletAddress && (
+                      <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-white/[0.04]">
+                        <svg className="w-3 h-3 text-emerald-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M22 10H18a2 2 0 000 4h4" /></svg>
+                        <span className="text-[9px] text-emerald-400/50 truncate">{agent.walletAddress}</span>
+                        <span className="text-[8px] text-gray-600 ml-auto">On-chain</span>
+                      </div>
+                    )}
+                  </a>
                 );
               })}
             </div>
             {deployedAgents.length > 3 && (
               <a
                 href="/dashboard/agents"
-                className="mt-2 w-full py-2 rounded-lg border border-[#1e1e2e] bg-white/[0.02] text-xs font-medium text-gray-400 hover:text-white hover:border-white/[0.1] transition-all flex items-center justify-center gap-1.5"
+                className="mt-2.5 w-full py-2 rounded-lg border border-[#1e1e2e] bg-white/[0.02] text-xs font-medium text-gray-400 hover:text-white hover:border-white/[0.1] transition-all flex items-center justify-center gap-1.5"
               >
-                View All ({deployedAgents.length})
+                View All {deployedAgents.length} Agents
               </a>
             )}
           </>
         ) : (
-          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] p-6 text-center">
-            <div className="mx-auto w-12 h-12 rounded-xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 flex items-center justify-center mb-3">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B8FF3C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.01] p-8 text-center">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 flex items-center justify-center mb-4">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B8FF3C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <p className="text-sm font-semibold text-gray-200 mb-1">No agents deployed</p>
-            <p className="text-xs text-gray-500 mb-4">Deploy your first agent to get personalized trading signals</p>
+            <p className="text-base font-bold text-gray-200 mb-1">No agents deployed yet</p>
+            <p className="text-xs text-gray-500 mb-5 max-w-xs mx-auto">Deploy your first AI agent on-chain. It&apos;ll scan markets, find trades, and send you signals 24/7.</p>
             <a
               href="/pricing"
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-xs hover:brightness-110 transition-all shadow-lg shadow-[#B8FF3C]/15"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-[#B8FF3C]/20"
             >
-              Get a Deployment Plan
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+              Deploy First Agent
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
             </a>
           </div>
         )}
