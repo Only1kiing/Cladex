@@ -376,14 +376,9 @@ export default function MyAgentsPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">My Agents</h1>
           <p className="text-sm text-gray-500">Your deployed on-chain trading agents</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/dashboard/build" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-xs font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-all">
-            <Sparkles size={14} /> Build Agent
-          </Link>
-          <Link href="/pricing" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs font-medium text-gray-300 hover:bg-white/[0.06] transition-all">
-            <Rocket size={14} /> Deploy More
-          </Link>
-        </div>
+        <Link href="/pricing" className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#B8FF3C] text-black text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-[#B8FF3C]/15">
+          <Rocket size={14} /> Deploy Agent
+        </Link>
       </div>
 
       {/* Summary stats */}
