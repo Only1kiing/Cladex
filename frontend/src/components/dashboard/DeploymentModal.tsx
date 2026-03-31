@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { addDeployedAgent } from '@/lib/agents-store';
 import type { AgentPersonality } from '@/types';
@@ -59,6 +60,7 @@ function getConnectedWallet(): { id: string; name: string; address: string } | n
 }
 
 function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
+  const router = useRouter();
   const [stage, setStage] = useState<'choose' | 'wallet-connect' | 'wallet-confirm' | 'gas-balance' | 'deposit' | 'deploying' | 'pending'>('choose');
   const [connectedWallet, setConnectedWallet] = useState<{ id: string; name: string; address: string } | null>(null);
   const [gasBalance, setGasBalance] = useState(0);
@@ -529,7 +531,7 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
           </p>
 
           <button
-            onClick={onClose}
+            onClick={() => { onClose(); router.push('/dashboard'); }}
             className="w-full py-3 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm font-medium text-gray-200 hover:bg-white/[0.1] transition-all"
           >
             Go to Dashboard
