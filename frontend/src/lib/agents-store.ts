@@ -15,6 +15,11 @@ export interface DeployedAgent {
   assets: string[];
   createdAt: number;
   strategy?: string;
+  published?: boolean;
+  publishedAt?: number;
+  subscribers?: number;
+  description?: string;
+  price?: number;
 }
 
 const STORAGE_KEY = 'cladex_deployed_agents';
@@ -41,6 +46,22 @@ export function addDeployedAgent(agent: DeployedAgent) {
 export function updateAgentStatus(id: string, status: DeployedAgent['status']) {
   const agents = getDeployedAgents().map(a =>
     a.id === id ? { ...a, status } : a
+  );
+  saveDeployedAgents(agents);
+  window.dispatchEvent(new CustomEvent('cladex_agents_updated'));
+}
+
+export function publishAgent(id: string, description: string, price: number) {
+  const agents = getDeployedAgents().map(a =>
+    a.id === id ? { ...a, published: true, publishedAt: Date.now(), subscribers: 0, description, price } : a
+  );
+  saveDeployedAgents(agents);
+  window.dispatchEvent(new CustomEvent('cladex_agents_updated'));
+}
+
+export function unpublishAgent(id: string) {
+  const agents = getDeployedAgents().map(a =>
+    a.id === id ? { ...a, published: false } : a
   );
   saveDeployedAgents(agents);
   window.dispatchEvent(new CustomEvent('cladex_agents_updated'));

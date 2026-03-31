@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { AgentAvatar } from '@/components/dashboard/AgentAvatar';
-import { getDeployedAgents, updateAgentStatus } from '@/lib/agents-store';
+import { getDeployedAgents, updateAgentStatus, publishAgent, unpublishAgent } from '@/lib/agents-store';
 import type { DeployedAgent } from '@/lib/agents-store';
 import type { AgentPersonality } from '@/types';
 
@@ -78,6 +78,11 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
   const [askResponse, setAskResponse] = useState<string | null>(null);
   const [isAsking, setIsAsking] = useState(false);
   const [showAsk, setShowAsk] = useState(false);
+  const [showPublish, setShowPublish] = useState(false);
+  const [isPublished, setIsPublished] = useState(agent.published || false);
+  const [pubDescription, setPubDescription] = useState(agent.description || '');
+  const [pubPrice, setPubPrice] = useState(agent.price?.toString() || '15');
+  const [publishing, setPublishing] = useState(false);
   const [pnl, setPnl] = useState(agent.pnl);
   const [trades, setTrades] = useState(agent.totalTrades);
   const [winRate, setWinRate] = useState(agent.winRate);
@@ -119,6 +124,22 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
     }, 800 + Math.random() * 600);
   };
 
+  const handlePublish = () => {
+    if (!pubDescription.trim()) return;
+    setPublishing(true);
+    setTimeout(() => {
+      publishAgent(agent.id, pubDescription.trim(), parseFloat(pubPrice) || 15);
+      setIsPublished(true);
+      setPublishing(false);
+      setShowPublish(false);
+    }, 1500);
+  };
+
+  const handleUnpublish = () => {
+    unpublishAgent(agent.id);
+    setIsPublished(false);
+  };
+
   const createdDate = new Date(agent.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   return (
@@ -138,6 +159,12 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
                   <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
                   {statusCfg.label}
                 </span>
+                {isPublished && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-400">
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                    Published
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -235,13 +262,32 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
                 </button>
               )}
               <button
-                onClick={() => { setShowAsk(!showAsk); setAskResponse(null); }}
+                onClick={() => { setShowAsk(!showAsk); setAskResponse(null); if (showPublish) setShowPublish(false); }}
                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                   showAsk ? 'text-[#B8FF3C] bg-[#B8FF3C]/10 border-[#B8FF3C]/20' : 'text-gray-400 bg-gray-500/10 hover:bg-gray-500/20 border-gray-500/20'
                 }`}
               >
                 <MessageCircle size={12} /> Ask
               </button>
+              {status === 'active' && !isPublished && (
+                <button
+                  onClick={() => { setShowPublish(!showPublish); if (showAsk) setShowAsk(false); }}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                    showPublish ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' : 'text-gray-400 bg-gray-500/10 hover:bg-gray-500/20 border-gray-500/20'
+                  }`}
+                >
+                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                  Publish
+                </button>
+              )}
+              {isPublished && (
+                <button
+                  onClick={handleUnpublish}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-400/60 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 transition-all"
+                >
+                  Unpublish
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -284,6 +330,102 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
                 {askResponse}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Publish section */}
+      {showPublish && !isPending && !isPublished && (
+        <div className="px-5 pb-5 border-t border-[#1e1e2e]">
+          <div className="pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <svg className="w-4 h-4 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              <span className="text-xs font-semibold text-purple-400">Publish to Marketplace</span>
+            </div>
+            <p className="text-[11px] text-gray-500 mb-4">
+              List {agent.name} on the Explore page. Other users can subscribe and copy your agent&apos;s strategy. You earn revenue from each subscriber.
+            </p>
+
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="text-[10px] text-gray-500 font-medium mb-1 block">Description</label>
+                <textarea
+                  value={pubDescription}
+                  onChange={e => setPubDescription(e.target.value)}
+                  placeholder={`Describe what ${agent.name} does, its strategy, and why traders should subscribe...`}
+                  rows={3}
+                  className="w-full bg-[#0a0a0f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-xs text-gray-100 placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-all resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500 font-medium mb-1 block">Monthly Price (USD)</label>
+                <div className="flex items-center gap-2">
+                  {['5', '15', '25', '50'].map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setPubPrice(p)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        pubPrice === p
+                          ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                          : 'bg-white/[0.03] text-gray-500 border border-white/[0.06] hover:text-gray-300'
+                      }`}
+                    >
+                      ${p}/mo
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Revenue preview */}
+            <div className="rounded-lg bg-purple-500/[0.04] border border-purple-500/15 p-3 mb-4">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-400">Per subscriber</span>
+                <span className="font-semibold text-purple-400">${pubPrice}/mo</span>
+              </div>
+              <div className="flex items-center justify-between text-xs mt-1.5">
+                <span className="text-gray-400">You keep (70%)</span>
+                <span className="font-semibold text-emerald-400">${(parseFloat(pubPrice || '0') * 0.7).toFixed(2)}/mo</span>
+              </div>
+              <div className="flex items-center justify-between text-xs mt-1.5">
+                <span className="text-gray-400">10 subscribers =</span>
+                <span className="font-bold text-white">${(parseFloat(pubPrice || '0') * 0.7 * 10).toFixed(0)}/mo</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handlePublish}
+              disabled={!pubDescription.trim() || publishing}
+              className="w-full py-2.5 rounded-xl bg-purple-600 text-white font-bold text-xs hover:bg-purple-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {publishing ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+                  </svg>
+                  Publishing...
+                </>
+              ) : (
+                <>Publish {agent.name} to Marketplace</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Published info */}
+      {isPublished && (
+        <div className="px-5 pb-4 border-t border-[#1e1e2e]">
+          <div className="pt-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className="w-3.5 h-3.5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              <span className="text-[11px] text-purple-400 font-medium">Live on Marketplace</span>
+            </div>
+            <div className="flex items-center gap-3 text-[11px]">
+              <span className="text-gray-500">${agent.price || 15}/mo</span>
+              <span className="text-gray-500">{agent.subscribers || 0} subscribers</span>
+            </div>
           </div>
         </div>
       )}
