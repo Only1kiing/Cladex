@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { getDeployedAgents, addDeployedAgent } from '@/lib/agents-store';
 import type { AgentPersonality } from '@/types';
 
 // ---- Types ----
@@ -327,16 +328,69 @@ export default function AgentBuilderPage() {
     }));
   }
 
+  const PLAN_LIMITS: Record<string, number> = { Trader: 2, Builder: 5, 'Pro Creator': 15 };
+
+  function getUserPlan(): string | null {
+    if (typeof window === 'undefined') return null;
+    const agents = getDeployedAgents();
+    if (agents.length === 0) return null;
+    return agents[0]?.plan || null;
+  }
+
+  function getAgentCount(): number {
+    return getDeployedAgents().length;
+  }
+
   function handleDeploy() {
-    window.location.href = '/pricing';
+    const plan = getUserPlan();
+    if (!plan) {
+      // No plan — go to pricing
+      window.location.href = '/pricing';
+      return;
+    }
+
+    const limit = PLAN_LIMITS[plan] || 2;
+    const count = getAgentCount();
+
+    if (count >= limit) {
+      // Hit limit — show upgrade
+      setShowMintModal(false);
+      setShowDeployModal(false);
+      alert(`You've reached your ${plan} plan limit (${limit} agents). Upgrade your plan for more agent slots.`);
+      window.location.href = '/pricing';
+      return;
+    }
+
+    // Has capacity — deploy directly
+    const personalityColors: Record<AgentPersonality, string> = {
+      hunter: 'text-red-400', oracle: 'text-violet-400', guardian: 'text-emerald-400', analyst: 'text-cyan-400'
+    };
+
+    addDeployedAgent({
+      id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: draft.name,
+      personality: draft.personality,
+      status: 'pending',
+      plan,
+      walletAddress: localStorage.getItem('cladex_connected_wallet') ? JSON.parse(localStorage.getItem('cladex_connected_wallet')!).address : null,
+      deployMethod: localStorage.getItem('cladex_connected_wallet') ? 'wallet' : 'gas-balance',
+      pnl: 0,
+      pnlPercent: 0,
+      totalTrades: 0,
+      winRate: 0,
+      assets: draft.assets,
+      createdAt: Date.now(),
+      strategy: draft.strategy,
+    });
+
+    setShowDeployModal(true);
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 3500);
   }
 
   function handleMintConfirm() {
     setShowMintModal(false);
-    setShowDeployModal(true);
-    setShowConfetti(true);
-    if (hasFreeAgent) setHasFreeAgent(false);
-    setTimeout(() => setShowConfetti(false), 3500);
+    handleDeploy();
   }
 
   const riskColor =
@@ -626,8 +680,13 @@ export default function AgentBuilderPage() {
                 disabled={!draft.strategy || draft.assets.length === 0}
                 className="bg-[#B8FF3C] hover:brightness-110 text-black text-base font-bold py-3.5"
               >
-                Select Deployment Plan
+                {getUserPlan() ? `Deploy ${draft.name}` : 'Get Plan & Deploy'}
               </Button>
+              {getUserPlan() && (
+                <p className="text-[10px] text-gray-500 text-center mt-1.5">
+                  {getUserPlan()} plan · {getAgentCount()}/{PLAN_LIMITS[getUserPlan()!] || 2} agents used
+                </p>
+              )}
             </Card>
 
             {/* Quick stats preview */}
