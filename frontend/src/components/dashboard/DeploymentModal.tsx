@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
+import { addDeployedAgent } from '@/lib/agents-store';
+import type { AgentPersonality } from '@/types';
 
 interface DeploymentModalProps {
   isOpen: boolean;
@@ -100,9 +102,40 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
     setStage('wallet-confirm');
   };
 
+  const AGENT_NAMES: Record<string, string[]> = {
+    Trader: ['Sentinel', 'Viper'],
+    Builder: ['Aegis', 'Phantom', 'Striker', 'Nova', 'Cipher'],
+    'Pro Creator': ['Titan', 'Apex', 'Shadow', 'Oracle', 'Blitz', 'Nexus', 'Rogue', 'Zenith', 'Pulse', 'Storm'],
+  };
+  const PERSONALITIES: AgentPersonality[] = ['guardian', 'hunter', 'analyst', 'oracle'];
+  const ASSET_SETS = [['BTC', 'ETH'], ['SOL', 'AVAX'], ['BTC', 'ETH', 'SOL'], ['LINK', 'ARB', 'ETH']];
+
+  const createAgentsForPlan = (method: 'wallet' | 'gas-balance') => {
+    const names = AGENT_NAMES[plan.name] || ['Agent'];
+    const count = Math.min(names.length, plan.agents);
+    for (let i = 0; i < count; i++) {
+      addDeployedAgent({
+        id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: names[i],
+        personality: PERSONALITIES[i % PERSONALITIES.length],
+        status: 'pending',
+        plan: plan.name,
+        walletAddress: method === 'wallet' ? connectedWallet?.address || null : null,
+        deployMethod: method,
+        pnl: 0,
+        pnlPercent: 0,
+        totalTrades: 0,
+        winRate: 0,
+        assets: ASSET_SETS[i % ASSET_SETS.length],
+        createdAt: Date.now(),
+      });
+    }
+  };
+
   const handleWalletDeploy = () => {
     setStage('deploying');
     addPendingDeployment(plan.name, 'wallet', connectedWallet?.id);
+    createAgentsForPlan('wallet');
     setTimeout(() => setStage('pending'), 2500);
   };
 
@@ -111,12 +144,12 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
       setStage('deposit');
       return;
     }
-    // Deduct balance
     const newBalance = gasBalance - plan.price;
     localStorage.setItem(GAS_BALANCE_KEY, newBalance.toString());
     setGasBalance(newBalance);
     setStage('deploying');
     addPendingDeployment(plan.name, 'gas-balance');
+    createAgentsForPlan('gas-balance');
     setTimeout(() => setStage('pending'), 2500);
   };
 
