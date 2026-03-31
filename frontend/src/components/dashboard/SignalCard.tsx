@@ -357,6 +357,15 @@ function SignalCard({ signal, onExecute, onDismiss }: SignalCardProps) {
             <span className="w-1.5 h-1.5 rounded-full bg-[#B8FF3C] animate-pulse" />
             SIGNAL
           </span>
+          {signal.isOwnAgent ? (
+            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Your Agent
+            </span>
+          ) : (
+            <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider bg-white/[0.04] text-gray-500 border border-white/[0.06]">
+              Community
+            </span>
+          )}
         </div>
         {!isMissed && (
           <span className="text-[10px] text-gray-500 tabular-nums font-medium">{timeLeft}</span>

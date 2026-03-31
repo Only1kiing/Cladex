@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getDeployedAgents } from '@/lib/agents-store';
+import type { DeployedAgent } from '@/lib/agents-store';
 import type { AgentPersonality } from '@/types';
 
 export interface TradeSignal {
   id: string;
   agentName: string;
+  agentId?: string;
   personality: AgentPersonality;
   color: string;
   pair: string;
@@ -19,30 +22,51 @@ export interface TradeSignal {
   expiresAt: number;
   status: 'active' | 'executed' | 'expired' | 'missed';
   estimatedPnl: number;
+  isOwnAgent: boolean;
 }
 
-const SIGNAL_AGENTS = [
+// Community agents shown when user has no deployed agents
+const COMMUNITY_AGENTS = [
   { name: 'Raze', personality: 'hunter' as AgentPersonality, color: 'text-red-400' },
   { name: 'Iris', personality: 'oracle' as AgentPersonality, color: 'text-violet-400' },
   { name: 'Knox', personality: 'guardian' as AgentPersonality, color: 'text-emerald-400' },
   { name: 'Byte', personality: 'analyst' as AgentPersonality, color: 'text-cyan-400' },
-  { name: 'Nova', personality: 'hunter' as AgentPersonality, color: 'text-red-400' },
-  { name: 'Luna', personality: 'oracle' as AgentPersonality, color: 'text-violet-400' },
-  { name: 'Cipher', personality: 'analyst' as AgentPersonality, color: 'text-cyan-400' },
 ];
+
+const PERSONALITY_COLORS: Record<AgentPersonality, string> = {
+  hunter: 'text-red-400',
+  oracle: 'text-violet-400',
+  guardian: 'text-emerald-400',
+  analyst: 'text-cyan-400',
+};
+
+// Personality-specific signal reasoning
+const PERSONALITY_REASONS: Record<AgentPersonality, string[]> = {
+  hunter: ['Momentum breakout detected', 'Liquidation cascade incoming', 'Volume spike — fast entry', 'Breakout above resistance', 'Scalp opportunity — tight window'],
+  oracle: ['Predictive model convergence', 'Pattern last seen before +12% move', 'Cycle analysis confirms entry', 'My models say now is the time', 'Reversal probability at 84%'],
+  guardian: ['Safe entry at strong support', 'Risk-adjusted opportunity', 'Conservative setup with high R:R', 'Capital-protected entry zone', 'Low drawdown setup identified'],
+  analyst: ['RSI divergence + volume breakout', 'On-chain metrics confirm', 'Cross-exchange arb detected', 'Technical indicators aligned', 'Smart money flow positive'],
+};
 
 const SIGNAL_TEMPLATES = [
-  { pair: 'BTC/USDT', base: 67200, spread: 0.034, reasons: ['RSI divergence + volume breakout', 'Double bottom at support', 'Golden cross on 4H', 'Whale accumulation detected'] },
-  { pair: 'ETH/USDT', base: 3420, spread: 0.04, reasons: ['Bull flag confirmed', 'Breakout above resistance', 'DEX volume spike', 'ETH/BTC ratio reversal'] },
-  { pair: 'SOL/USDT', base: 142, spread: 0.05, reasons: ['Momentum breakout', 'TVL surge on Solana', 'NFT volume spike', 'Breakout above $140 resistance'] },
-  { pair: 'LINK/USDT', base: 14.5, spread: 0.045, reasons: ['Oracle demand increasing', 'CCIP adoption signal', 'Accumulation pattern', 'Smart money inflow'] },
-  { pair: 'AVAX/USDT', base: 35.8, spread: 0.042, reasons: ['Subnet activity up 200%', 'Bull pennant forming', 'Institutional buying', 'Cross-chain volume spike'] },
-  { pair: 'ARB/USDT', base: 1.12, spread: 0.055, reasons: ['L2 dominance growing', 'Airdrop farming ended, real usage remains', 'Technical breakout', 'Sequencer revenue ATH'] },
+  { pair: 'BTC/USDT', base: 67200, spread: 0.034 },
+  { pair: 'ETH/USDT', base: 3420, spread: 0.04 },
+  { pair: 'SOL/USDT', base: 142, spread: 0.05 },
+  { pair: 'LINK/USDT', base: 14.5, spread: 0.045 },
+  { pair: 'AVAX/USDT', base: 35.8, spread: 0.042 },
+  { pair: 'ARB/USDT', base: 1.12, spread: 0.055 },
 ];
 
-function generateSignal(): TradeSignal {
-  const agent = SIGNAL_AGENTS[Math.floor(Math.random() * SIGNAL_AGENTS.length)];
-  const template = SIGNAL_TEMPLATES[Math.floor(Math.random() * SIGNAL_TEMPLATES.length)];
+function generateSignal(agent: { name: string; id?: string; personality: AgentPersonality; color: string; assets?: string[] }, isOwn: boolean): TradeSignal {
+  // Pick pair from agent's assets if available, otherwise random
+  let template;
+  if (agent.assets && agent.assets.length > 0) {
+    const assetPair = `${agent.assets[Math.floor(Math.random() * agent.assets.length)]}/USDT`;
+    template = SIGNAL_TEMPLATES.find(t => t.pair === assetPair) || SIGNAL_TEMPLATES[Math.floor(Math.random() * SIGNAL_TEMPLATES.length)];
+  } else {
+    template = SIGNAL_TEMPLATES[Math.floor(Math.random() * SIGNAL_TEMPLATES.length)];
+  }
+
   const side = Math.random() > 0.35 ? 'long' : 'short';
   const variance = 1 + (Math.random() - 0.5) * 0.02;
   const entry = Math.round(template.base * variance * 100) / 100;
@@ -56,6 +80,7 @@ function generateSignal(): TradeSignal {
     ? Math.round(entry * (1 + tpPercent) * 100) / 100
     : Math.round(entry * (1 - tpPercent) * 100) / 100;
 
+  const reasons = PERSONALITY_REASONS[agent.personality];
   const confidence = 65 + Math.floor(Math.random() * 30);
   const estimatedPnl = Math.round((50 + Math.random() * 400) * 100) / 100;
   const now = Date.now();
@@ -64,6 +89,7 @@ function generateSignal(): TradeSignal {
   return {
     id: `sig-${now}-${Math.random().toString(36).slice(2, 7)}`,
     agentName: agent.name,
+    agentId: agent.id,
     personality: agent.personality,
     color: agent.color,
     pair: template.pair,
@@ -72,11 +98,12 @@ function generateSignal(): TradeSignal {
     stopLoss,
     takeProfit,
     confidence,
-    reason: template.reasons[Math.floor(Math.random() * template.reasons.length)],
+    reason: reasons[Math.floor(Math.random() * reasons.length)],
     timestamp: now,
     expiresAt: now + expiryMinutes * 60 * 1000,
     status: 'active',
     estimatedPnl,
+    isOwnAgent: isOwn,
   };
 }
 
@@ -88,19 +115,43 @@ export function useSignalGenerator() {
   const [executedTrades, setExecutedTrades] = useState<{ signal: TradeSignal; result: number }[]>([]);
   const intervalRef = useRef<NodeJS.Timeout>();
 
+  const getSignalAgents = useCallback(() => {
+    const deployed = getDeployedAgents().filter(a => a.status === 'active');
+    if (deployed.length > 0) {
+      return {
+        agents: deployed.map(a => ({
+          name: a.name,
+          id: a.id,
+          personality: a.personality,
+          color: PERSONALITY_COLORS[a.personality],
+          assets: a.assets,
+        })),
+        isOwn: true,
+      };
+    }
+    return {
+      agents: COMMUNITY_AGENTS.map(a => ({ ...a, id: undefined, assets: undefined })),
+      isOwn: false,
+    };
+  }, []);
+
   // Generate signals periodically
   useEffect(() => {
-    // Generate first signal quickly
     const firstTimeout = setTimeout(() => {
-      setSignals(prev => [...prev, generateSignal()]);
+      const { agents, isOwn } = getSignalAgents();
+      if (agents.length === 0) return;
+      const agent = agents[Math.floor(Math.random() * agents.length)];
+      setSignals(prev => [...prev, generateSignal(agent, isOwn)]);
     }, 5000);
 
     intervalRef.current = setInterval(() => {
+      const { agents, isOwn } = getSignalAgents();
+      if (agents.length === 0) return;
       setSignals(prev => {
-        // Max 3 active signals at a time
         const active = prev.filter(s => s.status === 'active');
         if (active.length >= 3) return prev;
-        return [...prev, generateSignal()];
+        const agent = agents[Math.floor(Math.random() * agents.length)];
+        return [...prev, generateSignal(agent, isOwn)];
       });
     }, 25000 + Math.random() * 20000);
 
@@ -108,6 +159,15 @@ export function useSignalGenerator() {
       clearTimeout(firstTimeout);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
+  }, [getSignalAgents]);
+
+  // Listen for agent changes (deploy/status updates)
+  useEffect(() => {
+    const handler = () => {
+      // New agents deployed — signals will use them on next generation
+    };
+    window.addEventListener('cladex_agents_updated', handler);
+    return () => window.removeEventListener('cladex_agents_updated', handler);
   }, []);
 
   // Check for expired signals
@@ -140,7 +200,7 @@ export function useSignalGenerator() {
     const cleanup = setInterval(() => {
       const now = Date.now();
       setSignals(prev => prev.filter(s => {
-        if (s.status === 'executed') return false; // remove immediately on next tick
+        if (s.status === 'executed') return false;
         if (s.status === 'missed' && now - s.expiresAt > 15000) return false;
         return true;
       }));
@@ -174,16 +234,17 @@ export function useSignalGenerator() {
     setSignals(prev => prev.filter(s => s.id !== signalId));
   }, []);
 
-  const activeSignals = signals.filter(s => s.status === 'active');
+  const hasOwnAgents = getDeployedAgents().filter(a => a.status === 'active').length > 0;
 
   return {
     signals,
-    activeSignals,
+    activeSignals: signals.filter(s => s.status === 'active'),
     missedCount,
     missedPnl,
     manualTradeCount,
     executedTrades,
     executeSignal,
     dismissSignal,
+    hasOwnAgents,
   };
 }

@@ -557,7 +557,7 @@ export default function DashboardPage() {
   const [showAllTrades, setShowAllTrades] = useState(false);
 
   // Signal system
-  const { signals, missedCount, missedPnl, manualTradeCount, executedTrades, executeSignal, dismissSignal } = useSignalGenerator();
+  const { signals, missedCount, missedPnl, manualTradeCount, executedTrades, executeSignal, dismissSignal, hasOwnAgents } = useSignalGenerator();
   const [selectedSignal, setSelectedSignal] = useState<TradeSignal | null>(null);
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -813,6 +813,16 @@ export default function DashboardPage() {
           onExecute={(s) => { setSelectedSignal(s); setShowTradeModal(true); }}
           onDismiss={dismissSignal}
         />
+
+        {/* Deploy CTA when using community signals */}
+        {!hasOwnAgents && signals.filter(s => s.status === 'active').length > 0 && (
+          <div className="flex items-center justify-between px-4 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] mb-3">
+            <span className="text-[11px] text-gray-500">These signals are from community agents.</span>
+            <a href="/pricing" className="text-[11px] font-semibold text-[#B8FF3C] hover:brightness-110 transition-colors">
+              Deploy your own agent →
+            </a>
+          </div>
+        )}
 
         <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
           {/* Typing indicator at top */}
