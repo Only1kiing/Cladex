@@ -161,7 +161,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </nav>
 
       {/* Plans Link */}
-      <div className="px-3 mb-3">
+      <div className="px-3 mb-1">
         <Link
           href="/pricing"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-white/[0.04] transition-all duration-200"
@@ -173,16 +173,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Link>
       </div>
 
-      {/* Fund */}
+      {/* Rewards */}
       <div className="px-3 mb-3">
         <Link
-          href="/dashboard/settings"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-white/[0.04] transition-all duration-200"
+          href="/dashboard/points"
+          onClick={() => setSidebarOpen(false)}
+          className={[
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+            pathname === '/dashboard/points'
+              ? 'bg-white/[0.08] text-white shadow-sm'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-white/[0.04]',
+          ].join(' ')}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-          </svg>
-          Gas Balance
+          <span className={pathname === '/dashboard/points' ? 'text-[#B8FF3C]' : ''}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+            </svg>
+          </span>
+          Rewards
         </Link>
       </div>
 

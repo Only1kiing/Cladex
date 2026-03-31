@@ -105,7 +105,7 @@ export function PointsBalanceCard() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10">
               <BoltIcon className="w-5 h-5" />
             </div>
-            <span className="text-sm font-semibold text-gray-300">Cladex Points (CP)</span>
+            <span className="text-sm font-semibold text-gray-300">$CLDX Points</span>
           </div>
           <span className="rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-bold text-indigo-400 tracking-wide">
             Lvl {lvl.level} &middot; {lvl.name}
@@ -118,7 +118,7 @@ export function PointsBalanceCard() {
             <span className="text-5xl font-extrabold tracking-tight text-white tabular-nums">
               {displayPoints.toLocaleString()}
             </span>
-            <span className="text-lg font-semibold text-gray-500">CP</span>
+            <span className="text-lg font-semibold text-gray-500">$CLDX</span>
           </div>
         </div>
 
@@ -139,8 +139,8 @@ export function PointsBalanceCard() {
           </div>
           {lvl.nextThreshold && (
             <div className="flex justify-between text-[11px] text-gray-600 mt-1">
-              <span>{lvl.min.toLocaleString()} CP</span>
-              <span>{lvl.nextThreshold.toLocaleString()} CP</span>
+              <span>{lvl.min.toLocaleString()} $CLDX</span>
+              <span>{lvl.nextThreshold.toLocaleString()} $CLDX</span>
             </div>
           )}
         </div>
@@ -151,13 +151,13 @@ export function PointsBalanceCard() {
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 2.5L12 8.5H2L7 2.5Z" fill="#34d399" />
             </svg>
-            <span className="text-sm font-medium text-emerald-400">+{dailyEarned} CP today</span>
+            <span className="text-sm font-medium text-emerald-400">+{dailyEarned} $CLDX today</span>
           </div>
           <div className="h-4 w-px bg-white/[0.08]" />
           <div className="flex items-center gap-1.5">
             <div className="h-1.5 w-1.5 rounded-full bg-amber-400/60" />
             <span className="text-xs text-gray-500">
-              {dailyEarned}/{dailyCap} CP daily limit
+              {dailyEarned}/{dailyCap} $CLDX daily limit
             </span>
           </div>
         </div>
@@ -177,19 +177,19 @@ interface EarningItem {
 }
 
 const EARNINGS: EarningItem[] = [
-  { emoji: '\u{1F680}', action: 'Deploy Agent', reward: '+100 CP', progress: 100, detail: 'One-time per agent' },
-  { emoji: '\u{1F4CA}', action: 'Daily Login', reward: '+25 CP', progress: 100, detail: 'Claimed today' },
-  { emoji: '\u{1F4B0}', action: 'Profitable Trade', reward: '+10 CP/trade', progress: 60, detail: '6 trades today' },
-  { emoji: '\u{1F381}', action: 'Gift an Agent', reward: '+5 CP', progress: 0, detail: 'Not yet' },
-  { emoji: '\u{1F465}', action: 'Refer a Friend', reward: '+500 CP', progress: 20, detail: '2/10 referrals' },
-  { emoji: '\u{1F3EA}', action: 'Use Marketplace Agent', reward: '+50 CP', progress: 50, detail: '1 used today' },
+  { emoji: '\u{1F680}', action: 'Deploy Agent', reward: '+100 $CLDX', progress: 100, detail: 'One-time per agent' },
+  { emoji: '\u{1F4CA}', action: 'Daily Login', reward: '+25 $CLDX', progress: 100, detail: 'Claimed today' },
+  { emoji: '\u{1F4B0}', action: 'Profitable Trade', reward: '+10 $CLDX/trade', progress: 60, detail: '6 trades today' },
+  { emoji: '\u{1F381}', action: 'Gift an Agent', reward: '+5 $CLDX', progress: 0, detail: 'Not yet' },
+  { emoji: '\u{1F465}', action: 'Refer a Friend', reward: '+500 $CLDX', progress: 20, detail: '2/10 referrals' },
+  { emoji: '\u{1F3EA}', action: 'Use Marketplace Agent', reward: '+50 $CLDX', progress: 50, detail: '1 used today' },
 ];
 
 export function EarningsList() {
   return (
     <FadeSlide delay={80}>
       <div className="rounded-2xl border border-[#1e1e2e] bg-[#111118] p-6">
-        <h3 className="text-sm font-semibold text-gray-300 mb-4">How to Earn CP</h3>
+        <h3 className="text-sm font-semibold text-gray-300 mb-4">How to Earn $CLDX</h3>
         <div className="space-y-3">
           {EARNINGS.map((item, i) => (
             <FadeSlide key={item.action} delay={120 + i * 60}>
@@ -244,8 +244,8 @@ export function SpendingMenu() {
     <FadeSlide delay={120}>
       <div className="rounded-2xl border border-[#1e1e2e] bg-[#111118] p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-300">Spend CP</h3>
-          <span className="text-xs text-gray-500 tabular-nums">{currentBalance.toLocaleString()} CP available</span>
+          <h3 className="text-sm font-semibold text-gray-300">Spend $CLDX</h3>
+          <span className="text-xs text-gray-500 tabular-nums">{currentBalance.toLocaleString()} $CLDX available</span>
         </div>
         <div className="space-y-2.5">
           {SPEND_ITEMS.map((item, i) => {
@@ -265,7 +265,7 @@ export function SpendingMenu() {
                     <div className="text-[11px] text-gray-500 mt-0.5">{item.description}</div>
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-xs font-bold text-amber-400/80 tabular-nums">{item.cost} CP</span>
+                    <span className="text-xs font-bold text-amber-400/80 tabular-nums">{item.cost} $CLDX</span>
                     <button
                       disabled={!canAfford}
                       className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all duration-200 ${
@@ -302,7 +302,7 @@ export function PointsWidget() {
             <BoltIcon className="w-4 h-4" />
           </div>
           <span className="text-lg font-bold text-white tabular-nums">{displayPoints.toLocaleString()}</span>
-          <span className="text-xs text-gray-500 font-medium">CP</span>
+          <span className="text-xs text-gray-500 font-medium">$CLDX</span>
         </div>
         <div className="flex items-center gap-2 mb-2">
           <span className="rounded bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
@@ -346,7 +346,7 @@ export function ReferralCard() {
 
         <h3 className="text-base font-bold text-white mb-1">Invite friends, earn rewards</h3>
         <p className="text-sm text-gray-400 mb-5">
-          Share your link — earn 500 CP per friend who joins
+          Share your link — earn 500 $CLDX per friend who joins
         </p>
 
         {/* Referral link */}
@@ -408,11 +408,11 @@ export function ReferralCard() {
         <div className="space-y-1.5 text-[11px] text-gray-500">
           <div className="flex items-center gap-1.5">
             <div className="h-1 w-1 rounded-full bg-amber-400/50" />
-            <span>You get <span className="text-amber-400/80 font-medium">500 CP + 1 agent slot</span> per 3 referrals</span>
+            <span>You get <span className="text-amber-400/80 font-medium">500 $CLDX + 1 agent slot</span> per 3 referrals</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="h-1 w-1 rounded-full bg-gray-600" />
-            <span>Max 10 referrals (5,000 CP cap)</span>
+            <span>Max 10 referrals (5,000 $CLDX cap)</span>
           </div>
         </div>
       </div>

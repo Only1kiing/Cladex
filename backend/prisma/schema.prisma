@@ -64,22 +64,33 @@ model Agent {
 enum TradeSide {
   BUY
   SELL
+  LONG
+  SHORT
+}
+
+enum TradeStatus {
+  OPEN
+  CLOSED
+  CANCELLED
 }
 
 model Trade {
-  id        String    @id @default(cuid())
-  agentId   String
-  userId    String
-  symbol    String
-  side      TradeSide
-  amount    Float
-  price     Float
-  profit    Float     @default(0)
-  reason    String
-  createdAt DateTime  @default(now())
+  id         String      @id @default(cuid())
+  agentId    String?
+  userId     String
+  symbol     String
+  side       TradeSide
+  amount     Float
+  price      Float
+  profit     Float       @default(0)
+  reason     String
+  status     TradeStatus @default(OPEN)
+  stopLoss   Float?
+  takeProfit Float?
+  createdAt  DateTime    @default(now())
 
-  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent Agent? @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([agentId])

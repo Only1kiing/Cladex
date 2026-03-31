@@ -580,7 +580,7 @@ function StepSuccess({
           >
             <Award size={18} className="text-yellow-400" />
             <span className="text-sm font-semibold text-yellow-300">
-              Your agent earned +100 CP for deployment
+              Your agent earned +100 $CLDX for deployment
             </span>
           </motion.div>
         )}

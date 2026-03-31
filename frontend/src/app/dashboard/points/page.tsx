@@ -52,14 +52,14 @@ const LEVELS = [
 ];
 
 const EARN_METHODS = [
-  { emoji: '🚀', action: 'Deploy an Agent', reward: '+100 CP', desc: 'One-time per agent deployed. More agents = more points.', progress: 100 },
-  { emoji: '📊', action: 'Daily Login', reward: '+25 CP', desc: 'Log in every day to claim. Streak bonuses after 7 days.', progress: 100 },
-  { emoji: '💰', action: 'Profitable Trade', reward: '+10 CP/trade', desc: 'Every trade that closes in profit earns you points.', progress: 60 },
-  { emoji: '🎁', action: 'Gift an Agent', reward: '+5 CP', desc: 'Send gifts to agents in Agent Comms to earn points.', progress: 0 },
-  { emoji: '👥', action: 'Refer a Friend', reward: '+500 CP', desc: 'Share your referral code. Earn 500 CP per friend who signs up.', progress: 20 },
-  { emoji: '🏪', action: 'Use Marketplace Agent', reward: '+50 CP', desc: 'Try agents from the Explore page to earn bonus points.', progress: 50 },
-  { emoji: '🏆', action: 'Top Agent Performance', reward: '+200 CP', desc: 'Your agent reaches top 10 in the leaderboard weekly.', progress: 0 },
-  { emoji: '📈', action: 'Complete a Strategy', reward: '+75 CP', desc: 'Finish a full DCA or Trend strategy cycle successfully.', progress: 30 },
+  { emoji: '🚀', action: 'Deploy an Agent', reward: '+100 $CLDX', desc: 'One-time per agent deployed. More agents = more points.', progress: 100 },
+  { emoji: '📊', action: 'Daily Login', reward: '+25 $CLDX', desc: 'Log in every day to claim. Streak bonuses after 7 days.', progress: 100 },
+  { emoji: '💰', action: 'Profitable Trade', reward: '+10 $CLDX/trade', desc: 'Every trade that closes in profit earns you points.', progress: 60 },
+  { emoji: '🎁', action: 'Gift an Agent', reward: '+5 $CLDX', desc: 'Send gifts to agents in Agent Comms to earn points.', progress: 0 },
+  { emoji: '👥', action: 'Refer a Friend', reward: '+500 $CLDX', desc: 'Share your referral code. Earn 500 $CLDX per friend who signs up.', progress: 20 },
+  { emoji: '🏪', action: 'Use Marketplace Agent', reward: '+50 $CLDX', desc: 'Try agents from the Explore page to earn bonus points.', progress: 50 },
+  { emoji: '🏆', action: 'Top Agent Performance', reward: '+200 $CLDX', desc: 'Your agent reaches top 10 in the leaderboard weekly.', progress: 0 },
+  { emoji: '📈', action: 'Complete a Strategy', reward: '+75 $CLDX', desc: 'Finish a full DCA or Trend strategy cycle successfully.', progress: 30 },
 ];
 
 const SPEND_OPTIONS = [
@@ -80,7 +80,7 @@ const AIRDROP_BOOSTERS = [
   { action: 'Active trading volume', boost: '+10% per $10K traded' },
   { action: 'Agent performance (top 100)', boost: '+25% bonus' },
   { action: 'Referral count', boost: '+5% per referral' },
-  { action: 'CP balance at snapshot', boost: '+1% per 1,000 CP' },
+  { action: '$CLDX balance at snapshot', boost: '+1% per 1,000 $CLDX' },
   { action: 'Account age', boost: '+2% per month active' },
 ];
 
@@ -100,7 +100,7 @@ export default function PointsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white">Points & Rewards</h1>
-        <p className="text-sm text-gray-400 mt-1">Earn Cladex Points (CP), unlock rewards, and qualify for the $CLADEX token airdrop</p>
+        <p className="text-sm text-gray-400 mt-1">Earn $CLDX Points, unlock rewards, and qualify for the $CLADEX token airdrop</p>
       </div>
 
       {/* Points Overview Card */}
@@ -115,7 +115,7 @@ export default function PointsPage() {
               <BoltIcon />
             </div>
             <div>
-              <p className="text-3xl sm:text-4xl font-black text-white tabular-nums">{displayPoints.toLocaleString()} <span className="text-lg font-medium text-gray-500">CP</span></p>
+              <p className="text-3xl sm:text-4xl font-black text-white tabular-nums">{displayPoints.toLocaleString()} <span className="text-lg font-medium text-gray-500">$CLDX</span></p>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/15 ${currentLevel.color}`}>
                   {currentLevel.name}
@@ -130,7 +130,7 @@ export default function PointsPage() {
             <div className="sm:w-60">
               <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
                 <span>Next: {nextLevel.name}</span>
-                <span>{nextLevel.min.toLocaleString()} CP</span>
+                <span>{nextLevel.min.toLocaleString()} $CLDX</span>
               </div>
               <div className="h-2.5 rounded-full bg-white/[0.06] overflow-hidden">
                 <div
@@ -138,7 +138,7 @@ export default function PointsPage() {
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-[10px] text-gray-600 mt-1">{(nextLevel.min - totalPoints).toLocaleString()} CP to go</p>
+              <p className="text-[10px] text-gray-600 mt-1">{(nextLevel.min - totalPoints).toLocaleString()} $CLDX to go</p>
             </div>
           )}
         </div>
@@ -152,7 +152,7 @@ export default function PointsPage() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500">Today&apos;s earnings</span>
-              <span className="text-sm font-bold text-emerald-400">+125 CP</span>
+              <span className="text-sm font-bold text-emerald-400">+125 $CLDX</span>
             </div>
           </div>
           <div className="flex items-center gap-1 mt-3">
@@ -169,8 +169,8 @@ export default function PointsPage() {
       {/* Tab Navigation */}
       <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
         {[
-          { id: 'earn' as const, label: 'Earn CP', icon: '💰' },
-          { id: 'spend' as const, label: 'Spend CP', icon: '🛒' },
+          { id: 'earn' as const, label: 'Earn $CLDX', icon: '💰' },
+          { id: 'spend' as const, label: 'Spend $CLDX', icon: '🛒' },
           { id: 'airdrop' as const, label: '$CLADEX Airdrop', icon: '🪂' },
         ].map((tab) => (
           <button
@@ -224,7 +224,7 @@ export default function PointsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-200">{item.name}</span>
-                    <span className="text-sm font-bold text-indigo-400 tabular-nums">{item.cost} CP</span>
+                    <span className="text-sm font-bold text-indigo-400 tabular-nums">{item.cost} $CLDX</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
                 </div>
@@ -252,7 +252,7 @@ export default function PointsPage() {
                 <h2 className="text-xl font-bold text-white">$CLADEX Token Airdrop</h2>
               </div>
               <p className="text-sm text-gray-300 leading-relaxed max-w-2xl">
-                The $CLADEX utility token powers the Cladex ecosystem — governance, fee discounts, staking rewards, and premium features. All deployment plan holders are automatically eligible for the airdrop. Your allocation depends on your plan, activity, and CP balance.
+                The $CLADEX utility token powers the Cladex ecosystem — governance, fee discounts, staking rewards, and premium features. All deployment plan holders are automatically eligible for the airdrop. Your allocation depends on your plan, activity, and $CLDX balance.
               </p>
               <div className="mt-4 flex items-center gap-2">
                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">You&apos;re eligible ✓</span>

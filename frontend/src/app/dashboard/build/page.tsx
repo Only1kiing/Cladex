@@ -729,7 +729,7 @@ export default function AgentBuilderPage() {
           <div className="text-4xl mb-3">{'\uD83C\uDF89'}</div>
           <h3 className="text-lg font-bold text-white mb-2">Agent minted successfully!</h3>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#B8FF3C]/10 border border-[#B8FF3C]/30 mb-4">
-            <span className="text-[#B8FF3C] font-bold text-sm">+100 CP earned</span>
+            <span className="text-[#B8FF3C] font-bold text-sm">+100 $CLDX earned</span>
           </div>
           <p className="text-sm text-gray-400 mb-4">
             Your {selectedPersonality.label} agent <span className="text-white font-medium">{draft.name}</span> is now on-chain and actively monitoring the market.

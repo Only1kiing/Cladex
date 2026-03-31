@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, ArrowRight, Key, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Key, ShieldCheck, Gift, Sparkles } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
@@ -185,6 +185,114 @@ function VerificationStep({
             : 'Resend Code'}
         </button>
       </div>
+    </motion.div>
+  );
+}
+
+function ClaimPointsStep({ onClaimed }: { onClaimed: () => void }) {
+  const [claimed, setClaimed] = useState(false);
+  const [displayPoints, setDisplayPoints] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const handleClaim = () => {
+    setClaimed(true);
+    setShowConfetti(true);
+    // Animated count-up
+    const start = performance.now();
+    const duration = 1500;
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayPoints(Math.round(10000 * eased));
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    // Auto-advance after animation
+    setTimeout(() => onClaimed(), 2800);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="text-center"
+    >
+      {/* Icon */}
+      <div className="relative mx-auto w-20 h-20 mb-6">
+        <motion.div
+          animate={claimed ? { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] } : {}}
+          transition={{ duration: 0.6 }}
+          className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#B8FF3C]/20 to-emerald-500/10 border border-[#B8FF3C]/30 flex items-center justify-center"
+        >
+          {claimed ? (
+            <Sparkles size={36} className="text-[#B8FF3C]" />
+          ) : (
+            <Gift size={36} className="text-[#B8FF3C]" />
+          )}
+        </motion.div>
+        {showConfetti && (
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(8)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                animate={{
+                  opacity: 0,
+                  scale: 1,
+                  x: (Math.random() - 0.5) * 120,
+                  y: (Math.random() - 0.5) * 120,
+                }}
+                transition={{ duration: 1, delay: i * 0.05 }}
+                className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full"
+                style={{ backgroundColor: ['#B8FF3C', '#22c55e', '#818cf8', '#f59e0b', '#ec4899'][i % 5] }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <h2 className="text-xl font-bold text-white mb-2">
+        {claimed ? 'Points Claimed!' : 'Welcome Bonus'}
+      </h2>
+      <p className="text-sm text-gray-400 mb-6">
+        {claimed
+          ? 'Your $CLDX points are ready to use'
+          : 'Claim your welcome bonus to get started on Cladex'}
+      </p>
+
+      {/* Points display */}
+      <div className="rounded-xl border border-[#B8FF3C]/20 bg-[#B8FF3C]/[0.05] px-6 py-5 mb-6">
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-4xl font-black text-white tabular-nums">
+            {claimed ? displayPoints.toLocaleString() : '10,000'}
+          </span>
+          <span className="text-lg font-bold text-[#B8FF3C]">$CLDX</span>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">Use points to boost agents, unlock slots, and earn rewards</p>
+      </div>
+
+      {!claimed ? (
+        <button
+          type="button"
+          onClick={handleClaim}
+          className="w-full rounded-xl bg-[#B8FF3C] px-6 py-3.5 text-sm font-bold text-black hover:brightness-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#B8FF3C]/50 shadow-lg shadow-[#B8FF3C]/20"
+        >
+          Claim 10,000 $CLDX Points
+        </button>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex items-center justify-center gap-2 text-sm font-medium text-emerald-400"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
+            <path d="M4 10.5L8 14.5L16 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Successfully claimed!
+        </motion.div>
+      )}
     </motion.div>
   );
 }
@@ -481,8 +589,8 @@ function ConnectExchangeStep() {
 export default function SignupPage() {
   const { signup } = useAuth();
 
-  // Steps: 'signup' | 'verification' | 'agent-comm-preview' | 'connect-exchange'
-  const [step, setStep] = useState<'signup' | 'verification' | 'agent-comm-preview' | 'connect-exchange'>('signup');
+  // Steps: 'signup' | 'verification' | 'claim-points' | 'agent-comm-preview' | 'connect-exchange'
+  const [step, setStep] = useState<'signup' | 'verification' | 'claim-points' | 'agent-comm-preview' | 'connect-exchange'>('signup');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -548,12 +656,13 @@ export default function SignupPage() {
   };
 
   const handleVerified = () => {
-    setStep('agent-comm-preview');
+    setStep('claim-points');
   };
 
   const stepSubtitle = {
     'signup': 'Get early access to AI agents trading crypto for you',
     'verification': 'One last step to secure your account',
+    'claim-points': 'Claim your welcome bonus',
     'agent-comm-preview': 'See what your agents have been up to',
     'connect-exchange': 'Connect your exchange to go live',
   };
@@ -692,7 +801,12 @@ export default function SignupPage() {
               />
             )}
 
-            {/* ===== STEP 3: AGENT COMM PREVIEW ===== */}
+            {/* ===== STEP 3: CLAIM $CLDX POINTS ===== */}
+            {step === 'claim-points' && (
+              <ClaimPointsStep key="claim-points" onClaimed={() => setStep('agent-comm-preview')} />
+            )}
+
+            {/* ===== STEP 4: AGENT COMM PREVIEW ===== */}
             {step === 'agent-comm-preview' && (
               <AgentCommPreviewStep key="agent-comm-preview" onConnectExchange={() => setStep('connect-exchange')} />
             )}
