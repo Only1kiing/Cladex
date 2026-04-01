@@ -108,10 +108,12 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
   const isPending = status === 'pending';
 
   const [statusLoading, setStatusLoading] = useState(false);
+  const [statusError, setStatusError] = useState('');
 
   const handleStatusChange = async (newStatus: AgentStatus) => {
     if (statusLoading) return;
     setStatusLoading(true);
+    setStatusError('');
     const backendStatusMap: Record<AgentStatus, string> = {
       active: 'RUNNING',
       paused: 'PAUSED',
@@ -265,18 +267,18 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               {status !== 'active' && (
-                <button onClick={() => handleStatusChange('active')} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-nova-400 bg-nova-500/10 hover:bg-nova-500/20 border border-nova-500/20 transition-all">
-                  <Play size={12} /> Start
+                <button onClick={() => handleStatusChange('active')} disabled={statusLoading} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-nova-400 bg-nova-500/10 hover:bg-nova-500/20 border border-nova-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  {statusLoading ? <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" /></svg> : <Play size={12} />} Start
                 </button>
               )}
               {status === 'active' && (
-                <button onClick={() => handleStatusChange('paused')} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all">
-                  <Pause size={12} /> Pause
+                <button onClick={() => handleStatusChange('paused')} disabled={statusLoading} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  {statusLoading ? <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" /></svg> : <Pause size={12} />} Pause
                 </button>
               )}
               {status !== 'stopped' && (
-                <button onClick={() => handleStatusChange('stopped')} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 bg-gray-500/10 hover:bg-gray-500/20 border border-gray-500/20 transition-all">
-                  <Square size={12} /> Stop
+                <button onClick={() => handleStatusChange('stopped')} disabled={statusLoading} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-400 bg-gray-500/10 hover:bg-gray-500/20 border border-gray-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  {statusLoading ? <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" /></svg> : <Square size={12} />} Stop
                 </button>
               )}
               <button
@@ -307,6 +309,9 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
                 </button>
               )}
             </div>
+            {statusError && (
+              <p className="text-xs text-red-400 mt-2">{statusError}</p>
+            )}
           </div>
         )}
       </div>

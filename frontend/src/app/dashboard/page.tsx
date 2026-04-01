@@ -418,7 +418,7 @@ function ChatPanel({
           />
           <button
             onClick={onSend}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() || isTyping}
             className="w-10 h-10 rounded-xl bg-[#B8FF3C] flex items-center justify-center text-black hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shrink-0"
           >
             <SendIcon />

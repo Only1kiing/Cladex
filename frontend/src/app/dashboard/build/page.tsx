@@ -715,10 +715,11 @@ export default function AgentBuilderPage() {
                 size="lg"
                 fullWidth
                 icon={<Rocket size={18} />}
-                disabled={!draft.strategy || draft.assets.length === 0}
+                disabled={!draft.strategy || draft.assets.length === 0 || isDeploying}
+                loading={isDeploying}
                 className="bg-[#B8FF3C] hover:brightness-110 text-black text-base font-bold py-3.5"
               >
-                {getUserPlan() ? `Deploy ${draft.name}` : 'Get Plan & Deploy'}
+                {isDeploying ? 'Deploying...' : getUserPlan() ? `Deploy ${draft.name}` : 'Get Plan & Deploy'}
               </Button>
               {getUserPlan() && (
                 <p className="text-[10px] text-gray-500 text-center mt-1.5">

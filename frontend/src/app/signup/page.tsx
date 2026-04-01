@@ -104,10 +104,10 @@ function VerificationStep({
 
   useEffect(() => {
     const fullCode = code.join('');
-    if (fullCode.length === 6 && /^\d{6}$/.test(fullCode)) {
+    if (fullCode.length === 6 && /^\d{6}$/.test(fullCode) && !verifying) {
       handleVerify();
     }
-  }, [code, handleVerify]);
+  }, [code, handleVerify, verifying]);
 
   const handleResend = () => {
     if (resendCooldown > 0) return;

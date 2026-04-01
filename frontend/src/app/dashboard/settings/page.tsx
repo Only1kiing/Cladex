@@ -142,7 +142,7 @@ export default function SettingsPage() {
                   disabled={!apiKey || !apiSecret || connecting}
                   className="w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
-                  {connecting ? 'Connecting...' : 'Connect Exchange'}
+                  {connecting ? (<><svg className="w-4 h-4 animate-spin inline mr-1.5" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" /></svg>Connecting...</>) : 'Connect Exchange'}
                 </button>
               </div>
             )}
@@ -214,7 +214,7 @@ export default function SettingsPage() {
               disabled={depositing || !depositAmount || parseFloat(depositAmount) <= 0}
               className="w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
-              {depositing ? 'Processing...' : `Top Up $${depositAmount || '0'} Gas`}
+              {depositing ? (<><svg className="w-4 h-4 animate-spin inline mr-1.5" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" /></svg>Processing...</>) : `Top Up $${depositAmount || '0'} Gas`}
             </button>
             <p className="text-[10px] text-gray-600 text-center mt-2">Gas will be deducted as agents execute trades</p>
           </div>
