@@ -466,20 +466,20 @@ function EmptyState() {
       </div>
       <h2 className="text-xl font-bold text-white mb-2">No agents deployed yet</h2>
       <p className="text-sm text-gray-400 max-w-md mb-8 leading-relaxed">
-        Deploy your first AI trading agent on-chain. Choose a plan, connect your wallet, and your agent will be minted as an NFT that you own forever.
+        No agents yet. Use the AI chat to build your first one — it takes 30 seconds.
       </p>
       <div className="flex items-center gap-3">
         <Link
-          href="/pricing"
+          href="/dashboard/build"
           className="px-6 py-3 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-[#B8FF3C]/20"
         >
-          Get a Deployment Plan
+          Build First Agent
         </Link>
         <Link
-          href="/dashboard/build"
+          href="/pricing"
           className="px-6 py-3 rounded-xl border border-white/[0.08] text-sm font-medium text-gray-300 hover:bg-white/[0.04] transition-all"
         >
-          Build Custom Agent
+          Get Deployment Plan
         </Link>
       </div>
       <div className="mt-8 grid grid-cols-3 gap-4 max-w-sm">

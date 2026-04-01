@@ -561,10 +561,15 @@ export default function MarketplacePage() {
         </div>
 
         {filteredAgents.length === 0 ? (
-          <div className="text-center py-20">
-            <Search size={48} className="text-gray-700 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-400 mb-2">No agents found</h3>
-            <p className="text-sm text-gray-600">Try adjusting your search or filters</p>
+          <div className="text-center py-12">
+            {searchQuery ? (
+              <>
+                <Search size={48} className="text-gray-700 mx-auto mb-4" />
+                <p className="text-sm text-gray-500">No agents match your search.</p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">Marketplace loading...</p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

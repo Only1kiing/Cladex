@@ -118,6 +118,14 @@ function formatTimestamp(ts: string): string {
 }
 
 function ActivityFeed({ items, className = '' }: ActivityFeedProps) {
+  if (items.length === 0) {
+    return (
+      <div className={`py-8 text-center ${className}`}>
+        <p className="text-xs text-gray-500">No activity yet. Deploy an agent to see live trades here.</p>
+      </div>
+    );
+  }
+
   return (
     <div className={`space-y-1 ${className}`}>
       {items.map((item) => (

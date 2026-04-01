@@ -182,6 +182,9 @@ export default function SettingsPage() {
           <div>
             <p className="text-3xl font-black text-white">${balance.toFixed(2)}</p>
             <p className="text-xs text-gray-500 mt-0.5">Available gas balance</p>
+            {balance === 0 && (
+              <p className="text-xs text-gray-500 mt-1">Add gas to deploy agents and start trading.</p>
+            )}
           </div>
           <button
             onClick={() => setShowDeposit(!showDeposit)}

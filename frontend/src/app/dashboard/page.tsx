@@ -1044,12 +1044,12 @@ export default function DashboardPage() {
               </svg>
             </div>
             <p className="text-base font-bold text-gray-200 mb-1">No agents deployed yet</p>
-            <p className="text-xs text-gray-500 mb-5 max-w-xs mx-auto">Deploy your first AI agent on-chain. It&apos;ll scan markets, find trades, and send you signals 24/7.</p>
+            <p className="text-xs text-gray-500 mb-5 max-w-xs mx-auto">No agents yet. Use the AI chat to build your first one — it takes 30 seconds.</p>
             <a
-              href="/pricing"
+              href="/dashboard/build"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-[#B8FF3C]/20"
             >
-              Deploy First Agent
+              Build First Agent
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
             </a>
           </div>
@@ -1085,17 +1085,21 @@ export default function DashboardPage() {
           {/* Trade list — collapsible */}
           <div className={`overflow-hidden transition-all duration-300 ease-out ${showAllTrades ? 'max-h-[500px] border-t border-white/[0.04]' : 'max-h-0'}`}>
             <div className="max-h-[500px] overflow-y-auto scrollbar-thin p-2">
-              <ActivityFeed items={[
-                ...executedTrades.map((t, i) => ({
-                  id: `manual-${i}-${t.signal.id}`,
-                  type: 'trade' as const,
-                  tradeDirection: (t.signal.side === 'long' ? 'buy' : 'sell') as 'buy' | 'sell',
-                  agentPersonality: t.signal.personality,
-                  message: `${t.signal.agentName}: ${t.signal.side.toUpperCase()} ${t.signal.pair} at $${t.signal.entryPrice.toLocaleString()} — ${t.result >= 0 ? '+' : ''}$${t.result.toFixed(2)} ${t.result >= 0 ? '✅' : '❌'} (manual)`,
-                  timestamp: new Date(Date.now() - i * 120000).toISOString(),
-                })).reverse(),
-                ...tradeLogItems,
-              ]} />
+              {executedTrades.length === 0 && tradeLogItems.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">No trades yet. Your agents will log every trade here in real time.</p>
+              ) : (
+                <ActivityFeed items={[
+                  ...executedTrades.map((t, i) => ({
+                    id: `manual-${i}-${t.signal.id}`,
+                    type: 'trade' as const,
+                    tradeDirection: (t.signal.side === 'long' ? 'buy' : 'sell') as 'buy' | 'sell',
+                    agentPersonality: t.signal.personality,
+                    message: `${t.signal.agentName}: ${t.signal.side.toUpperCase()} ${t.signal.pair} at $${t.signal.entryPrice.toLocaleString()} — ${t.result >= 0 ? '+' : ''}$${t.result.toFixed(2)} ${t.result >= 0 ? '✅' : '❌'} (manual)`,
+                    timestamp: new Date(Date.now() - i * 120000).toISOString(),
+                  })).reverse(),
+                  ...tradeLogItems,
+                ]} />
+              )}
             </div>
           </div>
         </div>
