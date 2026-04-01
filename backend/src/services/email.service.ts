@@ -15,7 +15,7 @@ export async function sendVerificationEmail(email: string, code: string, name: s
 
   try {
     await resend.emails.send({
-      from: "Cladex <onboarding@resend.dev>",
+      from: "Cladex <noreply@cladex.xyz>",
       to: email,
       subject: "Verify your Cladex account",
       html: `
