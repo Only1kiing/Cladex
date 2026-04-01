@@ -190,7 +190,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* User section */}
       <div className="px-3 pb-5 mt-auto border-t border-white/[0.06] pt-4">
         <div className="flex items-center gap-3 px-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-oracle-500 flex items-center justify-center text-white text-sm font-semibold">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-echo-500 flex items-center justify-center text-white text-sm font-semibold">
             {userInitial}
           </div>
           <div className="flex-1 min-w-0">
@@ -270,7 +270,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </svg>
             </button>
             <Logo size="sm" />
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-oracle-500 flex items-center justify-center text-white text-xs font-semibold">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-echo-500 flex items-center justify-center text-white text-xs font-semibold">
               {userInitial}
             </div>
           </div>

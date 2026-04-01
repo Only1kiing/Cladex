@@ -2,7 +2,7 @@
 
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 
-type Personality = 'guardian' | 'analyst' | 'hunter' | 'oracle';
+type Personality = 'nova' | 'sage' | 'apex' | 'echo';
 
 interface PerformanceFeeModalProps {
   isOpen: boolean;
@@ -15,25 +15,25 @@ interface PerformanceFeeModalProps {
 }
 
 const personalityColors: Record<Personality, { bg: string; border: string; text: string; gradient: string }> = {
-  guardian: {
+  nova: {
     bg: 'bg-green-500/10',
     border: 'border-green-500/30',
     text: 'text-green-400',
     gradient: 'from-green-600 to-green-500',
   },
-  analyst: {
+  sage: {
     bg: 'bg-blue-500/10',
     border: 'border-blue-500/30',
     text: 'text-blue-400',
     gradient: 'from-blue-600 to-blue-500',
   },
-  hunter: {
+  apex: {
     bg: 'bg-red-500/10',
     border: 'border-red-500/30',
     text: 'text-red-400',
     gradient: 'from-red-600 to-red-500',
   },
-  oracle: {
+  echo: {
     bg: 'bg-purple-500/10',
     border: 'border-purple-500/30',
     text: 'text-purple-400',
@@ -42,10 +42,10 @@ const personalityColors: Record<Personality, { bg: string; border: string; text:
 };
 
 const personalityHex: Record<Personality, string> = {
-  guardian: '#22c55e',
-  analyst: '#3b82f6',
-  hunter: '#ef4444',
-  oracle: '#a855f7',
+  nova: '#22c55e',
+  sage: '#3b82f6',
+  apex: '#ef4444',
+  echo: '#a855f7',
 };
 
 function useCountUp(target: number, duration: number, active: boolean) {

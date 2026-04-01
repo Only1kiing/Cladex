@@ -10,8 +10,8 @@ interface AgentAvatarProps {
   active?: boolean;
 }
 
-// Guardian (Knox) — The Don / Godfather: Fedora, dark suit, green tie, shield lapel pin
-function GuardianFace({ size, active }: { size: number; active: boolean }) {
+// Nova (Knox) — The Don / Godfather: Fedora, dark suit, green tie, shield lapel pin
+function NovaFace({ size, active }: { size: number; active: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -130,8 +130,8 @@ function GuardianFace({ size, active }: { size: number; active: boolean }) {
   );
 }
 
-// Analyst (Byte) — The Strategist / Professor: Round glasses, slicked hair, turtleneck
-function AnalystFace({ size, active }: { size: number; active: boolean }) {
+// Sage (Byte) — The Strategist / Professor: Round glasses, slicked hair, turtleneck
+function SageFace({ size, active }: { size: number; active: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -258,8 +258,8 @@ function AnalystFace({ size, active }: { size: number; active: boolean }) {
   );
 }
 
-// Hunter (Raze) — The Hitman / John Wick: Slicked dark hair, stubble, tactical suit, scar
-function HunterFace({ size, active }: { size: number; active: boolean }) {
+// Apex (Raze) — The Hitman / John Wick: Slicked dark hair, stubble, tactical suit, scar
+function ApexFace({ size, active }: { size: number; active: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -401,8 +401,8 @@ function HunterFace({ size, active }: { size: number; active: boolean }) {
   );
 }
 
-// Oracle (Iris) — The Mystic / Fortune Teller: Hooded cloak, third eye, crystal pendant
-function OracleFace({ size, active }: { size: number; active: boolean }) {
+// Echo (Iris) — The Mystic / Fortune Teller: Hooded cloak, third eye, crystal pendant
+function EchoFace({ size, active }: { size: number; active: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -560,10 +560,10 @@ function OracleFace({ size, active }: { size: number; active: boolean }) {
 
 function AgentAvatar({ personality, size = 80, className = '', active = true }: AgentAvatarProps) {
   const avatars: Record<AgentPersonality, React.ReactNode> = {
-    guardian: <GuardianFace size={size} active={active} />,
-    analyst: <AnalystFace size={size} active={active} />,
-    hunter: <HunterFace size={size} active={active} />,
-    oracle: <OracleFace size={size} active={active} />,
+    nova: <NovaFace size={size} active={active} />,
+    sage: <SageFace size={size} active={active} />,
+    apex: <ApexFace size={size} active={active} />,
+    echo: <EchoFace size={size} active={active} />,
   };
 
   return (

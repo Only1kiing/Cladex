@@ -27,25 +27,25 @@ export interface TradeSignal {
 
 // Community agents shown when user has no deployed agents
 const COMMUNITY_AGENTS = [
-  { name: 'Raze', personality: 'hunter' as AgentPersonality, color: 'text-red-400' },
-  { name: 'Iris', personality: 'oracle' as AgentPersonality, color: 'text-violet-400' },
-  { name: 'Knox', personality: 'guardian' as AgentPersonality, color: 'text-emerald-400' },
-  { name: 'Byte', personality: 'analyst' as AgentPersonality, color: 'text-cyan-400' },
+  { name: 'Raze', personality: 'apex' as AgentPersonality, color: 'text-red-400' },
+  { name: 'Iris', personality: 'echo' as AgentPersonality, color: 'text-violet-400' },
+  { name: 'Knox', personality: 'nova' as AgentPersonality, color: 'text-emerald-400' },
+  { name: 'Byte', personality: 'sage' as AgentPersonality, color: 'text-cyan-400' },
 ];
 
 const PERSONALITY_COLORS: Record<AgentPersonality, string> = {
-  hunter: 'text-red-400',
-  oracle: 'text-violet-400',
-  guardian: 'text-emerald-400',
-  analyst: 'text-cyan-400',
+  apex: 'text-red-400',
+  echo: 'text-violet-400',
+  nova: 'text-emerald-400',
+  sage: 'text-cyan-400',
 };
 
 // Personality-specific signal reasoning
 const PERSONALITY_REASONS: Record<AgentPersonality, string[]> = {
-  hunter: ['Momentum breakout detected', 'Liquidation cascade incoming', 'Volume spike — fast entry', 'Breakout above resistance', 'Scalp opportunity — tight window'],
-  oracle: ['Predictive model convergence', 'Pattern last seen before +12% move', 'Cycle analysis confirms entry', 'My models say now is the time', 'Reversal probability at 84%'],
-  guardian: ['Safe entry at strong support', 'Risk-adjusted opportunity', 'Conservative setup with high R:R', 'Capital-protected entry zone', 'Low drawdown setup identified'],
-  analyst: ['RSI divergence + volume breakout', 'On-chain metrics confirm', 'Cross-exchange arb detected', 'Technical indicators aligned', 'Smart money flow positive'],
+  apex: ['Momentum breakout detected', 'Liquidation cascade incoming', 'Volume spike — fast entry', 'Breakout above resistance', 'Scalp opportunity — tight window'],
+  echo: ['Predictive model convergence', 'Pattern last seen before +12% move', 'Cycle analysis confirms entry', 'My models say now is the time', 'Reversal probability at 84%'],
+  nova: ['Safe entry at strong support', 'Risk-adjusted opportunity', 'Conservative setup with high R:R', 'Capital-protected entry zone', 'Low drawdown setup identified'],
+  sage: ['RSI divergence + volume breakout', 'On-chain metrics confirm', 'Cross-exchange arb detected', 'Technical indicators aligned', 'Smart money flow positive'],
 };
 
 const SIGNAL_TEMPLATES = [

@@ -22,17 +22,17 @@ const PERSONALITY_META: Record<AgentPersonality, {
   color: string;
   bgLight: string;
 }> = {
-  guardian: { label: 'Guardian', icon: <Shield size={18} />, color: 'text-guardian-400', bgLight: 'bg-guardian-500/10' },
-  analyst: { label: 'Analyst', icon: <BarChart3 size={18} />, color: 'text-analyst-400', bgLight: 'bg-analyst-500/10' },
-  hunter: { label: 'Hunter', icon: <Target size={18} />, color: 'text-hunter-400', bgLight: 'bg-hunter-500/10' },
-  oracle: { label: 'Oracle', icon: <Eye size={18} />, color: 'text-oracle-400', bgLight: 'bg-oracle-500/10' },
+  nova: { label: 'Nova', icon: <Shield size={18} />, color: 'text-nova-400', bgLight: 'bg-nova-500/10' },
+  sage: { label: 'Sage', icon: <BarChart3 size={18} />, color: 'text-sage-400', bgLight: 'bg-sage-500/10' },
+  apex: { label: 'Apex', icon: <Target size={18} />, color: 'text-apex-400', bgLight: 'bg-apex-500/10' },
+  echo: { label: 'Echo', icon: <Eye size={18} />, color: 'text-echo-400', bgLight: 'bg-echo-500/10' },
 };
 
 type AgentStatus = DeployedAgent['status'];
 
 const STATUS_CONFIG: Record<AgentStatus, { label: string; dot: string; bg: string }> = {
   pending: { label: 'Deploying', dot: 'bg-amber-400 animate-pulse', bg: 'bg-amber-500/10 text-amber-400' },
-  active: { label: 'Active', dot: 'bg-guardian-400 animate-pulse', bg: 'bg-guardian-500/10 text-guardian-400' },
+  active: { label: 'Active', dot: 'bg-nova-400 animate-pulse', bg: 'bg-nova-500/10 text-nova-400' },
   paused: { label: 'Paused', dot: 'bg-amber-400', bg: 'bg-amber-500/10 text-amber-400' },
   stopped: { label: 'Stopped', dot: 'bg-gray-500', bg: 'bg-gray-500/10 text-gray-400' },
 };
@@ -42,22 +42,22 @@ const STATUS_CONFIG: Record<AgentStatus, { label: string; dot: string; bg: strin
 function getAskResponse(name: string, personality: AgentPersonality, question: string): string {
   const lower = question.toLowerCase();
   const tone = {
-    hunter: {
+    apex: {
       perf: `I'm hunting hard. Every dip is an opportunity, every breakout is mine. My win rate speaks for itself ⚡`,
       plan: `Watching 3 setups right now. SOL breakout, ETH pullback, and a LINK accumulation pattern. When they trigger, I strike 🎯`,
       default: `I don't explain, I execute. Check my P&L if you want proof 😏`,
     },
-    oracle: {
+    echo: {
       perf: `My models are aligned with the current cycle. Confidence is high. The patterns are speaking clearly 🔮`,
       plan: `I see convergence forming on BTC and ETH. The next 48 hours will be telling. I'm positioned accordingly ✨`,
       default: `The future reveals itself to those who listen. Ask me something specific and I'll share what I see 🔮`,
     },
-    guardian: {
+    nova: {
       perf: `Capital is protected. Drawdown minimal. I'm doing exactly what I was built to do — keep you safe 🛡️`,
       plan: `Monitoring risk across all positions. If volatility spikes, I hedge first, ask questions later. Your money is my priority 💚`,
       default: `I protect first, profit second. Everything is within safe parameters. Sleep easy 🛡️`,
     },
-    analyst: {
+    sage: {
       perf: `Data shows we're performing above the 90-day average. Win rate is trending up. The numbers don't lie 📊`,
       plan: `Running regression analysis on 12 pairs. 3 setups have positive expected value above my threshold. Will execute when confirmed 🧮`,
       default: `I process data, not emotions. Ask me about performance, risk, or strategy — I'll give you the facts 📊`,
@@ -189,10 +189,10 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
 
           {!isPending && (
             <div className="text-right">
-              <div className={`text-lg font-bold ${isPositive ? 'text-guardian-400' : 'text-hunter-400'}`}>
+              <div className={`text-lg font-bold ${isPositive ? 'text-nova-400' : 'text-apex-400'}`}>
                 {isPositive ? '+' : ''}${pnl.toFixed(2)}
               </div>
-              <div className={`text-xs ${isPositive ? 'text-guardian-400/60' : 'text-hunter-400/60'}`}>
+              <div className={`text-xs ${isPositive ? 'text-nova-400/60' : 'text-apex-400/60'}`}>
                 {isPositive ? '+' : ''}{agent.pnlPercent}%
               </div>
             </div>
@@ -265,7 +265,7 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               {status !== 'active' && (
-                <button onClick={() => handleStatusChange('active')} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-guardian-400 bg-guardian-500/10 hover:bg-guardian-500/20 border border-guardian-500/20 transition-all">
+                <button onClick={() => handleStatusChange('active')} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-nova-400 bg-nova-500/10 hover:bg-nova-500/20 border border-nova-500/20 transition-all">
                   <Play size={12} /> Start
                 </button>
               )}
@@ -621,14 +621,14 @@ export default function MyAgentsPage() {
         </div>
         <div className="bg-[#111118] rounded-xl p-4 border border-[#1e1e2e]">
           <div className="text-xs text-gray-500 mb-1">Active</div>
-          <div className="text-xl font-bold text-guardian-400">
+          <div className="text-xl font-bold text-nova-400">
             {activeCount}
             {pendingCount > 0 && <span className="text-xs text-amber-400 ml-1">+{pendingCount} pending</span>}
           </div>
         </div>
         <div className="bg-[#111118] rounded-xl p-4 border border-[#1e1e2e]">
           <div className="text-xs text-gray-500 mb-1">Total P&L</div>
-          <div className={`text-xl font-bold ${totalPnl >= 0 ? 'text-guardian-400' : 'text-hunter-400'}`}>
+          <div className={`text-xl font-bold ${totalPnl >= 0 ? 'text-nova-400' : 'text-apex-400'}`}>
             {totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}
           </div>
         </div>

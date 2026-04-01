@@ -23,7 +23,7 @@ const config: Config = {
           900: '#1e2f00',
           950: '#0f1800',
         },
-        guardian: {
+        nova: {
           DEFAULT: '#22c55e',
           50: '#f0fdf4',
           100: '#dcfce7',
@@ -36,7 +36,7 @@ const config: Config = {
           800: '#166534',
           900: '#14532d',
         },
-        analyst: {
+        sage: {
           DEFAULT: '#3b82f6',
           50: '#eff6ff',
           100: '#dbeafe',
@@ -49,7 +49,7 @@ const config: Config = {
           800: '#1e40af',
           900: '#1e3a8a',
         },
-        hunter: {
+        apex: {
           DEFAULT: '#ef4444',
           50: '#fef2f2',
           100: '#fee2e2',
@@ -62,7 +62,7 @@ const config: Config = {
           800: '#991b1b',
           900: '#7f1d1d',
         },
-        oracle: {
+        echo: {
           DEFAULT: '#a855f7',
           50: '#faf5ff',
           100: '#f3e8ff',

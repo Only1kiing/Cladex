@@ -109,7 +109,7 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
     Builder: ['Aegis', 'Phantom', 'Striker', 'Nova', 'Cipher'],
     'Pro Creator': ['Titan', 'Apex', 'Shadow', 'Oracle', 'Blitz', 'Nexus', 'Rogue', 'Zenith', 'Pulse', 'Storm'],
   };
-  const PERSONALITIES: AgentPersonality[] = ['guardian', 'hunter', 'analyst', 'oracle'];
+  const PERSONALITIES: AgentPersonality[] = ['nova', 'apex', 'sage', 'echo'];
   const ASSET_SETS = [['BTC', 'ETH'], ['SOL', 'AVAX'], ['BTC', 'ETH', 'SOL'], ['LINK', 'ARB', 'ETH']];
 
   const createAgentsForPlan = (method: 'wallet' | 'gas-balance') => {

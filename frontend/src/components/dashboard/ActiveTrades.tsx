@@ -55,10 +55,10 @@ export function removeActiveTrade(id: string) {
 }
 
 const personalityColor: Record<string, string> = {
-  guardian: 'text-emerald-400',
-  analyst: 'text-cyan-400',
-  hunter: 'text-red-400',
-  oracle: 'text-violet-400',
+  nova: 'text-emerald-400',
+  sage: 'text-cyan-400',
+  apex: 'text-red-400',
+  echo: 'text-violet-400',
 };
 
 function ActiveTradesWidget() {

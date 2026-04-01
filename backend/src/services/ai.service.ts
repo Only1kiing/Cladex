@@ -6,7 +6,7 @@ const openai = new OpenAI({ apiKey: config.openaiApiKey });
 
 export interface GeneratedAgentConfig {
   name: string;
-  personality: "GUARDIAN" | "ANALYST" | "HUNTER" | "ORACLE";
+  personality: "NOVA" | "SAGE" | "APEX" | "ECHO";
   strategy: Record<string, unknown>;
   riskLevel: "LOW" | "MEDIUM" | "HIGH";
   assets: string[];
@@ -21,7 +21,7 @@ Given a user's description of what they want, generate a JSON configuration for 
 Return ONLY valid JSON with this exact structure:
 {
   "name": "<creative agent name>",
-  "personality": "<GUARDIAN|ANALYST|HUNTER|ORACLE>",
+  "personality": "<NOVA|SAGE|APEX|ECHO>",
   "strategy": {
     "description": "<brief strategy description>",
     "indicators": ["<list of technical indicators>"],
@@ -36,10 +36,10 @@ Return ONLY valid JSON with this exact structure:
 }
 
 Personality guide:
-- GUARDIAN: Conservative, capital preservation, low risk
-- ANALYST: Data-driven, technical analysis focused, medium risk
-- HUNTER: Aggressive, seeks high-reward opportunities, high risk
-- ORACLE: Sentiment-based, macro analysis, variable risk`;
+- NOVA: Conservative, capital preservation, low risk
+- SAGE: Data-driven, technical analysis focused, medium risk
+- APEX: Aggressive, seeks high-reward opportunities, high risk
+- ECHO: Sentiment-based, macro analysis, variable risk`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -69,9 +69,9 @@ Personality guide:
     throw new Error("AI generated incomplete agent configuration");
   }
 
-  const validPersonalities = ["GUARDIAN", "ANALYST", "HUNTER", "ORACLE"];
+  const validPersonalities = ["NOVA", "SAGE", "APEX", "ECHO"];
   if (!validPersonalities.includes(parsed.personality)) {
-    parsed.personality = "ANALYST";
+    parsed.personality = "SAGE";
   }
 
   const validRiskLevels = ["LOW", "MEDIUM", "HIGH"];
@@ -111,10 +111,10 @@ Recent trades:
 ${JSON.stringify(tradesSummary, null, 2)}
 
 Respond in character based on your personality:
-- GUARDIAN: Cautious, protective, emphasize risk management
-- ANALYST: Data-driven, precise, reference technical indicators
-- HUNTER: Bold, aggressive, focus on opportunities
-- ORACLE: Wise, big-picture, reference market sentiment
+- NOVA: Cautious, protective, emphasize risk management
+- SAGE: Data-driven, precise, reference technical indicators
+- APEX: Bold, aggressive, focus on opportunities
+- ECHO: Wise, big-picture, reference market sentiment
 
 Keep responses concise and actionable.`;
 

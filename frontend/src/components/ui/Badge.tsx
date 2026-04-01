@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-type BadgeVariant = 'guardian' | 'analyst' | 'hunter' | 'oracle' | 'default';
+type BadgeVariant = 'nova' | 'sage' | 'apex' | 'echo' | 'default';
 type BadgeStatus = 'active' | 'inactive' | 'warning' | 'error' | 'success';
 
 interface BadgeProps {
@@ -15,35 +15,35 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  guardian: 'bg-guardian-500/15 text-guardian-400 border-guardian-500/20',
-  analyst: 'bg-analyst-500/15 text-analyst-400 border-analyst-500/20',
-  hunter: 'bg-hunter-500/15 text-hunter-400 border-hunter-500/20',
-  oracle: 'bg-oracle-500/15 text-oracle-400 border-oracle-500/20',
+  nova: 'bg-nova-500/15 text-nova-400 border-nova-500/20',
+  sage: 'bg-sage-500/15 text-sage-400 border-sage-500/20',
+  apex: 'bg-apex-500/15 text-apex-400 border-apex-500/20',
+  echo: 'bg-echo-500/15 text-echo-400 border-echo-500/20',
   default: 'bg-gray-500/15 text-gray-400 border-gray-500/20',
 };
 
 const statusStyles: Record<BadgeStatus, string> = {
-  active: 'bg-guardian-500/15 text-guardian-400 border-guardian-500/20',
+  active: 'bg-nova-500/15 text-nova-400 border-nova-500/20',
   inactive: 'bg-gray-500/15 text-gray-400 border-gray-500/20',
   warning: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-  error: 'bg-hunter-500/15 text-hunter-400 border-hunter-500/20',
-  success: 'bg-guardian-500/15 text-guardian-400 border-guardian-500/20',
+  error: 'bg-apex-500/15 text-apex-400 border-apex-500/20',
+  success: 'bg-nova-500/15 text-nova-400 border-nova-500/20',
 };
 
 const dotColors: Record<BadgeVariant, string> = {
-  guardian: 'bg-guardian-400',
-  analyst: 'bg-analyst-400',
-  hunter: 'bg-hunter-400',
-  oracle: 'bg-oracle-400',
+  nova: 'bg-nova-400',
+  sage: 'bg-sage-400',
+  apex: 'bg-apex-400',
+  echo: 'bg-echo-400',
   default: 'bg-gray-400',
 };
 
 const statusDotColors: Record<BadgeStatus, string> = {
-  active: 'bg-guardian-400 animate-pulse',
+  active: 'bg-nova-400 animate-pulse',
   inactive: 'bg-gray-500',
   warning: 'bg-amber-400',
-  error: 'bg-hunter-400',
-  success: 'bg-guardian-400',
+  error: 'bg-apex-400',
+  success: 'bg-nova-400',
 };
 
 const sizeStyles = {

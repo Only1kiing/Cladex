@@ -11,17 +11,17 @@ interface SignalCardProps {
 }
 
 const personalityColor: Record<string, string> = {
-  guardian: 'text-guardian-400',
-  analyst: 'text-analyst-400',
-  hunter: 'text-hunter-400',
-  oracle: 'text-oracle-400',
+  nova: 'text-nova-400',
+  sage: 'text-sage-400',
+  apex: 'text-apex-400',
+  echo: 'text-echo-400',
 };
 
 const personalityLabel: Record<string, string> = {
-  guardian: 'Capital Protection',
-  analyst: 'Data-Driven Analysis',
-  hunter: 'Momentum Trading',
-  oracle: 'Predictive Model',
+  nova: 'Capital Protection',
+  sage: 'Data-Driven Analysis',
+  apex: 'Momentum Trading',
+  echo: 'Predictive Model',
 };
 
 const confidenceColor = (c: number) => {
@@ -31,29 +31,29 @@ const confidenceColor = (c: number) => {
 };
 
 const PREVIEW_DETAILS: Record<string, { q: string; a: string }[]> = {
-  hunter: [
+  apex: [
     { q: 'Why this trade?', a: 'Momentum breakout detected with rising volume. Price action confirms bullish structure above key support.' },
     { q: 'What\'s the risk?', a: 'Stop loss is tight to limit downside. If entry fails, max loss is capped at the SL level shown above.' },
-    { q: 'How long will this take?', a: 'Hunter trades are fast — typically 10 min to 4 hours. Designed to catch quick moves and exit.' },
+    { q: 'How long will this take?', a: 'Apex trades are fast — typically 10 min to 4 hours. Designed to catch quick moves and exit.' },
     { q: 'What if I miss it?', a: 'Signals expire in a few minutes. The agent will generate new ones as opportunities appear.' },
   ],
-  oracle: [
+  echo: [
     { q: 'Why this trade?', a: 'Predictive model identified a high-probability reversal zone. Historical accuracy at this pattern: 78%.' },
-    { q: 'What\'s the risk?', a: 'Oracle trades use wider stops for higher conviction. Risk is managed through position sizing.' },
+    { q: 'What\'s the risk?', a: 'Echo trades use wider stops for higher conviction. Risk is managed through position sizing.' },
     { q: 'How confident is the model?', a: 'The confidence score reflects backtested win rate at similar setups over the last 90 days.' },
     { q: 'What if the prediction is wrong?', a: 'Stop loss automatically limits your downside. The agent adjusts models after each outcome.' },
   ],
-  analyst: [
+  sage: [
     { q: 'Why this trade?', a: 'Technical indicators aligned — RSI, volume profile, and order flow all confirm this setup.' },
     { q: 'What data supports this?', a: 'Cross-exchange analysis across Binance, OKX, and Bybit. Smart money flow is positive.' },
     { q: 'What\'s the risk?', a: 'Risk is calculated precisely. The R:R ratio and stop loss are set based on recent volatility.' },
-    { q: 'How reliable is this signal?', a: 'Analyst signals have a 67% historical win rate. This setup scores above average confidence.' },
+    { q: 'How reliable is this signal?', a: 'Sage signals have a 67% historical win rate. This setup scores above average confidence.' },
   ],
-  guardian: [
+  nova: [
     { q: 'Why this trade?', a: 'Conservative entry at strong support with favorable risk/reward. Capital preservation is the priority.' },
-    { q: 'Is this safe?', a: 'Guardian trades use the tightest risk management. Stop loss is placed at the nearest structural support.' },
-    { q: 'What\'s the expected return?', a: 'Moderate but consistent. Guardian trades aim for steady gains with minimal drawdown.' },
-    { q: 'What if the market crashes?', a: 'The stop loss activates automatically. Guardian agents also monitor portfolio-wide exposure.' },
+    { q: 'Is this safe?', a: 'Nova trades use the tightest risk management. Stop loss is placed at the nearest structural support.' },
+    { q: 'What\'s the expected return?', a: 'Moderate but consistent. Nova trades aim for steady gains with minimal drawdown.' },
+    { q: 'What if the market crashes?', a: 'The stop loss activates automatically. Nova agents also monitor portfolio-wide exposure.' },
   ],
 };
 
@@ -264,7 +264,7 @@ function SignalCard({ signal, onExecute, onDismiss }: SignalCardProps) {
     setTimeout(() => onDismiss(signal.id), 300);
   };
 
-  const details = PREVIEW_DETAILS[signal.personality] || PREVIEW_DETAILS.analyst;
+  const details = PREVIEW_DETAILS[signal.personality] || PREVIEW_DETAILS.sage;
   const slPercent = Math.abs((signal.stopLoss - signal.entryPrice) / signal.entryPrice * 100).toFixed(2);
   const tpPercent = Math.abs((signal.takeProfit - signal.entryPrice) / signal.entryPrice * 100).toFixed(2);
   const rrRatio = (parseFloat(tpPercent) / parseFloat(slPercent)).toFixed(1);
@@ -274,16 +274,16 @@ function SignalCard({ signal, onExecute, onDismiss }: SignalCardProps) {
 
     // Personality tone wrappers
     const tone = {
-      hunter: {
+      apex: {
         why: `Spotted this ${signal.pair} move from a mile away ⚡ ${signal.reason}. ${signal.confidence}% confidence — I don't miss at this level. Entry at $${signal.entryPrice.toLocaleString()}, let's eat 🎯`,
-        risk: `Risk? ${slPercent}% max. SL at $${signal.stopLoss.toLocaleString()}. I keep it tight — if it doesn't move fast, I'm out. But the R:R is 1:${rrRatio}, so the upside is worth it. Trust the hunter 😏`,
+        risk: `Risk? ${slPercent}% max. SL at $${signal.stopLoss.toLocaleString()}. I keep it tight — if it doesn't move fast, I'm out. But the R:R is 1:${rrRatio}, so the upside is worth it. Trust the apex 😏`,
         time: `Fast money. 10 min to 4 hours max. I don't hold — I strike and move. If this doesn't pop quick, the SL handles it. No babysitting needed ⚡`,
         profit: `Target: $${signal.takeProfit.toLocaleString()} (+${tpPercent}%). That's +$${signal.estimatedPnl} estimated. I've been printing all week — this one's no different 🚀`,
         should: `${signal.confidence}% confidence, 1:${rrRatio} R:R. ${signal.confidence >= 80 ? 'This is one of my best setups today.' : 'Solid setup.'} You can sit this one out, but don't come crying when I post the gains 😏`,
         stop: `SL at $${signal.stopLoss.toLocaleString()} — ${slPercent}% from entry. Placed right below ${signal.side === 'long' ? 'support' : 'resistance'}. Tight enough to limit damage, wide enough to not get wicked out. I know what I'm doing 🎯`,
         default: `${signal.side.toUpperCase()} ${signal.pair} at $${signal.entryPrice.toLocaleString()}. ${signal.reason}. ${signal.confidence}% confidence. Ask me about risk, target, or timing — or just hit Execute and let's go ⚡`,
       },
-      oracle: {
+      echo: {
         why: `I've been watching this pattern form for hours 🔮 ${signal.reason}. My models give it ${signal.confidence}% probability. The stars — and the data — align on this ${signal.side} at $${signal.entryPrice.toLocaleString()} ✨`,
         risk: `The risk is contained — ${slPercent}% with SL at $${signal.stopLoss.toLocaleString()}. I see further than most, but I always protect the downside. R:R of 1:${rrRatio}. The universe rewards patience and preparation 🔮`,
         time: `My predictions typically play out in 2-12 hours. I don't rush — the market reveals itself to those who wait. This one feels like 4-8 hours to me 🌙`,
@@ -292,16 +292,16 @@ function SignalCard({ signal, onExecute, onDismiss }: SignalCardProps) {
         stop: `SL at $${signal.stopLoss.toLocaleString()} (${slPercent}% risk). I placed it where the pattern would be invalidated — if we breach that level, the vision was wrong and we exit gracefully 🌙`,
         default: `${signal.side.toUpperCase()} ${signal.pair} at $${signal.entryPrice.toLocaleString()}. ${signal.reason}. I see this with ${signal.confidence}% clarity. Ask me anything — I see all 🔮`,
       },
-      guardian: {
+      nova: {
         why: `I've been monitoring ${signal.pair} carefully 🛡️ ${signal.reason}. ${signal.confidence}% confidence — and I only call signals when I'm sure the risk is manageable. Your capital is my priority.`,
         risk: `${slPercent}% maximum risk. SL at $${signal.stopLoss.toLocaleString()} — non-negotiable. I don't gamble with your money. R:R is 1:${rrRatio}, meaning the reward justifies the controlled risk. Sleep easy 🛡️`,
-        time: `Guardian trades are patient — 4-24 hours typically. I don't chase. This setup needs time to develop safely. I'll watch it for you while you rest 💚`,
+        time: `Nova trades are patient — 4-24 hours typically. I don't chase. This setup needs time to develop safely. I'll watch it for you while you rest 💚`,
         profit: `Target: $${signal.takeProfit.toLocaleString()} (+${tpPercent}%). Estimated +$${signal.estimatedPnl}. Not the flashiest gain, but consistent and protected. That's how we build wealth 🏰`,
         should: `${signal.confidence}% confidence with 1:${rrRatio} R:R. ${signal.confidence >= 80 ? 'This is as safe as momentum trades get.' : 'Solid risk-adjusted setup.'} I wouldn't call it if I wasn't comfortable putting my name on it 🛡️`,
         stop: `SL at $${signal.stopLoss.toLocaleString()} — ${slPercent}% from entry. Placed at strong structural ${signal.side === 'long' ? 'support' : 'resistance'}. This level has held multiple times. Your safety net is solid 💚`,
         default: `${signal.side.toUpperCase()} ${signal.pair} at $${signal.entryPrice.toLocaleString()}. ${signal.reason}. ${signal.confidence}% confidence. I protect first, profit second. Ask me anything 🛡️`,
       },
-      analyst: {
+      sage: {
         why: `Data confirms this setup 📊 ${signal.reason}. ${signal.confidence}% probability based on regression analysis of similar patterns across the last 90 days. Entry: $${signal.entryPrice.toLocaleString()}.`,
         risk: `Precisely ${slPercent}% risk exposure. SL at $${signal.stopLoss.toLocaleString()} based on ATR and recent volatility bands. R:R ratio: 1:${rrRatio}. The numbers are clear 🧮`,
         time: `Based on historical data, this pattern resolves in 1-8 hours with a median of 3.2 hours. Timeframe: 15m candles. I'll flag if conditions change 📊`,
@@ -312,7 +312,7 @@ function SignalCard({ signal, onExecute, onDismiss }: SignalCardProps) {
       },
     };
 
-    const t = tone[p] || tone.analyst;
+    const t = tone[p] || tone.sage;
 
     if (lower.includes('why') || lower.includes('reason')) return t.why;
     if (lower.includes('risk') || lower.includes('lose') || lower.includes('safe')) return t.risk;

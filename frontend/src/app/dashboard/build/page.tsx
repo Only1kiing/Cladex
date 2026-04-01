@@ -40,44 +40,44 @@ const PERSONALITIES: {
   ring: string;
 }[] = [
   {
-    id: 'guardian',
-    label: 'Guardian',
+    id: 'nova',
+    label: 'Nova',
     description: 'Conservative, protects capital',
     icon: <Shield size={20} />,
-    color: 'text-guardian-400',
-    border: 'border-guardian-500/40',
-    bg: 'bg-guardian-500/10',
-    ring: 'ring-guardian-500/50',
+    color: 'text-nova-400',
+    border: 'border-nova-500/40',
+    bg: 'bg-nova-500/10',
+    ring: 'ring-nova-500/50',
   },
   {
-    id: 'analyst',
-    label: 'Analyst',
+    id: 'sage',
+    label: 'Sage',
     description: 'Data-driven, balanced',
     icon: <BarChart3 size={20} />,
-    color: 'text-analyst-400',
-    border: 'border-analyst-500/40',
-    bg: 'bg-analyst-500/10',
-    ring: 'ring-analyst-500/50',
+    color: 'text-sage-400',
+    border: 'border-sage-500/40',
+    bg: 'bg-sage-500/10',
+    ring: 'ring-sage-500/50',
   },
   {
-    id: 'hunter',
-    label: 'Hunter',
+    id: 'apex',
+    label: 'Apex',
     description: 'Aggressive, high reward',
     icon: <Target size={20} />,
-    color: 'text-hunter-400',
-    border: 'border-hunter-500/40',
-    bg: 'bg-hunter-500/10',
-    ring: 'ring-hunter-500/50',
+    color: 'text-apex-400',
+    border: 'border-apex-500/40',
+    bg: 'bg-apex-500/10',
+    ring: 'ring-apex-500/50',
   },
   {
-    id: 'oracle',
-    label: 'Oracle',
+    id: 'echo',
+    label: 'Echo',
     description: 'Predictive, pattern-based',
     icon: <Eye size={20} />,
-    color: 'text-oracle-400',
-    border: 'border-oracle-500/40',
-    bg: 'bg-oracle-500/10',
-    ring: 'ring-oracle-500/50',
+    color: 'text-echo-400',
+    border: 'border-echo-500/40',
+    bg: 'bg-echo-500/10',
+    ring: 'ring-echo-500/50',
   },
 ];
 
@@ -90,10 +90,10 @@ function getMockResponse(userMessage: string): { text: string; config: Partial<A
 
   if (lower.includes('degen')) {
     return {
-      text: "Let's go full degen! I'll set up a Hunter agent that apes into momentum plays on altcoins. High risk, high reward. It'll chase breakouts and ride them hard. Not for the faint-hearted! Risk level: 9/10.",
+      text: "Let's go full degen! I'll set up an Apex agent that apes into momentum plays on altcoins. High risk, high reward. It'll chase breakouts and ride them hard. Not for the faint-hearted! Risk level: 9/10.",
       config: {
         name: 'Degen Alpha',
-        personality: 'hunter',
+        personality: 'apex',
         riskLevel: 9,
         assets: ['SOL', 'AVAX', 'LINK', 'MATIC'],
         strategy: 'Full degen momentum strategy. Apes into volume spikes on altcoins with 5x-10x leverage. Chases breakouts aggressively. Wide take-profits at 20% with trailing stops. Exits on first sign of weakness.',
@@ -103,10 +103,10 @@ function getMockResponse(userMessage: string): { text: string; config: Partial<A
 
   if (lower.includes('boring') || lower.includes('safe') || lower.includes('conservative') || lower.includes('low risk')) {
     return {
-      text: "Great choice! I'll set up a Guardian-style agent focused on capital preservation. It will use dollar-cost averaging on blue-chip assets like BTC and ETH, with tight stop-losses and conservative position sizing. Risk level set to 3/10 for maximum safety.",
+      text: "Great choice! I'll set up a Nova-style agent focused on capital preservation. It will use dollar-cost averaging on blue-chip assets like BTC and ETH, with tight stop-losses and conservative position sizing. Risk level set to 3/10 for maximum safety.",
       config: {
         name: 'Safe Harbor Bot',
-        personality: 'guardian',
+        personality: 'nova',
         riskLevel: 3,
         assets: ['BTC', 'ETH'],
         strategy: 'Dollar-cost averaging on blue-chip cryptocurrencies with tight stop-losses at 3%. Prioritizes capital preservation with small, consistent position sizes. Buys dips when RSI < 30.',
@@ -116,10 +116,10 @@ function getMockResponse(userMessage: string): { text: string; config: Partial<A
 
   if (lower.includes('10x') || lower.includes('gem')) {
     return {
-      text: "Gem hunting mode activated! I'll build an Oracle agent that scans for low-cap tokens with explosive potential. It uses on-chain data, whale tracking, and social sentiment to find the next 10x before the crowd. Risk level: 7/10.",
+      text: "Gem hunting mode activated! I'll build an Echo agent that scans for low-cap tokens with explosive potential. It uses on-chain data, whale tracking, and social sentiment to find the next 10x before the crowd. Risk level: 7/10.",
       config: {
         name: 'Gem Scanner',
-        personality: 'oracle',
+        personality: 'echo',
         riskLevel: 7,
         assets: ['SOL', 'AVAX', 'DOT', 'LINK'],
         strategy: 'Gem hunting strategy using on-chain whale tracking, social sentiment analysis, and volume anomaly detection on low-cap altcoins. Enters early accumulation phases. Takes profit in stages at 3x, 5x, and 10x.',
@@ -129,10 +129,10 @@ function getMockResponse(userMessage: string): { text: string; config: Partial<A
 
   if (lower.includes('whale')) {
     return {
-      text: "Trade like a whale? Say no more. I'll create an Analyst agent that mirrors whale wallet behavior. It tracks large wallet movements, institutional flows, and smart money positioning to ride the big moves. Risk level: 6/10.",
+      text: "Trade like a whale? Say no more. I'll create a Sage agent that mirrors whale wallet behavior. It tracks large wallet movements, institutional flows, and smart money positioning to ride the big moves. Risk level: 6/10.",
       config: {
         name: 'Whale Mirror',
-        personality: 'analyst',
+        personality: 'sage',
         riskLevel: 6,
         assets: ['BTC', 'ETH', 'SOL'],
         strategy: 'Whale-mirroring strategy tracking top 100 wallet movements, institutional order flow, and smart money accumulation patterns. Enters positions when multiple whale wallets align. Scales in/out with whale activity.',
@@ -142,10 +142,10 @@ function getMockResponse(userMessage: string): { text: string; config: Partial<A
 
   if (lower.includes('aggressive') || lower.includes('high reward') || lower.includes('moon')) {
     return {
-      text: "You want to go big! I'll configure a Hunter agent that aggressively trades altcoins. It will hunt for momentum breakouts and ride trends hard. Higher risk, but the potential returns are significant. Risk level: 8/10.",
+      text: "You want to go big! I'll configure an Apex agent that aggressively trades altcoins. It will hunt for momentum breakouts and ride trends hard. Higher risk, but the potential returns are significant. Risk level: 8/10.",
       config: {
         name: 'Alpha Predator',
-        personality: 'hunter',
+        personality: 'apex',
         riskLevel: 8,
         assets: ['SOL', 'AVAX', 'LINK', 'MATIC'],
         strategy: 'Momentum breakout strategy on high-volatility altcoins. Enters on volume spikes with 5x leverage. Wide take-profits at 15% with trailing stops. Scales into winning positions aggressively.',
@@ -155,10 +155,10 @@ function getMockResponse(userMessage: string): { text: string; config: Partial<A
 
   if (lower.includes('data') || lower.includes('analysis') || lower.includes('balanced')) {
     return {
-      text: "A balanced approach is wise. I'll create an Analyst agent that uses multiple technical indicators and on-chain data to make informed decisions. Medium risk with a focus on risk-adjusted returns.",
+      text: "A balanced approach is wise. I'll create a Sage agent that uses multiple technical indicators and on-chain data to make informed decisions. Medium risk with a focus on risk-adjusted returns.",
       config: {
         name: 'Data Cruncher',
-        personality: 'analyst',
+        personality: 'sage',
         riskLevel: 5,
         assets: ['BTC', 'ETH', 'SOL'],
         strategy: 'Multi-indicator strategy combining RSI, MACD, and volume analysis with on-chain metrics. Enters positions when 3+ indicators align. Risk-reward ratio minimum 1:2.',
@@ -168,10 +168,10 @@ function getMockResponse(userMessage: string): { text: string; config: Partial<A
 
   if (lower.includes('predict') || lower.includes('pattern') || lower.includes('ai')) {
     return {
-      text: "Interesting! I'll build an Oracle agent that uses pattern recognition and predictive modeling. It analyzes historical cycles, whale movements, and market structure to anticipate moves before they happen.",
+      text: "Interesting! I'll build an Echo agent that uses pattern recognition and predictive modeling. It analyzes historical cycles, whale movements, and market structure to anticipate moves before they happen.",
       config: {
         name: 'Crystal Vision',
-        personality: 'oracle',
+        personality: 'echo',
         riskLevel: 6,
         assets: ['BTC', 'ETH', 'SOL', 'DOT'],
         strategy: 'Predictive model combining fractal analysis, whale wallet tracking, and market cycle theory. Identifies accumulation zones and distribution phases. Adjusts exposure based on confidence score.',
@@ -181,10 +181,10 @@ function getMockResponse(userMessage: string): { text: string; config: Partial<A
 
   // Default
   return {
-    text: "I understand! Let me suggest a well-rounded Analyst agent to start. It combines technical analysis with smart risk management. You can customize the personality, risk level, and assets in the panel on the right. What aspects would you like to adjust?",
+    text: "I understand! Let me suggest a well-rounded Sage agent to start. It combines technical analysis with smart risk management. You can customize the personality, risk level, and assets in the panel on the right. What aspects would you like to adjust?",
     config: {
       name: 'My Trading Agent',
-      personality: 'analyst',
+      personality: 'sage',
       riskLevel: 5,
       assets: ['BTC', 'ETH'],
       strategy: 'Balanced trading strategy using technical indicators and market sentiment analysis. Targets swing trades with 1-5 day holding periods. Dynamic position sizing based on volatility.',
@@ -269,7 +269,7 @@ export default function AgentBuilderPage() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [draft, setDraft] = useState<AgentDraft>({
     name: 'My Trading Agent',
-    personality: 'analyst',
+    personality: 'sage',
     riskLevel: 5,
     assets: ['BTC', 'ETH'],
     strategy: '',
@@ -433,17 +433,17 @@ export default function AgentBuilderPage() {
 
   const riskColor =
     draft.riskLevel <= 3
-      ? 'text-guardian-400'
+      ? 'text-nova-400'
       : draft.riskLevel <= 6
       ? 'text-amber-400'
-      : 'text-hunter-400';
+      : 'text-apex-400';
 
   const riskGradient =
     draft.riskLevel <= 3
-      ? 'from-guardian-500 to-guardian-400'
+      ? 'from-nova-500 to-nova-400'
       : draft.riskLevel <= 6
-      ? 'from-guardian-500 via-amber-500 to-amber-400'
-      : 'from-guardian-500 via-amber-500 to-hunter-500';
+      ? 'from-nova-500 via-amber-500 to-amber-400'
+      : 'from-nova-500 via-amber-500 to-apex-500';
 
   const selectedPersonality = PERSONALITIES.find((p) => p.id === draft.personality)!;
 

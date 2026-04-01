@@ -32,11 +32,11 @@ const variantStyles: Record<ButtonVariant, string> = {
     'disabled:bg-gray-800 disabled:text-gray-500 disabled:border-gray-700',
   ].join(' '),
   danger: [
-    'bg-gradient-to-r from-hunter-500 to-hunter-600',
-    'hover:from-hunter-400 hover:to-hunter-500',
-    'text-white shadow-lg shadow-hunter-500/25',
-    'hover:shadow-hunter-500/40',
-    'active:from-hunter-600 active:to-hunter-700',
+    'bg-gradient-to-r from-apex-500 to-apex-600',
+    'hover:from-apex-400 hover:to-apex-500',
+    'text-white shadow-lg shadow-apex-500/25',
+    'hover:shadow-apex-500/40',
+    'active:from-apex-600 active:to-apex-700',
     'disabled:from-gray-600 disabled:to-gray-700 disabled:shadow-none',
   ].join(' '),
   ghost: [

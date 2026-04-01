@@ -1,6 +1,6 @@
 // ---- Enums ----
 
-export type AgentPersonality = 'guardian' | 'analyst' | 'hunter' | 'oracle';
+export type AgentPersonality = 'nova' | 'apex' | 'sage' | 'echo';
 
 export type AgentStatus = 'active' | 'paused' | 'stopped' | 'error';
 

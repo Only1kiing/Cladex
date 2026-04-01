@@ -42,32 +42,32 @@ const PERSONALITY_META: Record<
   AgentPersonality,
   { label: string; color: string; bgColor: string; borderColor: string; icon: React.ReactNode }
 > = {
-  guardian: {
-    label: 'GUARDIAN',
-    color: 'text-guardian-400',
-    bgColor: 'bg-guardian-500/10',
-    borderColor: 'border-guardian-500/30',
+  nova: {
+    label: 'NOVA',
+    color: 'text-nova-400',
+    bgColor: 'bg-nova-500/10',
+    borderColor: 'border-nova-500/30',
     icon: <Shield size={18} />,
   },
-  analyst: {
-    label: 'ANALYST',
-    color: 'text-analyst-400',
-    bgColor: 'bg-analyst-500/10',
-    borderColor: 'border-analyst-500/30',
+  sage: {
+    label: 'SAGE',
+    color: 'text-sage-400',
+    bgColor: 'bg-sage-500/10',
+    borderColor: 'border-sage-500/30',
     icon: <BarChart3 size={18} />,
   },
-  hunter: {
-    label: 'HUNTER',
-    color: 'text-hunter-400',
-    bgColor: 'bg-hunter-500/10',
-    borderColor: 'border-hunter-500/30',
+  apex: {
+    label: 'APEX',
+    color: 'text-apex-400',
+    bgColor: 'bg-apex-500/10',
+    borderColor: 'border-apex-500/30',
     icon: <Crosshair size={18} />,
   },
-  oracle: {
-    label: 'ORACLE',
-    color: 'text-oracle-400',
-    bgColor: 'bg-oracle-500/10',
-    borderColor: 'border-oracle-500/30',
+  echo: {
+    label: 'ECHO',
+    color: 'text-echo-400',
+    bgColor: 'bg-echo-500/10',
+    borderColor: 'border-echo-500/30',
     icon: <Eye size={18} />,
   },
 };
@@ -100,33 +100,33 @@ interface MockAgent {
 
 function generateMockAgent(prompt: string): MockAgent {
   const lower = prompt.toLowerCase();
-  let personality: AgentPersonality = 'analyst';
+  let personality: AgentPersonality = 'sage';
   let riskLevel = 50;
   let assets = ['BTC/USDT', 'ETH/USDT'];
 
   if (lower.includes('protect') || lower.includes('low risk') || lower.includes('safe') || lower.includes('keep my money')) {
-    personality = 'guardian';
+    personality = 'nova';
     riskLevel = 20;
     assets = ['BTC/USDT', 'ETH/USDT', 'USDC/USDT'];
   } else if (lower.includes('aggressive') || lower.includes('altcoin') || lower.includes('moon') || lower.includes('growth')) {
-    personality = 'hunter';
+    personality = 'apex';
     riskLevel = 85;
     assets = ['SOL/USDT', 'AVAX/USDT', 'DOGE/USDT', 'PEPE/USDT'];
   } else if (lower.includes('dca') || lower.includes('top 10') || lower.includes('diversif') || lower.includes('data') || lower.includes('trust')) {
-    personality = 'oracle';
+    personality = 'echo';
     riskLevel = 40;
     assets = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT', 'ADA/USDT'];
   } else if (lower.includes('future') || lower.includes('show me')) {
-    personality = 'oracle';
+    personality = 'echo';
     riskLevel = 55;
     assets = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'];
   }
 
   const names: Record<AgentPersonality, string[]> = {
-    guardian: ['Sentinel Alpha', 'Shield Prime', 'Bastion'],
-    analyst: ['Quant Zero', 'DataMind', 'Nexus'],
-    hunter: ['Viper', 'Blitz', 'Apex Striker'],
-    oracle: ['Pythia', 'Foresight', 'Chronos'],
+    nova: ['Sentinel Alpha', 'Shield Prime', 'Bastion'],
+    sage: ['Quant Zero', 'DataMind', 'Nexus'],
+    apex: ['Viper', 'Blitz', 'Apex Striker'],
+    echo: ['Pythia', 'Foresight', 'Chronos'],
   };
 
   const pool = names[personality];
@@ -198,10 +198,10 @@ function RiskMeter({ level, max = 100 }: { level: number; max?: number }) {
   const pct = (level / max) * 100;
   const color =
     pct <= 33
-      ? 'from-guardian-500 to-guardian-400'
+      ? 'from-nova-500 to-nova-400'
       : pct <= 66
       ? 'from-yellow-500 to-amber-400'
-      : 'from-hunter-500 to-hunter-400';
+      : 'from-apex-500 to-apex-400';
 
   const label = pct <= 33 ? 'Low' : pct <= 66 ? 'Medium' : 'High';
 
@@ -236,7 +236,7 @@ function StepStrategy({
   onChange: (v: string) => void;
   onNext: () => void;
 }) {
-  const meta = PERSONALITY_META.guardian;
+  const meta = PERSONALITY_META.nova;
 
   return (
     <div className="space-y-8">
@@ -250,7 +250,7 @@ function StepStrategy({
       </div>
 
       {/* Pre-built agent card */}
-      <Card padding="lg" className="space-y-4 border-guardian-500/20 bg-guardian-500/[0.03] max-w-md mx-auto w-full">
+      <Card padding="lg" className="space-y-4 border-nova-500/20 bg-nova-500/[0.03] max-w-md mx-auto w-full">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-lg font-semibold text-gray-100">Your First Agent</p>
@@ -470,7 +470,7 @@ function TypingMessage({ text, onComplete }: { text: string; onComplete?: () => 
       {displayed}
       {displayed.length < text.length && (
         <motion.span
-          className="inline-block w-[2px] h-4 bg-guardian-400 ml-0.5 align-middle"
+          className="inline-block w-[2px] h-4 bg-nova-400 ml-0.5 align-middle"
           animate={{ opacity: [1, 0] }}
           transition={{ duration: 0.5, repeat: Infinity }}
         />
@@ -514,12 +514,12 @@ function StepSuccess({
       <div className="relative mx-auto w-24 h-24">
         {/* Pulsing glow ring */}
         <motion.div
-          className="absolute inset-0 rounded-full bg-guardian-500/20"
+          className="absolute inset-0 rounded-full bg-nova-500/20"
           animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0, 0.4] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute inset-0 rounded-full bg-guardian-500/10"
+          className="absolute inset-0 rounded-full bg-nova-500/10"
           animate={{ scale: [1, 1.7, 1], opacity: [0.3, 0, 0.3] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
         />
@@ -528,14 +528,14 @@ function StepSuccess({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-          className="relative w-24 h-24 rounded-full bg-guardian-500/20 border-2 border-guardian-500/40 flex items-center justify-center shadow-[0_0_40px_rgba(34,197,94,0.15)]"
+          className="relative w-24 h-24 rounded-full bg-nova-500/20 border-2 border-nova-500/40 flex items-center justify-center shadow-[0_0_40px_rgba(34,197,94,0.15)]"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.35 }}
           >
-            <Check size={40} className="text-guardian-400" />
+            <Check size={40} className="text-nova-400" />
           </motion.div>
         </motion.div>
       </div>
@@ -560,7 +560,7 @@ function StepSuccess({
               transition={{ duration: 0.4 }}
               className="flex items-start gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
             >
-              <MessageSquare size={16} className="text-guardian-400 shrink-0 mt-0.5" />
+              <MessageSquare size={16} className="text-nova-400 shrink-0 mt-0.5" />
               <p className="text-sm text-gray-300">
                 <TypingMessage text={AGENT_MESSAGES[i].text} />
               </p>

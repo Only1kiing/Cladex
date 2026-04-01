@@ -158,7 +158,7 @@ function VerificationStep({
       </div>
 
       {error && (
-        <p className="text-sm text-hunter-400 mb-4">{error}</p>
+        <p className="text-sm text-apex-400 mb-4">{error}</p>
       )}
 
       <Button
@@ -431,7 +431,7 @@ function ConnectExchangeStep() {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="rounded-lg bg-hunter-500/10 border border-hunter-500/20 px-4 py-3 text-sm text-hunter-400"
+          className="rounded-lg bg-apex-500/10 border border-apex-500/20 px-4 py-3 text-sm text-apex-400"
         >
           {error}
         </motion.div>
@@ -704,7 +704,7 @@ export default function SignupPage() {
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="rounded-lg bg-hunter-500/10 border border-hunter-500/20 px-4 py-3 text-sm text-hunter-400 mb-5"
+                    className="rounded-lg bg-apex-500/10 border border-apex-500/20 px-4 py-3 text-sm text-apex-400 mb-5"
                   >
                     {error}
                   </motion.div>

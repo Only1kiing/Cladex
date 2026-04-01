@@ -10,7 +10,7 @@ interface ActivityItem {
   message: string;
   timestamp: string;
   tradeDirection?: 'buy' | 'sell';
-  agentPersonality?: 'guardian' | 'analyst' | 'hunter' | 'oracle';
+  agentPersonality?: 'nova' | 'sage' | 'apex' | 'echo';
 }
 
 interface ActivityFeedProps {
@@ -82,11 +82,11 @@ function ErrorIcon() {
 }
 
 const iconBgColors: Record<ActivityType, string> = {
-  trade: 'bg-guardian-500/10',
-  signal: 'bg-analyst-500/10',
+  trade: 'bg-nova-500/10',
+  signal: 'bg-sage-500/10',
   alert: 'bg-amber-500/10',
-  system: 'bg-oracle-500/10',
-  error: 'bg-hunter-500/10',
+  system: 'bg-echo-500/10',
+  error: 'bg-apex-500/10',
 };
 
 function getIcon(type: ActivityType, direction?: 'buy' | 'sell') {

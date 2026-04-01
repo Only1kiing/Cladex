@@ -48,7 +48,9 @@ export default function SettingsPage() {
     if (isNaN(amount) || amount <= 0) return;
     setDepositing(true);
     setTimeout(() => {
-      setBalance(prev => prev + amount);
+      const newBalance = balance + amount;
+      setBalance(newBalance);
+      localStorage.setItem('cladex_gas_balance', newBalance.toString());
       setDepositAmount('');
       setShowDeposit(false);
       setDepositing(false);
@@ -158,52 +160,63 @@ export default function SettingsPage() {
         )}
       </section>
 
-      {/* Deposit & Balance */}
+      {/* Gas Balance */}
       <section className="rounded-2xl border border-[#1e1e2e] bg-[#111118] p-6">
-        <h2 className="text-lg font-semibold text-gray-100 mb-1">Balance</h2>
-        <p className="text-xs text-gray-500 mb-4">Used for trading fees and agent deployment. No withdrawals.</p>
+        <h2 className="text-lg font-semibold text-gray-100 mb-1">Gas Balance</h2>
+        <p className="text-xs text-gray-500 mb-4">Gas powers your agents. Each trade costs a small gas fee. Top up to keep agents running.</p>
+
+        {balance < 2 && balance > 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-4">
+            <span className="text-sm">&#x26A0;&#xFE0F;</span>
+            <span className="text-xs text-amber-300">Low gas — agents pause under $1</span>
+          </div>
+        )}
+        {balance === 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 mb-4">
+            <span className="text-sm">&#x26A0;&#xFE0F;</span>
+            <span className="text-xs text-red-300">Agents paused — add gas to continue</span>
+          </div>
+        )}
 
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-3xl font-black text-white">${balance.toFixed(2)}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Available for fees & minting</p>
+            <p className="text-xs text-gray-500 mt-0.5">Available gas balance</p>
           </div>
           <button
             onClick={() => setShowDeposit(!showDeposit)}
-            className="px-5 py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all"
+            className="px-5 py-2.5 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-sm hover:bg-amber-500/30 transition-all"
           >
-            Deposit
+            Top Up Gas
           </button>
         </div>
 
         {showDeposit && (
-          <div className="rounded-xl border border-[#B8FF3C]/20 bg-[#B8FF3C]/[0.03] p-4 mb-4">
-            <label className="text-xs text-gray-400 font-medium mb-2 block">Deposit Amount (USDT)</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40 transition-all"
-              />
-              <button
-                onClick={handleDeposit}
-                disabled={depositing || !depositAmount || parseFloat(depositAmount) <= 0}
-                className="px-5 py-2.5 rounded-lg bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-              >
-                {depositing ? 'Processing...' : 'Confirm'}
-              </button>
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              {[10, 25, 50, 100].map((amt) => (
-                <button key={amt} onClick={() => setDepositAmount(String(amt))} className="px-3 py-1 rounded-lg border border-[#1e1e2e] text-xs text-gray-400 hover:border-[#B8FF3C]/30 hover:text-[#B8FF3C] transition-colors">
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-4 mb-4">
+            <label className="text-xs text-gray-400 font-medium mb-3 block">Select top up amount</label>
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {[5, 10, 25, 50].map((amt) => (
+                <button
+                  key={amt}
+                  onClick={() => setDepositAmount(String(amt))}
+                  className={`py-3 rounded-xl text-sm font-bold transition-all ${
+                    depositAmount === String(amt)
+                      ? 'bg-amber-500/20 text-amber-400 border-2 border-amber-500/40'
+                      : 'bg-white/[0.03] text-gray-400 border-2 border-white/[0.06] hover:border-amber-500/20 hover:text-amber-400'
+                  }`}
+                >
                   ${amt}
                 </button>
               ))}
             </div>
+            <button
+              onClick={handleDeposit}
+              disabled={depositing || !depositAmount || parseFloat(depositAmount) <= 0}
+              className="w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              {depositing ? 'Processing...' : `Top Up $${depositAmount || '0'} Gas`}
+            </button>
+            <p className="text-[10px] text-gray-600 text-center mt-2">Gas will be deducted as agents execute trades</p>
           </div>
         )}
 

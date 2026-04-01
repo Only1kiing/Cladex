@@ -18,14 +18,15 @@ model User {
   agents       Agent[]
   trades       Trade[]
   exchanges    Exchange[]
-  activityLogs ActivityLog[]
+  activityLogs    ActivityLog[]
+  foundingPoints  Int          @default(10000)
 }
 
 enum Personality {
-  GUARDIAN
-  ANALYST
-  HUNTER
-  ORACLE
+  NOVA
+  SAGE
+  APEX
+  ECHO
 }
 
 enum RiskLevel {
@@ -114,7 +115,7 @@ enum ActivityType {
   TRADE
   INSIGHT
   ALERT
-  GUARDIAN
+  NOVA
 }
 
 model ActivityLog {

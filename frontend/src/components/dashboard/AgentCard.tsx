@@ -35,52 +35,52 @@ interface AgentCardProps {
 // ---- Personality config ----
 
 const personalityBorderColors: Record<AgentPersonality, string> = {
-  guardian: 'border-t-guardian-500',
-  analyst: 'border-t-analyst-500',
-  hunter: 'border-t-hunter-500',
-  oracle: 'border-t-oracle-500',
+  nova: 'border-t-nova-500',
+  sage: 'border-t-sage-500',
+  apex: 'border-t-apex-500',
+  echo: 'border-t-echo-500',
 };
 
 const personalityGlow: Record<AgentPersonality, string> = {
-  guardian: 'shadow-guardian-500/8',
-  analyst: 'shadow-analyst-500/8',
-  hunter: 'shadow-hunter-500/8',
-  oracle: 'shadow-oracle-500/8',
+  nova: 'shadow-nova-500/8',
+  sage: 'shadow-sage-500/8',
+  apex: 'shadow-apex-500/8',
+  echo: 'shadow-echo-500/8',
 };
 
 const personalityGlowHover: Record<AgentPersonality, string> = {
-  guardian: 'hover:shadow-guardian-500/20',
-  analyst: 'hover:shadow-analyst-500/20',
-  hunter: 'hover:shadow-hunter-500/20',
-  oracle: 'hover:shadow-oracle-500/20',
+  nova: 'hover:shadow-nova-500/20',
+  sage: 'hover:shadow-sage-500/20',
+  apex: 'hover:shadow-apex-500/20',
+  echo: 'hover:shadow-echo-500/20',
 };
 
 const personalityAccent: Record<AgentPersonality, string> = {
-  guardian: 'text-guardian-400',
-  analyst: 'text-analyst-400',
-  hunter: 'text-hunter-400',
-  oracle: 'text-oracle-400',
+  nova: 'text-nova-400',
+  sage: 'text-sage-400',
+  apex: 'text-apex-400',
+  echo: 'text-echo-400',
 };
 
 const personalityAccentBg: Record<AgentPersonality, string> = {
-  guardian: 'bg-guardian-500/10 border-guardian-500/20',
-  analyst: 'bg-analyst-500/10 border-analyst-500/20',
-  hunter: 'bg-hunter-500/10 border-hunter-500/20',
-  oracle: 'bg-oracle-500/10 border-oracle-500/20',
+  nova: 'bg-nova-500/10 border-nova-500/20',
+  sage: 'bg-sage-500/10 border-sage-500/20',
+  apex: 'bg-apex-500/10 border-apex-500/20',
+  echo: 'bg-echo-500/10 border-echo-500/20',
 };
 
 const personalityLabels: Record<AgentPersonality, string> = {
-  guardian: 'Guardian',
-  analyst: 'Analyst',
-  hunter: 'Hunter',
-  oracle: 'Oracle',
+  nova: 'Nova',
+  sage: 'Sage',
+  apex: 'Apex',
+  echo: 'Echo',
 };
 
 const personalityIconBg: Record<AgentPersonality, string> = {
-  guardian: 'bg-guardian-500/15 text-guardian-400',
-  analyst: 'bg-analyst-500/15 text-analyst-400',
-  hunter: 'bg-hunter-500/15 text-hunter-400',
-  oracle: 'bg-oracle-500/15 text-oracle-400',
+  nova: 'bg-nova-500/15 text-nova-400',
+  sage: 'bg-sage-500/15 text-sage-400',
+  apex: 'bg-apex-500/15 text-apex-400',
+  echo: 'bg-echo-500/15 text-echo-400',
 };
 
 const statusLabels: Record<AgentStatus, string> = {
@@ -100,7 +100,7 @@ const statusBadgeStatus: Record<AgentStatus, 'active' | 'inactive' | 'warning' |
 // ---- Default stories per personality ----
 
 const defaultStories: Record<AgentPersonality, IntelligenceStory> = {
-  guardian: {
+  nova: {
     currentState: 'I am maintaining a defensive posture, carefully watching for signs of market weakness. My shields are up and your capital is well-protected. Current drawdown is minimal at 1.2%.',
     recentActions: [
       'Secured partial profits on BTC after detecting overbought conditions on the 4H timeframe',
@@ -110,7 +110,7 @@ const defaultStories: Record<AgentPersonality, IntelligenceStory> = {
     strategy: 'Conservative capital preservation with strategic DCA entries during high-conviction dips. I prioritize protecting your wealth over chasing gains.',
     nextMove: 'Watching the $66,800 BTC support level closely. If it holds with strong volume, I\'ll add a small position. Otherwise, I\'ll keep our powder dry.',
   },
-  analyst: {
+  sage: {
     currentState: 'Running multi-timeframe analysis across 12 indicators. The data is painting an interesting picture — several confluence zones are forming. Confidence level: 78%.',
     recentActions: [
       'Identified a bullish divergence on ETH/USDT that led to a successful 4.2% swing trade',
@@ -120,7 +120,7 @@ const defaultStories: Record<AgentPersonality, IntelligenceStory> = {
     strategy: 'Data-driven trend following using SMA crossovers, RSI divergence, and volume profile analysis. Every decision is backed by at least 3 confirming signals.',
     nextMove: 'The 50-day MA is about to cross above the 200-day on BTC. If volume confirms, I\'ll scale into a larger position over the next 48 hours.',
   },
-  hunter: {
+  apex: {
     currentState: 'Stalking three high-potential setups across altcoin markets. Adrenaline is high — I can smell a breakout forming. Locked and loaded.',
     recentActions: [
       'Captured a 12% move on SOL after catching the momentum breakout at $145',
@@ -130,7 +130,7 @@ const defaultStories: Record<AgentPersonality, IntelligenceStory> = {
     strategy: 'Aggressive momentum hunting with tight risk management. I strike fast on breakouts and cut losses faster. High frequency, high conviction.',
     nextMove: 'AVAX is coiling in a tight range near resistance. When it breaks, I\'m going in heavy with a 5% portfolio allocation. Stop-loss already calculated.',
   },
-  oracle: {
+  echo: {
     currentState: 'My pattern recognition models are detecting an unusual convergence of signals. Historical analysis suggests a significant move within 72 hours. Probability: 82%.',
     recentActions: [
       'Predicted the BTC pullback to $67,200 within $50 accuracy — position adjusted 6 hours before the drop',
@@ -147,22 +147,22 @@ const defaultStories: Record<AgentPersonality, IntelligenceStory> = {
 function PersonalityIcon({ personality, size = 'md' }: { personality: AgentPersonality; size?: 'sm' | 'md' }) {
   const cls = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
   const icons: Record<AgentPersonality, React.ReactNode> = {
-    guardian: (
+    nova: (
       <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
       </svg>
     ),
-    analyst: (
+    sage: (
       <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
-    hunter: (
+    apex: (
       <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
       </svg>
     ),
-    oracle: (
+    echo: (
       <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -183,10 +183,10 @@ function PersonalityIcon({ personality, size = 'md' }: { personality: AgentPerso
 function BreathingGlow({ personality, active }: { personality: AgentPersonality; active: boolean }) {
   if (!active) return null;
   const colors: Record<AgentPersonality, string> = {
-    guardian: 'bg-guardian-500',
-    analyst: 'bg-analyst-500',
-    hunter: 'bg-hunter-500',
-    oracle: 'bg-oracle-500',
+    nova: 'bg-nova-500',
+    sage: 'bg-sage-500',
+    apex: 'bg-apex-500',
+    echo: 'bg-echo-500',
   };
   return (
     <div className="absolute -inset-[1px] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none overflow-hidden">
@@ -375,7 +375,7 @@ function AgentCard({ agent, className = '' }: AgentCardProps) {
       <div className="grid grid-cols-3 gap-3 mt-4 mb-4">
         <div>
           <p className="text-[11px] text-gray-500 uppercase tracking-wider">Profit</p>
-          <p className={`text-sm font-semibold mt-0.5 ${isPositive ? 'text-guardian-400' : 'text-hunter-400'}`}>
+          <p className={`text-sm font-semibold mt-0.5 ${isPositive ? 'text-nova-400' : 'text-apex-400'}`}>
             {isPositive ? '+' : ''}${Math.abs(agent.pnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
@@ -406,7 +406,7 @@ function AgentCard({ agent, className = '' }: AgentCardProps) {
           'border',
           isRunning
             ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 hover:shadow-amber-500/10 hover:shadow-md'
-            : 'border-guardian-500/30 bg-guardian-500/10 text-guardian-400 hover:bg-guardian-500/20 hover:shadow-guardian-500/10 hover:shadow-md',
+            : 'border-nova-500/30 bg-nova-500/10 text-nova-400 hover:bg-nova-500/20 hover:shadow-nova-500/10 hover:shadow-md',
           isToggling ? 'opacity-60 cursor-not-allowed scale-[0.98]' : '',
         ].join(' ')}
       >

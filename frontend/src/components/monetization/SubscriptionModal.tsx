@@ -2,7 +2,7 @@
 
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
 
-type Personality = 'guardian' | 'analyst' | 'hunter' | 'oracle';
+type Personality = 'nova' | 'sage' | 'apex' | 'echo';
 
 interface AgentInfo {
   name: string;
@@ -25,32 +25,32 @@ const personalityConfig: Record<
   Personality,
   { label: string; bg: string; border: string; text: string; hex: string; gradient: string }
 > = {
-  guardian: {
-    label: 'Guardian',
+  nova: {
+    label: 'Nova',
     bg: 'bg-green-500/10',
     border: 'border-green-500/30',
     text: 'text-green-400',
     hex: '#22c55e',
     gradient: 'from-green-600 to-green-500',
   },
-  analyst: {
-    label: 'Analyst',
+  sage: {
+    label: 'Sage',
     bg: 'bg-blue-500/10',
     border: 'border-blue-500/30',
     text: 'text-blue-400',
     hex: '#3b82f6',
     gradient: 'from-blue-600 to-blue-500',
   },
-  hunter: {
-    label: 'Hunter',
+  apex: {
+    label: 'Apex',
     bg: 'bg-red-500/10',
     border: 'border-red-500/30',
     text: 'text-red-400',
     hex: '#ef4444',
     gradient: 'from-red-600 to-red-500',
   },
-  oracle: {
-    label: 'Oracle',
+  echo: {
+    label: 'Echo',
     bg: 'bg-purple-500/10',
     border: 'border-purple-500/30',
     text: 'text-purple-400',

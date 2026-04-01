@@ -8,7 +8,7 @@ router.use(authMiddleware);
 
 const createAgentSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
-  personality: z.enum(["GUARDIAN", "ANALYST", "HUNTER", "ORACLE"]),
+  personality: z.enum(["NOVA", "SAGE", "APEX", "ECHO"]),
   strategy: z.record(z.unknown()),
   riskLevel: z.enum(["LOW", "MEDIUM", "HIGH"]),
   assets: z.array(z.string().min(1)).min(1, "At least one asset is required"),

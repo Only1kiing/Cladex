@@ -37,40 +37,40 @@ const PERSONALITY_META: Record<AgentPersonality, {
   accentBar: string;
   bgGlow: string;
 }> = {
-  guardian: {
-    label: 'Guardian',
+  nova: {
+    label: 'Nova',
     icon: <Shield size={16} />,
-    color: 'text-guardian-400',
-    accentBar: 'bg-gradient-to-r from-guardian-500 to-guardian-400',
-    bgGlow: 'group-hover:shadow-guardian-500/10',
+    color: 'text-nova-400',
+    accentBar: 'bg-gradient-to-r from-nova-500 to-nova-400',
+    bgGlow: 'group-hover:shadow-nova-500/10',
   },
-  analyst: {
-    label: 'Analyst',
+  sage: {
+    label: 'Sage',
     icon: <BarChart3 size={16} />,
-    color: 'text-analyst-400',
-    accentBar: 'bg-gradient-to-r from-analyst-500 to-analyst-400',
-    bgGlow: 'group-hover:shadow-analyst-500/10',
+    color: 'text-sage-400',
+    accentBar: 'bg-gradient-to-r from-sage-500 to-sage-400',
+    bgGlow: 'group-hover:shadow-sage-500/10',
   },
-  hunter: {
-    label: 'Hunter',
+  apex: {
+    label: 'Apex',
     icon: <Target size={16} />,
-    color: 'text-hunter-400',
-    accentBar: 'bg-gradient-to-r from-hunter-500 to-hunter-400',
-    bgGlow: 'group-hover:shadow-hunter-500/10',
+    color: 'text-apex-400',
+    accentBar: 'bg-gradient-to-r from-apex-500 to-apex-400',
+    bgGlow: 'group-hover:shadow-apex-500/10',
   },
-  oracle: {
-    label: 'Oracle',
+  echo: {
+    label: 'Echo',
     icon: <Eye size={16} />,
-    color: 'text-oracle-400',
-    accentBar: 'bg-gradient-to-r from-oracle-500 to-oracle-400',
-    bgGlow: 'group-hover:shadow-oracle-500/10',
+    color: 'text-echo-400',
+    accentBar: 'bg-gradient-to-r from-echo-500 to-echo-400',
+    bgGlow: 'group-hover:shadow-echo-500/10',
   },
 };
 
 const RISK_STYLES: Record<string, string> = {
-  Low: 'text-guardian-400 bg-guardian-500/10',
+  Low: 'text-nova-400 bg-nova-500/10',
   Medium: 'text-amber-400 bg-amber-500/10',
-  High: 'text-hunter-400 bg-hunter-500/10',
+  High: 'text-apex-400 bg-apex-500/10',
 };
 
 const MOCK_AGENTS: MarketplaceAgent[] = [
@@ -78,7 +78,7 @@ const MOCK_AGENTS: MarketplaceAgent[] = [
     id: '1',
     name: 'Raze',
     creator: 'CladexTeam',
-    personality: 'hunter',
+    personality: 'apex',
     description: 'Aggressive momentum scalper that hunts volatile breakouts with lightning-fast entries and tight trailing stops.',
     monthlyReturn: 18,
     winRate: 64,
@@ -93,7 +93,7 @@ const MOCK_AGENTS: MarketplaceAgent[] = [
     id: '2',
     name: 'Knox',
     creator: 'CladexTeam',
-    personality: 'guardian',
+    personality: 'nova',
     description: 'Capital preservation specialist focused on minimizing drawdown while steadily compounding returns.',
     monthlyReturn: 6,
     winRate: 81,
@@ -108,7 +108,7 @@ const MOCK_AGENTS: MarketplaceAgent[] = [
     id: '3',
     name: 'Byte',
     creator: 'CladexTeam',
-    personality: 'analyst',
+    personality: 'sage',
     description: 'Data-driven trend follower using cross-exchange volume analysis and momentum indicators for precise entries.',
     monthlyReturn: 12,
     winRate: 72,
@@ -124,7 +124,7 @@ const MOCK_AGENTS: MarketplaceAgent[] = [
     id: '4',
     name: 'Iris',
     creator: 'CladexTeam',
-    personality: 'oracle',
+    personality: 'echo',
     description: 'Predictive pattern recognition engine using on-chain analytics, whale tracking, and historical cycle data.',
     monthlyReturn: 22,
     winRate: 69,
@@ -140,7 +140,7 @@ const MOCK_AGENTS: MarketplaceAgent[] = [
     id: '5',
     name: 'Nova',
     creator: 'CladexTeam',
-    personality: 'hunter',
+    personality: 'apex',
     description: 'High-frequency breakout trader specializing in rapid multi-asset scalps with sub-second execution.',
     monthlyReturn: 15,
     winRate: 58,
@@ -155,7 +155,7 @@ const MOCK_AGENTS: MarketplaceAgent[] = [
     id: '6',
     name: 'Luna',
     creator: 'CladexTeam',
-    personality: 'oracle',
+    personality: 'echo',
     description: 'Cosmic cycle predictor leveraging macro patterns, lunar cycles, and sentiment oscillation models.',
     monthlyReturn: 19,
     winRate: 74,
@@ -170,7 +170,7 @@ const MOCK_AGENTS: MarketplaceAgent[] = [
     id: '7',
     name: 'Shield',
     creator: 'CladexTeam',
-    personality: 'guardian',
+    personality: 'nova',
     description: 'Maximum drawdown protection agent that prioritizes capital safety above all else with zero-tolerance risk limits.',
     monthlyReturn: 4,
     winRate: 88,
@@ -185,7 +185,7 @@ const MOCK_AGENTS: MarketplaceAgent[] = [
     id: '8',
     name: 'Cipher',
     creator: 'CladexTeam',
-    personality: 'analyst',
+    personality: 'sage',
     description: 'On-chain intelligence engine tracking wallet clusters, whale movements, and institutional accumulation patterns.',
     monthlyReturn: 28,
     winRate: 66,
@@ -201,7 +201,7 @@ const MOCK_AGENTS: MarketplaceAgent[] = [
     id: '9',
     name: 'Blitz',
     creator: 'CladexTeam',
-    personality: 'hunter',
+    personality: 'apex',
     description: 'Speed-optimized scalper built for rapid-fire trades on high-volume pairs with ultra-low latency execution.',
     monthlyReturn: 14,
     winRate: 61,
@@ -264,21 +264,21 @@ function AgentCard({ agent, onUse, onPreview }: { agent: MarketplaceAgent; onUse
         <div className="grid grid-cols-3 gap-1.5 sm:gap-3 mb-4">
           <div className="bg-[#0a0a0f] rounded-lg px-1.5 sm:px-2.5 py-2 text-center">
             <div className="flex items-center justify-center gap-1 mb-0.5">
-              <TrendingUp size={10} className="text-guardian-400" />
+              <TrendingUp size={10} className="text-nova-400" />
               <span className="text-[10px] text-gray-500 hidden sm:inline">Return</span>
             </div>
-            <div className="text-xs sm:text-sm font-bold text-guardian-400">+{agent.monthlyReturn}%</div>
+            <div className="text-xs sm:text-sm font-bold text-nova-400">+{agent.monthlyReturn}%</div>
           </div>
           <div className="bg-[#0a0a0f] rounded-lg px-1.5 sm:px-2.5 py-2 text-center">
             <div className="flex items-center justify-center gap-1 mb-0.5">
-              <Activity size={10} className="text-analyst-400" />
+              <Activity size={10} className="text-sage-400" />
               <span className="text-[10px] text-gray-500 hidden sm:inline">Win Rate</span>
             </div>
             <div className="text-xs sm:text-sm font-bold text-gray-200">{agent.winRate}%</div>
           </div>
           <div className="bg-[#0a0a0f] rounded-lg px-1.5 sm:px-2.5 py-2 text-center">
             <div className="flex items-center justify-center gap-1 mb-0.5">
-              <Zap size={10} className="text-oracle-400" />
+              <Zap size={10} className="text-echo-400" />
               <span className="text-[10px] text-gray-500 hidden sm:inline">Trades</span>
             </div>
             <div className="text-xs sm:text-sm font-bold text-gray-200">{agent.totalTrades.toLocaleString()}</div>
@@ -299,7 +299,7 @@ function AgentCard({ agent, onUse, onPreview }: { agent: MarketplaceAgent; onUse
         {/* Price */}
         <div className="flex items-center justify-between mb-4">
           {agent.price === 0 ? (
-            <span className="text-sm font-bold text-guardian-400">FREE</span>
+            <span className="text-sm font-bold text-nova-400">FREE</span>
           ) : (
             <span className="text-sm font-bold text-white">${agent.price}<span className="text-xs font-normal text-gray-500">/mo</span></span>
           )}
@@ -339,14 +339,14 @@ export default function MarketplacePage() {
   const [useAgent, setUseAgent] = useState<MarketplaceAgent | null>(null);
 
   const leaderboardAgents = [
-    { name: 'Raze', volume: '$1.2M', roi: '+34%', creator: '@hunter_x', personality: 'hunter', loves: 2847 },
-    { name: 'Iris', volume: '$890K', roi: '+28%', creator: '@oracle_queen', personality: 'oracle', loves: 2103 },
-    { name: 'Knox', volume: '$650K', roi: '+19%', creator: '@shield_master', personality: 'guardian', loves: 1876 },
-    { name: 'Nova', volume: '$420K', roi: '+42%', creator: '@speed_demon', personality: 'hunter', loves: 1654 },
-    { name: 'Byte', volume: '$380K', roi: '+15%', creator: '@data_nerd', personality: 'analyst', loves: 1432 },
-    { name: 'Luna', volume: '$310K', roi: '+22%', creator: '@moon_caller', personality: 'oracle', loves: 1201 },
-    { name: 'Shield', volume: '$280K', roi: '+11%', creator: '@safe_hands', personality: 'guardian', loves: 987 },
-    { name: 'Poly', volume: '$240K', roi: '+31%', creator: '@prediction_king', personality: 'analyst', loves: 876 },
+    { name: 'Raze', volume: '$1.2M', roi: '+34%', creator: '@hunter_x', personality: 'apex', loves: 2847 },
+    { name: 'Iris', volume: '$890K', roi: '+28%', creator: '@oracle_queen', personality: 'echo', loves: 2103 },
+    { name: 'Knox', volume: '$650K', roi: '+19%', creator: '@shield_master', personality: 'nova', loves: 1876 },
+    { name: 'Nova', volume: '$420K', roi: '+42%', creator: '@speed_demon', personality: 'apex', loves: 1654 },
+    { name: 'Byte', volume: '$380K', roi: '+15%', creator: '@data_nerd', personality: 'sage', loves: 1432 },
+    { name: 'Luna', volume: '$310K', roi: '+22%', creator: '@moon_caller', personality: 'echo', loves: 1201 },
+    { name: 'Shield', volume: '$280K', roi: '+11%', creator: '@safe_hands', personality: 'nova', loves: 987 },
+    { name: 'Poly', volume: '$240K', roi: '+31%', creator: '@prediction_king', personality: 'sage', loves: 876 },
   ];
 
   const filteredAgents = useMemo(() => {
@@ -363,10 +363,10 @@ export default function MarketplacePage() {
 
   const filters: { id: FilterType; label: string; icon?: React.ReactNode }[] = [
     { id: 'all', label: 'All Agents' },
-    { id: 'guardian', label: 'Guardian', icon: <Shield size={14} /> },
-    { id: 'analyst', label: 'Analyst', icon: <BarChart3 size={14} /> },
-    { id: 'hunter', label: 'Hunter', icon: <Target size={14} /> },
-    { id: 'oracle', label: 'Oracle', icon: <Eye size={14} /> },
+    { id: 'nova', label: 'Nova', icon: <Shield size={14} /> },
+    { id: 'sage', label: 'Sage', icon: <BarChart3 size={14} /> },
+    { id: 'apex', label: 'Apex', icon: <Target size={14} /> },
+    { id: 'echo', label: 'Echo', icon: <Eye size={14} /> },
   ];
 
   return (
@@ -396,7 +396,7 @@ export default function MarketplacePage() {
               const medalColors = ['from-amber-400 to-yellow-500', 'from-gray-300 to-gray-400', 'from-amber-600 to-amber-700'];
               const borderColors = ['border-amber-500/30', 'border-gray-400/20', 'border-amber-700/20'];
               const bgColors = ['bg-amber-500/[0.06]', 'bg-gray-400/[0.04]', 'bg-amber-700/[0.04]'];
-              const personalityColor = agent.personality === 'hunter' ? 'text-red-400' : agent.personality === 'oracle' ? 'text-violet-400' : agent.personality === 'guardian' ? 'text-emerald-400' : 'text-cyan-400';
+              const personalityColor = agent.personality === 'apex' ? 'text-red-400' : agent.personality === 'echo' ? 'text-violet-400' : agent.personality === 'nova' ? 'text-emerald-400' : 'text-cyan-400';
 
               return (
                 <div
@@ -452,7 +452,7 @@ export default function MarketplacePage() {
             <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
               {leaderboardAgents.slice(3).map((agent, idx) => {
                 const rank = idx + 4;
-                const personalityColor = agent.personality === 'hunter' ? 'text-red-400' : agent.personality === 'oracle' ? 'text-violet-400' : agent.personality === 'guardian' ? 'text-emerald-400' : 'text-cyan-400';
+                const personalityColor = agent.personality === 'apex' ? 'text-red-400' : agent.personality === 'echo' ? 'text-violet-400' : agent.personality === 'nova' ? 'text-emerald-400' : 'text-cyan-400';
 
                 return (
                   <div
@@ -606,7 +606,7 @@ export default function MarketplacePage() {
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <div className="bg-[#0a0a0f] rounded-xl p-2.5 sm:p-4 text-center border border-[#1e1e2e]">
                 <div className="text-[10px] sm:text-xs text-gray-500 mb-1">Return</div>
-                <div className="text-base sm:text-xl font-bold text-guardian-400">+{previewAgent.monthlyReturn}%</div>
+                <div className="text-base sm:text-xl font-bold text-nova-400">+{previewAgent.monthlyReturn}%</div>
               </div>
               <div className="bg-[#0a0a0f] rounded-xl p-2.5 sm:p-4 text-center border border-[#1e1e2e]">
                 <div className="text-[10px] sm:text-xs text-gray-500 mb-1">Win Rate</div>
@@ -642,7 +642,7 @@ export default function MarketplacePage() {
 
             <div className="flex items-center justify-between mb-3">
               {previewAgent.price === 0 ? (
-                <span className="text-lg font-bold text-guardian-400">FREE</span>
+                <span className="text-lg font-bold text-nova-400">FREE</span>
               ) : (
                 <span className="text-lg font-bold text-white">${previewAgent.price}<span className="text-sm font-normal text-gray-500">/mo</span></span>
               )}
