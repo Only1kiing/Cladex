@@ -365,6 +365,10 @@ export default function AgentBuilderPage() {
   const [isDeploying, setIsDeploying] = useState(false);
 
   async function handleDeploy() {
+    if (!draft.name.trim() || draft.name.trim().length < 2 || !draft.strategy || draft.assets.length === 0) {
+      return;
+    }
+
     const plan = getUserPlan();
     if (!plan) {
       // No plan — save draft and go to pricing with return URL
@@ -740,7 +744,7 @@ export default function AgentBuilderPage() {
                 size="lg"
                 fullWidth
                 icon={<Rocket size={18} />}
-                disabled={!draft.strategy || draft.assets.length === 0 || isDeploying}
+                disabled={!draft.name.trim() || draft.name.trim().length < 2 || !draft.strategy || draft.assets.length === 0 || isDeploying}
                 loading={isDeploying}
                 className="bg-[#B8FF3C] hover:brightness-110 text-black text-base font-bold py-3.5"
               >

@@ -610,6 +610,8 @@ export default function SignupPage() {
 
     if (!name.trim()) {
       errors.name = 'Name is required.';
+    } else if (name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters.';
     }
 
     if (!email.trim()) {
