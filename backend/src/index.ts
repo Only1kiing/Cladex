@@ -53,10 +53,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error("Unhandled error:", err);
 
   const statusCode = (err as any).statusCode || 500;
-  const message =
-    config.nodeEnv === "production"
-      ? "Internal server error"
-      : err.message || "Internal server error";
+  const message = err.message || "Internal server error";
 
   res.status(statusCode).json({ error: message });
 });
