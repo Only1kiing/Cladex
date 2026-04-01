@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { DeploymentModal } from '@/components/dashboard/DeploymentModal';
 import { Logo } from '@/components/ui/Logo';
 
@@ -225,13 +226,23 @@ const planData: Record<string, { name: string; price: number; agents: number }> 
   'Pro Creator': { name: 'Pro Creator', price: 200, agents: 15 },
 };
 
-export default function PricingPage() {
+function PricingPageContent() {
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('return');
   const [deployModalOpen, setDeployModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number; agents: number } | null>(null);
 
   const handlePlanClick = (planName: string) => {
     setSelectedPlan(planData[planName] || null);
     setDeployModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setDeployModalOpen(false);
+    // If user came from build page, redirect back after closing modal
+    if (returnTo === 'build') {
+      window.location.href = '/dashboard/build';
+    }
   };
 
   const deployCta: Record<string, string> = {
@@ -421,9 +432,17 @@ export default function PricingPage() {
       {/* Deployment Modal */}
       <DeploymentModal
         isOpen={deployModalOpen}
-        onClose={() => setDeployModalOpen(false)}
+        onClose={handleModalClose}
         plan={selectedPlan}
       />
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0f]" />}>
+      <PricingPageContent />
+    </Suspense>
   );
 }

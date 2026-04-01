@@ -78,7 +78,7 @@ export default function LoginPage() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        setStep('connect-exchange');
+        router.push('/dashboard');
       } else {
         setError(result.error || 'Login failed. Please try again.');
       }

@@ -279,6 +279,28 @@ export default function AgentBuilderPage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Restore agent draft if returning from pricing page
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedDraft = localStorage.getItem('cladex_agent_draft');
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft) as AgentDraft;
+        setDraft(parsed);
+        localStorage.removeItem('cladex_agent_draft');
+        // Add a welcome-back message
+        setMessages(prev => [...prev, {
+          id: `system-restored-${Date.now()}`,
+          role: 'system' as const,
+          content: `Welcome back! Your agent "${parsed.name}" is ready to deploy. Click Deploy Agent to continue.`,
+          timestamp: new Date(),
+        }]);
+      } catch {
+        localStorage.removeItem('cladex_agent_draft');
+      }
+    }
+  }, []);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isThinking]);
@@ -345,8 +367,11 @@ export default function AgentBuilderPage() {
   async function handleDeploy() {
     const plan = getUserPlan();
     if (!plan) {
-      // No plan — go to pricing
-      window.location.href = '/pricing';
+      // No plan — save draft and go to pricing with return URL
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cladex_agent_draft', JSON.stringify(draft));
+      }
+      window.location.href = '/pricing?return=build';
       return;
     }
 

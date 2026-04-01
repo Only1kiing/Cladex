@@ -287,21 +287,27 @@ export default function LandingPage() {
             <Link href="#agents" className="text-sm text-gray-400 hover:text-white transition-colors">
               Agents
             </Link>
-            <Link href="/signup" className="text-sm text-gray-400 hover:text-white transition-colors">
+            <Link href="/dashboard/marketplace" className="text-sm text-gray-400 hover:text-white transition-colors">
               Marketplace
             </Link>
             <Link
               href="/login"
+              className="text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/signup"
               className="bg-[#B8FF3C] text-black font-semibold text-sm px-5 py-2 rounded-lg hover:brightness-110 transition-all green-glow-hover"
             >
-              Connect Exchange
+              Get Started
             </Link>
           </div>
 
           {/* Mobile: hamburger + CTA */}
           <div className="flex items-center gap-3 md:hidden">
             <Link
-              href="/login"
+              href="/signup"
               className="bg-[#B8FF3C] text-black font-semibold text-xs px-4 py-2 rounded-lg"
             >
               Get Started
@@ -325,18 +331,21 @@ export default function LandingPage() {
             <Link href="#agents" onClick={() => setMobileMenu(false)} className="block py-2 text-sm text-gray-400 hover:text-white transition-colors">
               Agents
             </Link>
-            <Link href="/signup" onClick={() => setMobileMenu(false)} className="block py-2 text-sm text-gray-400 hover:text-white transition-colors">
+            <Link href="/dashboard/marketplace" onClick={() => setMobileMenu(false)} className="block py-2 text-sm text-gray-400 hover:text-white transition-colors">
               Explore
             </Link>
             <Link href="/pricing" onClick={() => setMobileMenu(false)} className="block py-2 text-sm text-gray-400 hover:text-white transition-colors">
               Plans
             </Link>
+            <Link href="/login" onClick={() => setMobileMenu(false)} className="block py-2 text-sm text-gray-400 hover:text-white transition-colors">
+              Log In
+            </Link>
             <Link
-              href="/login"
+              href="/signup"
               onClick={() => setMobileMenu(false)}
               className="block w-full text-center bg-[#B8FF3C] text-black font-semibold text-sm px-5 py-2.5 rounded-lg hover:brightness-110 transition-all mt-2"
             >
-              Connect Exchange
+              Get Started
             </Link>
           </div>
         )}
@@ -381,7 +390,7 @@ export default function LandingPage() {
           <Reveal delay={200}>
             <div className="mt-10">
               <Link
-                href="/login"
+                href="/signup"
                 className="inline-block bg-[#B8FF3C] text-black font-bold text-lg px-10 py-4 rounded-xl hover:brightness-110 transition-all green-glow green-glow-hover"
               >
                 Get Early Access
@@ -573,7 +582,7 @@ export default function LandingPage() {
           <Reveal delay={200}>
             <div className="mt-6 text-center">
               <Link
-                href="/login"
+                href="/signup"
                 className="inline-flex items-center gap-2 text-[#B8FF3C] font-semibold text-sm hover:underline"
               >
                 Deploy your own agent <Arrow />
@@ -620,7 +629,7 @@ export default function LandingPage() {
           <Reveal delay={450}>
             <div className="mt-10 text-center">
               <Link
-                href="/login"
+                href="/signup"
                 className="inline-flex items-center gap-2 text-[#B8FF3C] font-semibold hover:underline"
               >
                 Launch your agent and start earning <Arrow />
@@ -695,7 +704,7 @@ export default function LandingPage() {
                     ))}
                   </ul>
                   <Link
-                    href="/login"
+                    href="/signup"
                     className={`mt-6 inline-block w-full font-bold text-sm px-6 py-3 rounded-xl transition-all ${
                       plan.featured
                         ? 'bg-[#B8FF3C] text-black hover:brightness-110 shadow-lg shadow-[#B8FF3C]/15'
@@ -827,10 +836,10 @@ export default function LandingPage() {
 
           <Reveal delay={100}>
             <Link
-              href="/login"
+              href="/signup"
               className="inline-block bg-[#B8FF3C] text-black font-bold text-lg px-10 py-4 rounded-xl hover:brightness-110 transition-all green-glow green-glow-hover"
             >
-              Connect Exchange
+              Get Started Free
             </Link>
           </Reveal>
 

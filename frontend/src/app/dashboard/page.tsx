@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { getDeployedAgents } from '@/lib/agents-store';
+import { getDeployedAgents, updateAgentStatus } from '@/lib/agents-store';
 import type { DeployedAgent } from '@/lib/agents-store';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { api } from '@/lib/api';
@@ -528,6 +528,16 @@ export default function DashboardPage() {
     window.addEventListener('cladex_agents_updated', refresh);
     return () => window.removeEventListener('cladex_agents_updated', refresh);
   }, []);
+
+  // Simulate pending agents going active after 30s (same as agents page)
+  useEffect(() => {
+    const pending = deployedAgents.filter(a => a.status === 'pending');
+    if (pending.length === 0) return;
+    const timeout = setTimeout(() => {
+      pending.forEach(a => updateAgentStatus(a.id, 'active'));
+    }, 30000);
+    return () => clearTimeout(timeout);
+  }, [deployedAgents]);
 
   // Fetch dashboard stats and recent trades from backend
   useEffect(() => {
