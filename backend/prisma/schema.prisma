@@ -20,6 +20,9 @@ model User {
   exchanges    Exchange[]
   activityLogs    ActivityLog[]
   foundingPoints  Int          @default(10000)
+  emailVerified    Boolean  @default(false)
+  verificationCode String?
+  verificationExp  DateTime?
 }
 
 enum Personality {

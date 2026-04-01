@@ -15,5 +15,6 @@ export const config = {
   databaseUrl: requireEnv("DATABASE_URL"),
   jwtSecret: requireEnv("JWT_SECRET"),
   openaiApiKey: requireEnv("OPENAI_API_KEY"),
+  resendApiKey: process.env.RESEND_API_KEY || "",
   nodeEnv: process.env.NODE_ENV || "development",
 } as const;

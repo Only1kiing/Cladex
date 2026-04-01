@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Key, ShieldCheck, Gift, Sparkles } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
@@ -95,11 +96,17 @@ function VerificationStep({
     }
 
     setVerifying(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setVerifying(false);
-
-    // Any 6-digit code works for demo
-    onVerified();
+    try {
+      await api.post('/auth/verify-email', { code: fullCode });
+      setVerifying(false);
+      onVerified();
+    } catch (err) {
+      setVerifying(false);
+      const message = (err as { message?: string }).message || 'Invalid code. Please try again.';
+      setError(message);
+      setCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    }
   }, [code, onVerified]);
 
   useEffect(() => {
@@ -109,11 +116,17 @@ function VerificationStep({
     }
   }, [code, handleVerify, verifying]);
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (resendCooldown > 0) return;
-    setResendCooldown(60);
-    setCode(['', '', '', '', '', '']);
-    inputRefs.current[0]?.focus();
+    try {
+      await api.post('/auth/resend-code');
+      setResendCooldown(60);
+      setCode(['', '', '', '', '', '']);
+      setError('');
+      inputRefs.current[0]?.focus();
+    } catch {
+      setError('Failed to resend code. Please try again.');
+    }
   };
 
   return (

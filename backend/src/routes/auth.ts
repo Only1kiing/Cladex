@@ -5,6 +5,7 @@ import { z } from "zod";
 import prisma from "../lib/prisma";
 import { config } from "../config";
 import { authMiddleware } from "../middleware/auth";
+import { generateVerificationCode, sendVerificationEmail } from "../services/email.service";
 
 const router = Router();
 
@@ -48,6 +49,20 @@ router.post("/signup", async (req: Request, res: Response) => {
     });
 
     const token = generateToken(user.id);
+
+    // Generate verification code and send email
+    const code = generateVerificationCode();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verificationCode: code,
+        verificationExp: expiry,
+      },
+    });
+
+    await sendVerificationEmail(body.email, code, body.name);
 
     res.status(201).json({ user, token });
   } catch (err) {
@@ -108,10 +123,107 @@ router.get("/me", authMiddleware, async (req: Request, res: Response) => {
       name: true,
       createdAt: true,
       updatedAt: true,
+      emailVerified: true,
     },
   });
 
   res.json({ user });
+});
+
+// POST /api/auth/verify-email
+router.post("/verify-email", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { code } = req.body;
+
+    if (!code || typeof code !== "string") {
+      res.status(400).json({ error: "Verification code is required" });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: {
+        verificationCode: true,
+        verificationExp: true,
+        emailVerified: true,
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    if (user.emailVerified) {
+      res.status(400).json({ error: "Email is already verified" });
+      return;
+    }
+
+    if (!user.verificationCode || !user.verificationExp) {
+      res.status(400).json({ error: "No verification code found. Please request a new one." });
+      return;
+    }
+
+    if (new Date() > user.verificationExp) {
+      res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+      return;
+    }
+
+    if (user.verificationCode !== code) {
+      res.status(400).json({ error: "Invalid verification code" });
+      return;
+    }
+
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        emailVerified: true,
+        verificationCode: null,
+        verificationExp: null,
+      },
+    });
+
+    res.json({ message: "Email verified successfully" });
+  } catch (err) {
+    throw err;
+  }
+});
+
+// POST /api/auth/resend-code
+router.post("/resend-code", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { email: true, name: true, emailVerified: true },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    if (user.emailVerified) {
+      res.status(400).json({ error: "Email is already verified" });
+      return;
+    }
+
+    const code = generateVerificationCode();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        verificationCode: code,
+        verificationExp: expiry,
+      },
+    });
+
+    await sendVerificationEmail(user.email, code, user.name);
+
+    res.json({ message: "Verification code sent" });
+  } catch (err) {
+    throw err;
+  }
 });
 
 export default router;
