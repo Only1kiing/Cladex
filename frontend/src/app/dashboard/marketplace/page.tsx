@@ -390,7 +390,7 @@ export default function MarketplacePage() {
           </div>
 
           {/* Top 3 podium */}
-          <div className="grid grid-cols-3 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
             {leaderboardAgents.slice(0, 3).map((agent, idx) => {
               const rank = idx + 1;
               const medalColors = ['from-amber-400 to-yellow-500', 'from-gray-300 to-gray-400', 'from-amber-600 to-amber-700'];

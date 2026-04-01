@@ -513,7 +513,7 @@ export default function LandingPage() {
       <section className="relative py-20 sm:py-28">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <Reveal>
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
               <h2 className="text-2xl sm:text-3xl font-bold">Agents are trading live right now</h2>
               <span className="flex items-center gap-1.5 text-xs bg-red-500/10 text-red-400 px-2.5 py-1 rounded-full font-medium">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 live-pulse" />
