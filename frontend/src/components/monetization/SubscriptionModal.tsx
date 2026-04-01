@@ -121,6 +121,8 @@ function MiniSparkline({ color }: { color: string }) {
   );
 }
 
+const SOLANA_ADDRESS = 'Pz1eoDHDQhH8Tb5buYDPSWSRP1ydxvDyqWhdJYxEznU';
+
 export default function SubscriptionModal({
   isOpen,
   onClose,
@@ -129,6 +131,11 @@ export default function SubscriptionModal({
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+  const [showPayment, setShowPayment] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   const config = personalityConfig[agent.personality];
   const annualPrice = Math.round(agent.price * 12 * 0.8);
@@ -140,6 +147,11 @@ export default function SubscriptionModal({
   useEffect(() => {
     if (isOpen) {
       setVisible(true);
+      setShowPayment(false);
+      setSubmitted(false);
+      setReceiptFile(null);
+      setReceiptPreview(null);
+      setCopied(false);
       requestAnimationFrame(() => setAnimating(true));
       document.body.style.overflow = 'hidden';
     } else {
@@ -152,6 +164,21 @@ export default function SubscriptionModal({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(SOLANA_ADDRESS).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleReceiptUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setReceiptFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setReceiptPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
@@ -328,37 +355,137 @@ export default function SubscriptionModal({
             </div>
           </div>
 
-          {/* Subscribe button */}
-          <button
-            className={`w-full py-3 rounded-xl font-semibold text-white text-sm bg-gradient-to-r ${config.gradient} hover:brightness-110 transition-all duration-200 shadow-lg active:scale-[0.98]`}
-            style={{ boxShadow: `0 8px 24px ${config.hex}33` }}
-          >
-            Subscribe Now
-          </button>
+          {/* Subscribe / Payment flow */}
+          {!showPayment && !submitted && (
+            <>
+              <button
+                onClick={() => setShowPayment(true)}
+                className={`w-full py-3 rounded-xl font-semibold text-white text-sm bg-gradient-to-r ${config.gradient} hover:brightness-110 transition-all duration-200 shadow-lg active:scale-[0.98]`}
+                style={{ boxShadow: `0 8px 24px ${config.hex}33` }}
+              >
+                Subscribe Now
+              </button>
 
-          {/* Guarantees */}
-          <div className="flex items-center justify-center gap-4 mt-4">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M7 1L2 3.5v3.5C2 10.5 4.1 13 7 13.5 9.9 13 12 10.5 12 7V3.5L7 1z"
-                  stroke="#4b5563"
-                  strokeWidth="1.2"
-                  fill="none"
+              <div className="flex items-center justify-center gap-4 mt-4">
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 1L2 3.5v3.5C2 10.5 4.1 13 7 13.5 9.9 13 12 10.5 12 7V3.5L7 1z" stroke="#4b5563" strokeWidth="1.2" fill="none" />
+                    <path d="M5 7l1.5 1.5L9 5.5" stroke="#4b5563" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  30-day money-back guarantee
+                </div>
+                <span className="text-gray-700">|</span>
+                <span className="text-xs text-gray-500">Cancel anytime</span>
+              </div>
+            </>
+          )}
+
+          {showPayment && !submitted && (
+            <div className="space-y-4">
+              <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4">
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Send payment to (Solana)</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-[11px] text-gray-200 font-mono bg-white/[0.04] rounded-lg px-3 py-2 truncate">
+                    {SOLANA_ADDRESS}
+                  </code>
+                  <button
+                    onClick={handleCopyAddress}
+                    className="shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                    style={{ backgroundColor: `${config.hex}15`, borderColor: `${config.hex}30`, color: config.hex, borderWidth: 1 }}
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-2">
+                  Amount: <span className="text-white font-semibold">
+                    {billing === 'monthly' ? `$${agent.price.toFixed(2)}` : `$${Math.round(agent.price * 12 * 0.8)}`}
+                  </span>
+                  {' '}via SOL, USDT, or USDC on Solana
+                </p>
+              </div>
+
+              {/* Receipt upload */}
+              <div>
+                <label className="text-xs text-gray-400 font-medium mb-1.5 block">Upload Payment Receipt</label>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleReceiptUpload}
+                  className="hidden"
+                  id="sub-receipt-upload"
                 />
-                <path
-                  d="M5 7l1.5 1.5L9 5.5"
-                  stroke="#4b5563"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              30-day money-back guarantee
+                <label
+                  htmlFor="sub-receipt-upload"
+                  className="flex items-center justify-center gap-2 w-full bg-white/[0.04] border border-dashed border-white/[0.12] rounded-xl px-4 py-4 text-sm text-gray-400 hover:bg-white/[0.06] transition-all cursor-pointer"
+                  style={{ ['--hover-border' as string]: `${config.hex}40` }}
+                >
+                  {receiptFile ? (
+                    <div className="flex items-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      <span className="text-emerald-400 text-xs truncate max-w-[200px]">{receiptFile.name}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      <span>Upload screenshot or PDF</span>
+                    </>
+                  )}
+                </label>
+                {receiptPreview && receiptFile?.type.startsWith('image/') && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-white/[0.08]">
+                    <img src={receiptPreview} alt="Receipt" className="w-full max-h-32 object-contain bg-black/40" />
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => { if (receiptFile) setSubmitted(true); }}
+                disabled={!receiptFile}
+                className={`w-full py-3 rounded-xl font-semibold text-white text-sm bg-gradient-to-r ${config.gradient} hover:brightness-110 transition-all duration-200 shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed`}
+                style={{ boxShadow: `0 8px 24px ${config.hex}33` }}
+              >
+                Submit Receipt for Verification
+              </button>
+
+              <button
+                onClick={() => setShowPayment(false)}
+                className="w-full text-center text-xs text-gray-500 hover:text-gray-300 transition-colors py-1"
+              >
+                Back
+              </button>
             </div>
-            <span className="text-gray-700">|</span>
-            <span className="text-xs text-gray-500">Cancel anytime</span>
-          </div>
+          )}
+
+          {submitted && (
+            <div className="text-center space-y-4">
+              <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1">Receipt Submitted</h3>
+                <p className="text-sm text-gray-400">
+                  Your subscription to {agent.name} will be activated after verification.
+                </p>
+              </div>
+              <p className="text-xs text-gray-500">This usually takes a few minutes.</p>
+              <button
+                onClick={onClose}
+                className="w-full py-3 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm font-medium text-gray-200 hover:bg-white/[0.1] transition-all"
+              >
+                Done
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

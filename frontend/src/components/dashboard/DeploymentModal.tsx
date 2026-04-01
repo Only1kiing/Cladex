@@ -18,7 +18,7 @@ const WALLETS = [
   { id: 'walletconnect', name: 'WalletConnect', color: '#3B99FC', icon: 'W', chain: 'Multi-chain' },
 ];
 
-const DEPOSIT_ADDRESS = '0x8Fc2E4b3a71D42Ef9Bc5e1bA7D2c8e3F4a5B6C7D';
+const SOLANA_ADDRESS = 'Pz1eoDHDQhH8Tb5buYDPSWSRP1ydxvDyqWhdJYxEznU';
 const GAS_BALANCE_KEY = 'cladex_gas_balance';
 const PENDING_DEPOSITS_KEY = 'cladex_pending_deposits';
 const PENDING_DEPLOYMENTS_KEY = 'cladex_pending_deployments';
@@ -69,6 +69,8 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
   const [copied, setCopied] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositSubmitted, setDepositSubmitted] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -80,6 +82,8 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
       setCopied(false);
       setDepositAmount('');
       setDepositSubmitted(false);
+      setReceiptFile(null);
+      setReceiptPreview(null);
     }
   }, [isOpen]);
 
@@ -156,9 +160,18 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
   };
 
   const handleCopyAddress = () => {
-    navigator.clipboard.writeText(DEPOSIT_ADDRESS).catch(() => {});
+    navigator.clipboard.writeText(SOLANA_ADDRESS).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleReceiptUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setReceiptFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setReceiptPreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleDepositSubmit = () => {
@@ -383,15 +396,15 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
         <div className="space-y-5">
           <div className="text-center">
             <h3 className="text-lg font-bold text-white mb-1">Fund Gas Balance</h3>
-            <p className="text-sm text-gray-400">Send USDT/USDC to the address below</p>
+            <p className="text-sm text-gray-400">Send SOL/USDT/USDC to the Solana address below</p>
           </div>
 
-          {/* Deposit address */}
+          {/* Solana deposit address */}
           <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Deposit Address (ERC-20 / SOL)</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Solana Deposit Address</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-xs text-gray-200 font-mono bg-white/[0.04] rounded-lg px-3 py-2 truncate">
-                {DEPOSIT_ADDRESS}
+              <code className="flex-1 text-[11px] text-gray-200 font-mono bg-white/[0.04] rounded-lg px-3 py-2 truncate">
+                {SOLANA_ADDRESS}
               </code>
               <button
                 onClick={handleCopyAddress}
@@ -421,22 +434,68 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
             />
           </div>
 
+          {/* Receipt upload */}
+          <div>
+            <label className="text-xs text-gray-400 font-medium mb-1.5 block">Upload Payment Receipt</label>
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleReceiptUpload}
+                className="hidden"
+                id="receipt-upload"
+              />
+              <label
+                htmlFor="receipt-upload"
+                className="flex items-center justify-center gap-2 w-full bg-white/[0.04] border border-dashed border-white/[0.12] rounded-xl px-4 py-4 text-sm text-gray-400 hover:border-[#B8FF3C]/30 hover:bg-white/[0.06] transition-all cursor-pointer"
+              >
+                {receiptFile ? (
+                  <div className="flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span className="text-emerald-400 text-xs truncate max-w-[200px]">{receiptFile.name}</span>
+                  </div>
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span>Upload screenshot or PDF</span>
+                  </>
+                )}
+              </label>
+            </div>
+            {receiptPreview && receiptFile?.type.startsWith('image/') && (
+              <div className="mt-2 rounded-lg overflow-hidden border border-white/[0.08]">
+                <img src={receiptPreview} alt="Receipt preview" className="w-full max-h-32 object-contain bg-black/40" />
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleDepositSubmit}
-            disabled={!depositAmount || parseFloat(depositAmount) <= 0}
+            disabled={!depositAmount || parseFloat(depositAmount) <= 0 || !receiptFile}
             className="w-full py-3.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-[#B8FF3C]/20 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            I&apos;ve Sent the Deposit
+            Submit Payment &amp; Receipt
           </button>
 
           <div className="space-y-1.5 text-[10px] text-gray-600">
             <div className="flex items-center gap-1.5">
               <span className="text-amber-400">&#x26A0;</span>
-              <span>Deposits require admin approval before crediting</span>
+              <span>Deposits require admin verification before crediting</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-amber-400">&#x26A0;</span>
-              <span>Only send USDT or USDC to this address</span>
+              <span>Only send SOL, USDT, or USDC on Solana network</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-amber-400">&#x26A0;</span>
+              <span>Receipt upload is required for manual verification</span>
             </div>
           </div>
 

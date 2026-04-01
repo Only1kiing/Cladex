@@ -100,6 +100,8 @@ const CrossIcon = () => (
   </svg>
 );
 
+const SOLANA_ADDRESS = 'Pz1eoDHDQhH8Tb5buYDPSWSRP1ydxvDyqWhdJYxEznU';
+
 export default function UpgradeModal({
   isOpen,
   onClose,
@@ -108,10 +110,20 @@ export default function UpgradeModal({
 }: UpgradeModalProps) {
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
+  const [showPayment, setShowPayment] = useState<'pro' | 'premium' | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setVisible(true);
+      setShowPayment(null);
+      setSubmitted(false);
+      setReceiptFile(null);
+      setReceiptPreview(null);
+      setCopied(false);
       requestAnimationFrame(() => setAnimating(true));
       document.body.style.overflow = 'hidden';
     } else {
@@ -124,6 +136,26 @@ export default function UpgradeModal({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(SOLANA_ADDRESS).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleReceiptUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setReceiptFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setReceiptPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitPayment = () => {
+    if (!receiptFile) return;
+    setSubmitted(true);
+  };
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
@@ -267,22 +299,135 @@ export default function UpgradeModal({
             </div>
           </div>
 
-          {/* CTA buttons */}
-          <button className="w-full py-3 rounded-xl font-semibold text-white text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 active:scale-[0.98]">
-            Upgrade to Pro &mdash; $29/mo
-          </button>
+          {/* CTA buttons / Payment flow */}
+          {!showPayment && !submitted && (
+            <>
+              <button
+                onClick={() => setShowPayment('pro')}
+                className="w-full py-3 rounded-xl font-semibold text-white text-sm bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 active:scale-[0.98]"
+              >
+                Upgrade to Pro &mdash; $29/mo
+              </button>
 
-          <div className="flex flex-col items-center gap-2 mt-4">
-            <button className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
-              Or go Premium &mdash; $99/mo
-            </button>
-            <button
-              onClick={onClose}
-              className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
-            >
-              Maybe later
-            </button>
-          </div>
+              <div className="flex flex-col items-center gap-2 mt-4">
+                <button
+                  onClick={() => setShowPayment('premium')}
+                  className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Or go Premium &mdash; $99/mo
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                >
+                  Maybe later
+                </button>
+              </div>
+            </>
+          )}
+
+          {showPayment && !submitted && (
+            <div className="space-y-4">
+              <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold text-white">
+                    {showPayment === 'pro' ? 'Pro Plan — $29/mo' : 'Premium Plan — $99/mo'}
+                  </p>
+                  <button onClick={() => setShowPayment(null)} className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors">Change</button>
+                </div>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Send payment to (Solana)</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-[11px] text-gray-200 font-mono bg-white/[0.04] rounded-lg px-3 py-2 truncate">
+                    {SOLANA_ADDRESS}
+                  </code>
+                  <button
+                    onClick={handleCopyAddress}
+                    className="shrink-0 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs font-medium text-blue-400 hover:bg-blue-500/20 transition-colors"
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Receipt upload */}
+              <div>
+                <label className="text-xs text-gray-400 font-medium mb-1.5 block">Upload Payment Receipt</label>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleReceiptUpload}
+                  className="hidden"
+                  id="upgrade-receipt-upload"
+                />
+                <label
+                  htmlFor="upgrade-receipt-upload"
+                  className="flex items-center justify-center gap-2 w-full bg-white/[0.04] border border-dashed border-white/[0.12] rounded-xl px-4 py-4 text-sm text-gray-400 hover:border-blue-500/30 hover:bg-white/[0.06] transition-all cursor-pointer"
+                >
+                  {receiptFile ? (
+                    <div className="flex items-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                      <span className="text-emerald-400 text-xs truncate max-w-[200px]">{receiptFile.name}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      <span>Upload screenshot or PDF</span>
+                    </>
+                  )}
+                </label>
+                {receiptPreview && receiptFile?.type.startsWith('image/') && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-white/[0.08]">
+                    <img src={receiptPreview} alt="Receipt" className="w-full max-h-32 object-contain bg-black/40" />
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleSubmitPayment}
+                disabled={!receiptFile}
+                className={`w-full py-3 rounded-xl font-semibold text-white text-sm transition-all duration-200 shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed ${
+                  showPayment === 'pro'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20'
+                    : 'bg-gradient-to-r from-purple-600 to-purple-500 shadow-purple-500/20'
+                }`}
+              >
+                Submit Receipt for Verification
+              </button>
+
+              <p className="text-[10px] text-gray-600 text-center">
+                Send SOL, USDT, or USDC on Solana network. Receipt required for manual verification.
+              </p>
+            </div>
+          )}
+
+          {submitted && (
+            <div className="text-center space-y-4">
+              <div className="mx-auto w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1">Receipt Submitted</h3>
+                <p className="text-sm text-gray-400">Our team will verify your payment and activate your plan.</p>
+              </div>
+              <p className="text-xs text-gray-500">This usually takes a few minutes.</p>
+              <button
+                onClick={onClose}
+                className="w-full py-3 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm font-medium text-gray-200 hover:bg-white/[0.1] transition-all"
+              >
+                Done
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
