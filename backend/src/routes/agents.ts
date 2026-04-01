@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
+import { Prisma, Personality } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
 
@@ -44,8 +45,8 @@ router.post("/", async (req: Request, res: Response) => {
       data: {
         userId: req.user!.id,
         name: body.name,
-        personality: body.personality,
-        strategy: body.strategy,
+        personality: body.personality as Personality,
+        strategy: body.strategy as Prisma.InputJsonValue,
         riskLevel: body.riskLevel,
         assets: body.assets,
       },
@@ -72,8 +73,9 @@ router.post("/", async (req: Request, res: Response) => {
 
 // GET /api/agents/:id
 router.get("/:id", async (req: Request, res: Response) => {
+  const agentId = req.params.id as string;
   const agent = await prisma.agent.findFirst({
-    where: { id: req.params.id, userId: req.user!.id },
+    where: { id: agentId, userId: req.user!.id },
     include: {
       trades: { orderBy: { createdAt: "desc" }, take: 20 },
       _count: { select: { trades: true } },
@@ -91,10 +93,11 @@ router.get("/:id", async (req: Request, res: Response) => {
 // PATCH /api/agents/:id
 router.patch("/:id", async (req: Request, res: Response) => {
   try {
+    const agentId = req.params.id as string;
     const body = updateAgentSchema.parse(req.body);
 
     const existing = await prisma.agent.findFirst({
-      where: { id: req.params.id, userId: req.user!.id },
+      where: { id: agentId, userId: req.user!.id },
     });
 
     if (!existing) {
@@ -103,8 +106,11 @@ router.patch("/:id", async (req: Request, res: Response) => {
     }
 
     const agent = await prisma.agent.update({
-      where: { id: req.params.id },
-      data: body,
+      where: { id: agentId },
+      data: {
+        ...body,
+        strategy: body.strategy ? (body.strategy as Prisma.InputJsonValue) : undefined,
+      },
     });
 
     if (body.status && body.status !== existing.status) {
@@ -130,8 +136,9 @@ router.patch("/:id", async (req: Request, res: Response) => {
 
 // DELETE /api/agents/:id
 router.delete("/:id", async (req: Request, res: Response) => {
+  const agentId = req.params.id as string;
   const existing = await prisma.agent.findFirst({
-    where: { id: req.params.id, userId: req.user!.id },
+    where: { id: agentId, userId: req.user!.id },
   });
 
   if (!existing) {
@@ -139,7 +146,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
     return;
   }
 
-  await prisma.agent.delete({ where: { id: req.params.id } });
+  await prisma.agent.delete({ where: { id: agentId } });
 
   res.json({ message: "Agent deleted successfully" });
 });

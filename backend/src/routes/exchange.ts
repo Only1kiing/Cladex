@@ -72,8 +72,9 @@ router.get("/", async (req: Request, res: Response) => {
 
 // DELETE /api/exchange/:id
 router.delete("/:id", async (req: Request, res: Response) => {
+  const exchangeId = req.params.id as string;
   const existing = await prisma.exchange.findFirst({
-    where: { id: req.params.id, userId: req.user!.id },
+    where: { id: exchangeId, userId: req.user!.id },
   });
 
   if (!existing) {
@@ -81,7 +82,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
     return;
   }
 
-  await prisma.exchange.delete({ where: { id: req.params.id } });
+  await prisma.exchange.delete({ where: { id: exchangeId } });
 
   res.json({ message: "Exchange disconnected successfully" });
 });
