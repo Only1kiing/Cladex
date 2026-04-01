@@ -8,6 +8,8 @@ import tradeRoutes from "./routes/trades";
 import dashboardRoutes from "./routes/dashboard";
 import exchangeRoutes from "./routes/exchange";
 import aiRoutes from "./routes/ai";
+import paymentRoutes from "./routes/payments";
+import adminRoutes from "./routes/admin";
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.use("/api/trades", tradeRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/exchange", exchangeRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ---------------------------------------------------------------------------
 // 404 handler

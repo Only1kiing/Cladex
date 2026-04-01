@@ -198,6 +198,16 @@ function VerificationStep({
             : 'Resend Code'}
         </button>
       </div>
+
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={onVerified}
+          className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          Skip for now
+        </button>
+      </div>
     </motion.div>
   );
 }

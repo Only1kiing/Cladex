@@ -69,8 +69,9 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, isAuthenticated, isLoading } = useAuth();
+  const { user, logout, isAuthenticated, isLoading, isEmailVerified } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [verifyBannerDismissed, setVerifyBannerDismissed] = useState(false);
 
   // Auth guard — redirect to login if not authenticated
   useEffect(() => {
@@ -275,6 +276,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
         </div>
+
+        {user && !isEmailVerified && !verifyBannerDismissed && (
+          <div className="flex items-center justify-between px-4 py-2.5 bg-amber-500/15 border-b border-amber-500/20">
+            <p className="text-sm text-amber-300">
+              Please verify your email to secure your account.
+            </p>
+            <button
+              onClick={() => setVerifyBannerDismissed(true)}
+              className="ml-4 text-amber-400 hover:text-amber-200 transition-colors shrink-0"
+              aria-label="Dismiss"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>

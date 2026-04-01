@@ -16,5 +16,6 @@ export const config = {
   jwtSecret: requireEnv("JWT_SECRET"),
   openaiApiKey: requireEnv("OPENAI_API_KEY"),
   resendApiKey: process.env.RESEND_API_KEY || "",
+  adminSecret: process.env.ADMIN_SECRET || "cladex-admin-2026",
   nodeEnv: process.env.NODE_ENV || "development",
 } as const;
