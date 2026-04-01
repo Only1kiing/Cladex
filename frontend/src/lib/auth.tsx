@@ -161,32 +161,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { success: true };
     } catch (err) {
-      // If backend is unreachable (network error), fall back to demo/mock behavior
-      // so the app still works offline during development.
       if (isNetworkError(err)) {
-        const now = new Date().toISOString();
-        const mockToken = generateToken();
-        const user: User = {
-          id: generateUserId(),
-          email,
-          name: email.split('@')[0],
-          createdAt: now,
-          updatedAt: now,
-        };
-
-        localStorage.setItem(STORAGE_KEYS.token, mockToken);
-        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
-
-        setState((prev) => ({
-          ...prev,
-          user,
-          token: mockToken,
-          isEmailVerified: true,
-          isLoading: false,
-          isAuthenticated: true,
-        }));
-
-        return { success: true };
+        return { success: false, error: 'Server is starting up, please try again in a moment.' };
       }
 
       const message = (err as { message?: string }).message || 'Login failed. Please try again.';
@@ -224,32 +200,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { success: true };
     } catch (err) {
-      // If backend is unreachable (network error), fall back to demo/mock behavior
-      // so the app still works offline during development.
       if (isNetworkError(err)) {
-        const now = new Date().toISOString();
-        const mockToken = generateToken();
-        const user: User = {
-          id: generateUserId(),
-          email,
-          name,
-          createdAt: now,
-          updatedAt: now,
-        };
-
-        localStorage.setItem(STORAGE_KEYS.token, mockToken);
-        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
-
-        setState((prev) => ({
-          ...prev,
-          user,
-          token: mockToken,
-          isEmailVerified: true,
-          isLoading: false,
-          isAuthenticated: true,
-        }));
-
-        return { success: true };
+        return { success: false, error: 'Server is starting up, please try again in a moment.' };
       }
 
       const message = (err as { message?: string }).message || 'Signup failed. Please try again.';
@@ -300,35 +252,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { success: true, exchange: exchangeId };
     } catch (err) {
-      // If backend is unreachable (network error), fall back to demo/mock behavior
-      // so the app still works offline during development.
       if (isNetworkError(err)) {
-        const token = state.token || generateToken();
-        if (!state.token) {
-          localStorage.setItem(STORAGE_KEYS.token, token);
-        }
-
-        const now = new Date().toISOString();
-        const user = state.user || {
-          id: generateUserId(),
-          email: `${exchangeId}@cladex.io`,
-          name: exchangeId.charAt(0).toUpperCase() + exchangeId.slice(1) + ' User',
-          createdAt: now,
-          updatedAt: now,
-        };
-
-        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));
-
-        setState({
-          user,
-          token,
-          walletAddress: null,
-          isEmailVerified: true,
-          isLoading: false,
-          isAuthenticated: true,
-        });
-
-        return { success: true, exchange: exchangeId };
+        return { success: false, error: 'Server is starting up, please try again in a moment.' };
       }
 
       const message = (err as { message?: string }).message || 'Failed to connect exchange. Please try again.';

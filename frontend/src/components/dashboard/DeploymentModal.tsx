@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { addDeployedAgent } from '@/lib/agents-store';
+import { api } from '@/lib/api';
 import type { AgentPersonality } from '@/types';
 
 interface DeploymentModalProps {
@@ -174,10 +175,20 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
     reader.readAsDataURL(file);
   };
 
-  const handleDepositSubmit = () => {
+  const handleDepositSubmit = async () => {
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0) return;
     addPendingDeposit(amount);
+    try {
+      await api.post('/payments/receipt', {
+        plan: plan.name,
+        amount: depositAmount,
+        receiptData: receiptPreview,
+        fileName: receiptFile?.name,
+      });
+    } catch {
+      // Don't block the UI if the API call fails
+    }
     setDepositSubmitted(true);
   };
 

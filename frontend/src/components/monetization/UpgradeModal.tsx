@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useCallback, useState } from 'react';
+import { api } from '@/lib/api';
 
 type TriggerType = 'agent_limit' | 'locked_feature' | 'premium_agent' | 'gift_limit';
 type PlanType = 'free' | 'pro' | 'premium';
@@ -152,8 +153,18 @@ export default function UpgradeModal({
     reader.readAsDataURL(file);
   };
 
-  const handleSubmitPayment = () => {
+  const handleSubmitPayment = async () => {
     if (!receiptFile) return;
+    try {
+      await api.post('/payments/receipt', {
+        plan: showPayment,
+        amount: showPayment === 'pro' ? '29' : '99',
+        receiptData: receiptPreview,
+        fileName: receiptFile.name,
+      });
+    } catch {
+      // Don't block the UI if the API call fails
+    }
     setSubmitted(true);
   };
 

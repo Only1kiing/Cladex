@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
+import { api } from '@/lib/api';
 
 type Personality = 'nova' | 'sage' | 'apex' | 'echo';
 
@@ -446,7 +447,20 @@ export default function SubscriptionModal({
               </div>
 
               <button
-                onClick={() => { if (receiptFile) setSubmitted(true); }}
+                onClick={async () => {
+                  if (!receiptFile) return;
+                  try {
+                    await api.post('/payments/receipt', {
+                      plan: agent.name + ' subscription',
+                      amount: billing === 'monthly' ? agent.price : Math.round(agent.price * 12 * 0.8),
+                      receiptData: receiptPreview,
+                      fileName: receiptFile.name,
+                    });
+                  } catch {
+                    // Don't block the UI if the API call fails
+                  }
+                  setSubmitted(true);
+                }}
                 disabled={!receiptFile}
                 className={`w-full py-3 rounded-xl font-semibold text-white text-sm bg-gradient-to-r ${config.gradient} hover:brightness-110 transition-all duration-200 shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed`}
                 style={{ boxShadow: `0 8px 24px ${config.hex}33` }}
