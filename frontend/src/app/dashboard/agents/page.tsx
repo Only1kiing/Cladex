@@ -37,37 +37,6 @@ const STATUS_CONFIG: Record<AgentStatus, { label: string; dot: string; bg: strin
   stopped: { label: 'Stopped', dot: 'bg-gray-500', bg: 'bg-gray-500/10 text-gray-400' },
 };
 
-// ---- Mock AI Ask responses ----
-
-function getAskResponse(name: string, personality: AgentPersonality, question: string): string {
-  const lower = question.toLowerCase();
-  const tone = {
-    apex: {
-      perf: `I'm hunting hard. Every dip is an opportunity, every breakout is mine. My win rate speaks for itself ⚡`,
-      plan: `Watching 3 setups right now. SOL breakout, ETH pullback, and a LINK accumulation pattern. When they trigger, I strike 🎯`,
-      default: `I don't explain, I execute. Check my P&L if you want proof 😏`,
-    },
-    echo: {
-      perf: `My models are aligned with the current cycle. Confidence is high. The patterns are speaking clearly 🔮`,
-      plan: `I see convergence forming on BTC and ETH. The next 48 hours will be telling. I'm positioned accordingly ✨`,
-      default: `The future reveals itself to those who listen. Ask me something specific and I'll share what I see 🔮`,
-    },
-    nova: {
-      perf: `Capital is protected. Drawdown minimal. I'm doing exactly what I was built to do — keep you safe 🛡️`,
-      plan: `Monitoring risk across all positions. If volatility spikes, I hedge first, ask questions later. Your money is my priority 💚`,
-      default: `I protect first, profit second. Everything is within safe parameters. Sleep easy 🛡️`,
-    },
-    sage: {
-      perf: `Data shows we're performing above the 90-day average. Win rate is trending up. The numbers don't lie 📊`,
-      plan: `Running regression analysis on 12 pairs. 3 setups have positive expected value above my threshold. Will execute when confirmed 🧮`,
-      default: `I process data, not emotions. Ask me about performance, risk, or strategy — I'll give you the facts 📊`,
-    },
-  };
-  const t = tone[personality];
-  if (lower.includes('performance') || lower.includes('how are')) return t.perf;
-  if (lower.includes('next') || lower.includes('plan') || lower.includes('what')) return t.plan;
-  return t.default;
-}
 
 // ---- Agent Card ----
 
@@ -85,22 +54,6 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
   const [pnl, setPnl] = useState(agent.pnl);
   const [trades, setTrades] = useState(agent.totalTrades);
   const [winRate, setWinRate] = useState(agent.winRate);
-
-  // Simulate live P&L for active agents
-  useEffect(() => {
-    if (status !== 'active') return;
-    const interval = setInterval(() => {
-      setPnl(p => {
-        const change = (Math.random() - 0.45) * 15;
-        return Math.round((p + change) * 100) / 100;
-      });
-      if (Math.random() > 0.7) {
-        setTrades(t => t + 1);
-        setWinRate(w => Math.min(100, Math.max(30, w + (Math.random() > 0.4 ? 0.3 : -0.2))));
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [status]);
 
   const meta = PERSONALITY_META[agent.personality];
   const statusCfg = STATUS_CONFIG[status];
@@ -145,8 +98,8 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
       });
       setAskResponse(data.response);
     } catch {
-      // Fallback to mock if API fails
-      setAskResponse(getAskResponse(agent.name, agent.personality, text));
+      // Fallback message if API fails
+      setAskResponse('Agent is thinking... please try again.');
     }
     setIsAsking(false);
   };

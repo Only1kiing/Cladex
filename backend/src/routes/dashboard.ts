@@ -121,7 +121,8 @@ router.get("/stats", async (req: Request, res: Response) => {
 
   const realProfit = profitAgg._sum.profit ?? 0;
 
-  let totalBalance = 10000 + realProfit; // Demo default
+  // Fallback balance for users without a connected exchange (paper/demo mode)
+  let totalBalance = 10000 + realProfit;
   let exchangeConnected = false;
   let exchangeBalances: { asset: string; free: number; total: number }[] = [];
 

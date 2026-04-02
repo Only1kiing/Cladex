@@ -25,14 +25,6 @@ export interface TradeSignal {
   isOwnAgent: boolean;
 }
 
-// Community agents shown when user has no deployed agents
-const COMMUNITY_AGENTS = [
-  { name: 'Raze', personality: 'apex' as AgentPersonality, color: 'text-red-400' },
-  { name: 'Iris', personality: 'echo' as AgentPersonality, color: 'text-violet-400' },
-  { name: 'Knox', personality: 'nova' as AgentPersonality, color: 'text-emerald-400' },
-  { name: 'Byte', personality: 'sage' as AgentPersonality, color: 'text-cyan-400' },
-];
-
 const PERSONALITY_COLORS: Record<AgentPersonality, string> = {
   apex: 'text-red-400',
   echo: 'text-violet-400',
@@ -134,7 +126,7 @@ export function useSignalGenerator() {
       };
     }
     return {
-      agents: COMMUNITY_AGENTS.map(a => ({ ...a, id: undefined, assets: undefined })),
+      agents: [],
       isOwn: false,
     };
   }, []);
