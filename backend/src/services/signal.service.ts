@@ -17,10 +17,44 @@ interface MarketData {
 }
 
 async function fetchMarketData(): Promise<MarketData[]> {
+  // Try CoinGecko first (free, no auth)
+  try {
+    const ids = "bitcoin,ethereum,solana,chainlink,avalanche-2";
+    const resp = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`);
+    const json = await resp.json() as Record<string, any>;
+
+    const map: Record<string, { symbol: string; id: string }> = {
+      bitcoin: { symbol: "BTC/USDT", id: "bitcoin" },
+      ethereum: { symbol: "ETH/USDT", id: "ethereum" },
+      solana: { symbol: "SOL/USDT", id: "solana" },
+      chainlink: { symbol: "LINK/USDT", id: "chainlink" },
+      "avalanche-2": { symbol: "AVAX/USDT", id: "avalanche-2" },
+    };
+
+    const data: MarketData[] = [];
+    for (const [id, info] of Object.entries(map)) {
+      const coin = json[id];
+      if (coin) {
+        data.push({
+          symbol: info.symbol,
+          price: coin.usd || 0,
+          change24h: coin.usd_24h_change || 0,
+          high24h: coin.usd * 1.02, // approximate
+          low24h: coin.usd * 0.98,
+          volume: coin.usd_24h_vol || 0,
+        });
+      }
+    }
+
+    return data;
+  } catch (err) {
+    console.error("[Signals] CoinGecko failed, trying ccxt:", err);
+  }
+
+  // Fallback to ccxt
   try {
     const exchange = new (ccxt as any).bybit({ enableRateLimit: true, timeout: 15000 });
     await exchange.loadMarkets();
-
     const tickers = await exchange.fetchTickers(WATCHED_PAIRS);
     const data: MarketData[] = [];
 
@@ -37,10 +71,9 @@ async function fetchMarketData(): Promise<MarketData[]> {
         });
       }
     }
-
     return data;
   } catch (err) {
-    console.error("[Signals] Failed to fetch market data:", err);
+    console.error("[Signals] ccxt also failed:", err);
     return [];
   }
 }
