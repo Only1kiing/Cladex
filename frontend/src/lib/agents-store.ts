@@ -27,7 +27,20 @@ const STORAGE_KEY = 'cladex_deployed_agents';
 export function getDeployedAgents(): DeployedAgent[] {
   if (typeof window === 'undefined') return [];
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    if (!Array.isArray(raw)) return [];
+    return raw.map((a: Record<string, unknown>) => ({
+      ...a,
+      assets: Array.isArray(a.assets) ? a.assets : [],
+      name: a.name || 'Agent',
+      personality: a.personality || 'sage',
+      status: a.status || 'pending',
+      plan: a.plan || '',
+      pnl: a.pnl ?? 0,
+      pnlPercent: a.pnlPercent ?? 0,
+      totalTrades: a.totalTrades ?? 0,
+      winRate: a.winRate ?? 0,
+    })) as DeployedAgent[];
   } catch { return []; }
 }
 
