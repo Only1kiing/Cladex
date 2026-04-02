@@ -174,6 +174,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Link>
       </div>
 
+      {/* Demo Mode */}
+      <div className="px-3 mb-1">
+        <button
+          onClick={() => {
+            localStorage.removeItem('cladex_connected_wallet');
+            localStorage.setItem('cladex_demo_mode', 'true');
+            window.location.href = '/dashboard';
+          }}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-white/[0.04] transition-all duration-200"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+          Demo Mode
+        </button>
+      </div>
+
       {/* Settings */}
       <div className="px-3 mb-3">
         <Link
