@@ -64,4 +64,18 @@ router.patch("/receipts/:id", async (req: Request, res: Response) => {
   res.json({ receipt });
 });
 
+// DELETE /api/admin/users/:id — delete a user
+router.delete("/users/:id", async (req: Request, res: Response) => {
+  const userId = req.params.id as string;
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  await prisma.user.delete({ where: { id: userId } });
+  res.json({ message: `User ${user.email} deleted` });
+});
+
 export default router;
