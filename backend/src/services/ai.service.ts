@@ -154,11 +154,13 @@ About Cladex:
 User status: ${exchangeConnected ? "Exchange is connected and live trading is active." : "No exchange connected yet — user is in demo/exploration mode."}
 
 Guidelines:
-- Be concise and actionable
-- If user asks about trading, give real market context
-- If user hasn't connected an exchange, gently encourage them to connect
-- Use a professional but friendly tone
-- Keep responses under 150 words`;
+- Keep responses SHORT — 2-3 sentences max, no bullet lists unless asked
+- Talk like a sharp trader friend, not a corporate chatbot
+- Be direct — answer first, explain only if needed
+- Use simple language, no jargon dumps
+- If user hasn't connected an exchange, mention it briefly once
+- Never repeat what the user said back to them
+- No greetings like "Great question!" — just answer`;
 
   const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
     { role: "system", content: systemPrompt },
