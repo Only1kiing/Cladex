@@ -293,11 +293,17 @@ export default function SettingsPage() {
                     const solAmt = solPrice > 0 ? usd / solPrice : 0;
                     const lamports = Math.round(solAmt * LAMPORTS_PER_SOL);
 
-                    const transaction = new Transaction().add(
+                    // Fetch blockhash via Phantom's connection
+                    const connection = new Connection(phantom.connection?.rpcEndpoint || 'https://api.mainnet-beta.solana.com');
+                    const { blockhash } = await connection.getLatestBlockhash();
+
+                    const transaction = new Transaction({
+                      recentBlockhash: blockhash,
+                      feePayer: fromPubkey,
+                    }).add(
                       SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
                     );
 
-                    // Let Phantom handle blockhash + sending via its own RPC
                     const { signature } = await phantom.signAndSendTransaction(transaction);
                     setTopUpStatus('confirming');
 

@@ -208,7 +208,14 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
 
       setTxStatus('Creating transaction...');
 
-      const transaction = new Transaction().add(
+      // Fetch blockhash via Phantom's connection
+      const connection = new Connection(phantom.connection?.rpcEndpoint || 'https://api.mainnet-beta.solana.com');
+      const { blockhash } = await connection.getLatestBlockhash();
+
+      const transaction = new Transaction({
+        recentBlockhash: blockhash,
+        feePayer: fromPubkey,
+      }).add(
         SystemProgram.transfer({
           fromPubkey,
           toPubkey,
@@ -218,7 +225,6 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
 
       setTxStatus('Approve in Phantom...');
 
-      // Let Phantom handle blockhash + sending via its own RPC
       const { signature } = await phantom.signAndSendTransaction(transaction);
       setTxStatus('Confirming on-chain...');
 
