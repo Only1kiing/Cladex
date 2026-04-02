@@ -544,58 +544,59 @@ export default function DashboardPage() {
     return () => clearTimeout(timeout);
   }, [deployedAgents]);
 
-  // Fetch dashboard stats and recent trades from backend
-  useEffect(() => {
-    // Fetch dashboard stats
-    (async () => {
-      try {
-        const data = await api.get<{ stats: DashboardStats; exchangeConnected?: boolean; exchangeBalances?: { asset: string; free: number; total: number }[] }>('/dashboard/stats');
-        if (data?.stats) {
-          setDashStats(data.stats);
-        }
-        if (data?.exchangeConnected) {
-          setExchangeConnected(true);
-          localStorage.setItem('cladex_exchange_connected', 'true');
-          if (data.exchangeBalances && data.exchangeBalances.length > 0) {
-            setExchangeBalance({ total: data.stats.totalBalance, balances: data.exchangeBalances });
-          }
-        }
-      } catch {
-        // Backend unreachable or error — keep defaults (null = show placeholders)
+  // Fetch dashboard data from backend
+  const fetchDashboardData = useCallback(async () => {
+    // Fetch dashboard stats + exchange balance
+    try {
+      const data = await api.get<{ stats: DashboardStats; exchangeConnected?: boolean; exchangeBalances?: { asset: string; free: number; total: number; usdValue?: number }[] }>('/dashboard/stats');
+      if (data?.stats) {
+        setDashStats(data.stats);
       }
-    })();
-
-    // Fetch recent trades for trade log
-    (async () => {
-      try {
-        const data = await api.get<{ trades: Array<{
-          id: string;
-          pair?: string;
-          side?: string;
-          price?: number;
-          profit?: number;
-          status?: string;
-          createdAt?: string;
-          agent?: { name?: string; personality?: string };
-        }> }>('/trades/recent');
-        if (data?.trades && data.trades.length > 0) {
-          const items: ActivityItem[] = data.trades.map((t) => ({
-            id: t.id,
-            type: 'trade' as const,
-            tradeDirection: (t.side === 'sell' ? 'sell' : 'buy') as 'buy' | 'sell',
-            agentPersonality: (t.agent?.personality?.toLowerCase() || undefined) as ActivityItem['agentPersonality'],
-            message: `${t.agent?.name || 'Agent'}: ${(t.side || 'buy').toUpperCase()} ${t.pair || 'Unknown'} at $${(t.price ?? 0).toLocaleString()}${t.profit != null ? ` (P/L: ${t.profit >= 0 ? '+' : ''}$${t.profit.toFixed(2)})` : ''}`,
-            timestamp: t.createdAt || new Date().toISOString(),
-          }));
-          setTradeLogItems(items);
+      if (data?.exchangeConnected) {
+        setExchangeConnected(true);
+        localStorage.setItem('cladex_exchange_connected', 'true');
+        if (data.exchangeBalances) {
+          setExchangeBalance({ total: data.stats.totalBalance, balances: data.exchangeBalances });
         }
-      } catch {
-        // Backend unreachable — trade log stays empty
       }
-    })();
+    } catch {
+      // Backend unreachable
+    }
 
-    // Exchange balance is now included in dashboard/stats response
+    // Fetch recent trades
+    try {
+      const data = await api.get<{ trades: Array<{
+        id: string;
+        pair?: string;
+        side?: string;
+        price?: number;
+        profit?: number;
+        status?: string;
+        createdAt?: string;
+        agent?: { name?: string; personality?: string };
+      }> }>('/trades/recent');
+      if (data?.trades && data.trades.length > 0) {
+        const items: ActivityItem[] = data.trades.map((t) => ({
+          id: t.id,
+          type: 'trade' as const,
+          tradeDirection: (t.side === 'sell' ? 'sell' : 'buy') as 'buy' | 'sell',
+          agentPersonality: (t.agent?.personality?.toLowerCase() || undefined) as ActivityItem['agentPersonality'],
+          message: `${t.agent?.name || 'Agent'}: ${(t.side || 'buy').toUpperCase()} ${t.pair || 'Unknown'} at $${(t.price ?? 0).toLocaleString()}${t.profit != null ? ` (P/L: ${t.profit >= 0 ? '+' : ''}$${t.profit.toFixed(2)})` : ''}`,
+          timestamp: t.createdAt || new Date().toISOString(),
+        }));
+        setTradeLogItems(items);
+      }
+    } catch {
+      // Backend unreachable
+    }
   }, []);
+
+  // Fetch on mount + auto-refresh every 30 seconds
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchDashboardData]);
 
   const feedCounterRef = useRef(100);
   const [dashFeed, setDashFeed] = useState<DashFeedMsg[]>(() =>
@@ -825,7 +826,7 @@ export default function DashboardPage() {
         <StatCard
           icon={<BalanceIcon />}
           label="Total Balance"
-          value={exchangeBalance.total > 0 ? `$${exchangeBalance.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : dashStats ? `$${dashStats.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '\u2014'}
+          value={exchangeConnected ? `$${exchangeBalance.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}` : dashStats ? `$${dashStats.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '\u2014'}
         />
         <StatCard
           icon={<PnlIcon />}
@@ -846,28 +847,41 @@ export default function DashboardPage() {
       </div>
 
       {/* Exchange Portfolio or Gas Balance */}
-      {exchangeConnected && exchangeBalance.balances.length > 0 ? (
+      {exchangeConnected ? (
         <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Exchange Portfolio</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-[11px] text-emerald-400 font-medium">Live</span>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-gray-600">Auto-refreshes every 30s</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[11px] text-emerald-400 font-medium">Live</span>
+              </div>
             </div>
           </div>
-          <div className="space-y-2">
-            {exchangeBalance.balances.slice(0, 8).map((b) => (
-              <div key={b.asset} className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-white">{b.asset}</span>
-                  <span className="text-xs text-gray-500">{b.total.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
+          {exchangeBalance.balances.length > 0 ? (
+            <div className="space-y-2">
+              {exchangeBalance.balances.slice(0, 8).map((b) => (
+                <div key={b.asset} className="flex items-center justify-between py-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-white">{b.asset}</span>
+                    <span className="text-xs text-gray-500">{b.total.toLocaleString(undefined, { maximumFractionDigits: 8 })}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-white tabular-nums">
+                    ${(b.usdValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                  </span>
                 </div>
-                <span className="text-sm font-semibold text-white tabular-nums">
-                  {b.usdValue ? `$${b.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+              ))}
+              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-400">Total</span>
+                <span className="text-sm font-bold text-white tabular-nums">
+                  ${exchangeBalance.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                 </span>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 py-2">Loading balances...</p>
+          )}
         </div>
       ) : (
         <div className="flex items-center justify-between px-4 py-2.5 rounded-xl border border-[#1e1e2e] bg-[#111118]">
