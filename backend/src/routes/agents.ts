@@ -151,4 +151,38 @@ router.delete("/:id", async (req: Request, res: Response) => {
   res.json({ message: "Agent deleted successfully" });
 });
 
+// GET /api/agents/comms — live agent comm feed (public-ish, requires auth)
+router.get("/comms", async (_req: Request, res: Response) => {
+  // Get recent activity from all active agents
+  const recentLogs = await prisma.activityLog.findMany({
+    where: {
+      agent: { status: "RUNNING" },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    include: {
+      agent: { select: { id: true, name: true, personality: true, assets: true } },
+    },
+  });
+
+  // Also get active agents for live status
+  const activeAgents = await prisma.agent.findMany({
+    where: { status: "RUNNING" },
+    select: { id: true, name: true, personality: true, assets: true, profit: true, totalTrades: true },
+    take: 10,
+    orderBy: { updatedAt: "desc" },
+  });
+
+  const comms = recentLogs.map(log => ({
+    id: log.id,
+    agentName: log.agent?.name || "Agent",
+    personality: (log.agent?.personality?.toLowerCase() || "sage"),
+    message: log.message,
+    type: log.type,
+    timestamp: log.createdAt.toISOString(),
+  }));
+
+  res.json({ comms, activeAgents });
+});
+
 export default router;
