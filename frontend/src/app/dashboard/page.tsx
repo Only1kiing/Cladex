@@ -300,7 +300,7 @@ function AIMarketScanner() {
   return (
     <section>
       <div className="flex items-center gap-3 mb-3">
-        <h2 className="text-sm font-semibold text-gray-100">Trade Signals</h2>
+        <h2 className="text-sm font-semibold text-gray-100">Market Intelligence</h2>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#B8FF3C] animate-pulse" />
           <span className="text-[10px] text-[#B8FF3C] font-medium">AI Scanning</span>
@@ -377,7 +377,7 @@ function AIMarketScanner() {
         </div>
 
         <p className="text-[10px] text-gray-600 text-center mt-3">
-          Signals generated every 15 min from real market data + AI analysis
+          Market intelligence updated every 15 min from real data + AI analysis
         </p>
       </div>
     </section>
@@ -934,11 +934,11 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Live Trade Signals or AI Scanner */}
+      {/* Live Market Intelligence or AI Scanner */}
       {liveSignals.length > 0 ? (
         <section>
           <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-sm font-semibold text-gray-100">Trade Signals</h2>
+            <h2 className="text-sm font-semibold text-gray-100">Market Intelligence</h2>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[#B8FF3C] animate-pulse" />
               <span className="text-[10px] text-[#B8FF3C] font-medium">AI-Powered</span>
@@ -1021,7 +1021,7 @@ export default function DashboardPage() {
                       onClick={() => setShowConnectModal(true)}
                       className="w-full py-2.5 rounded-lg border border-[#B8FF3C]/20 bg-[#B8FF3C]/10 text-[#B8FF3C] font-semibold text-sm hover:bg-[#B8FF3C]/20 transition-all"
                     >
-                      Connect Exchange to Execute
+                      Connect Exchange to Trade
                     </button>
                   )}
                 </div>
@@ -1033,11 +1033,11 @@ export default function DashboardPage() {
         <AIMarketScanner />
       )}
 
-      {/* Agent Comms — Live Feed from real agents */}
+      {/* Market Intelligence — Live Feed from real agents */}
       {agentComms.length > 0 && (
         <section>
           <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-sm font-semibold text-gray-100">Agent Comms</h2>
+            <h2 className="text-sm font-semibold text-gray-100">Market Intelligence</h2>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-[10px] text-emerald-400 font-medium">Live</span>

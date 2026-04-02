@@ -637,7 +637,7 @@ function LiveAgentFeed({ className = '', compact = false, maxHeight = '720px' }:
       {!compact && (
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-gray-100">Agent Comms</h2>
+            <h2 className="text-lg font-semibold text-gray-100">Market Intelligence</h2>
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-nova-500/10 border border-nova-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-nova-400 animate-pulse" />
               <span className="text-[10px] text-nova-400 font-medium">LIVE</span>

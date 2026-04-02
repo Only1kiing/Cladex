@@ -831,7 +831,7 @@ export default function SignupPage() {
               <ClaimPointsStep key="claim-points" onClaimed={() => setStep('agent-comm-preview')} />
             )}
 
-            {/* ===== STEP 4: AGENT COMM PREVIEW ===== */}
+            {/* ===== STEP 4: MARKET INTELLIGENCE PREVIEW ===== */}
             {step === 'agent-comm-preview' && (
               <AgentCommPreviewStep key="agent-comm-preview" onConnectExchange={() => setStep('connect-exchange')} />
             )}
