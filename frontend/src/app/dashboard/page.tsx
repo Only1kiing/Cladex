@@ -484,6 +484,7 @@ function SignalSection({
 export default function DashboardPage() {
   const [exchangeConnected, setExchangeConnected] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
+    if (localStorage.getItem('cladex_demo_mode') === 'true') return false;
     return localStorage.getItem('cladex_exchange_connected') === 'true';
   });
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -552,7 +553,7 @@ export default function DashboardPage() {
       if (data?.stats) {
         setDashStats(data.stats);
       }
-      if (data?.exchangeConnected) {
+      if (data?.exchangeConnected && localStorage.getItem('cladex_demo_mode') !== 'true') {
         setExchangeConnected(true);
         localStorage.setItem('cladex_exchange_connected', 'true');
         if (data.exchangeBalances) {
@@ -724,6 +725,7 @@ export default function DashboardPage() {
   const handleModalConnect = async () => {
     if (!selectedExchange || !apiKey || !apiSecret) return;
     setConnectingState('connecting');
+    localStorage.removeItem('cladex_demo_mode');
     try {
       const connectData = await api.post<{ exchange: Record<string, unknown>; balance?: { total: number; balances: { asset: string; free: number; total: number }[] } }>('/exchange/connect', { name: selectedExchange, apiKey, apiSecret });
       setConnectingState('success');
