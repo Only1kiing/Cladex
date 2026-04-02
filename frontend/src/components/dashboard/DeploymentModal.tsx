@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { addDeployedAgent } from '@/lib/agents-store';
 import { api } from '@/lib/api';
+import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import type { AgentPersonality } from '@/types';
 
 interface DeploymentModalProps {
@@ -72,6 +73,9 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
   const [depositSubmitted, setDepositSubmitted] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [solPrice, setSolPrice] = useState<number>(0);
+  const [txStatus, setTxStatus] = useState<string>('');
+  const [txError, setTxError] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
@@ -85,6 +89,13 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
       setDepositSubmitted(false);
       setReceiptFile(null);
       setReceiptPreview(null);
+      setTxStatus('');
+      setTxError('');
+      // Fetch SOL price
+      fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd')
+        .then(r => r.json())
+        .then(d => { if (d?.solana?.usd) setSolPrice(d.solana.usd); })
+        .catch(() => setSolPrice(140)); // fallback
     }
   }, [isOpen]);
 
@@ -173,11 +184,80 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
     }
   };
 
-  const handleWalletDeploy = () => {
+  const solAmount = solPrice > 0 ? Math.ceil((plan.price / solPrice) * 10000) / 10000 : 0;
+
+  const handleWalletDeploy = async () => {
+    setTxError('');
+    setTxStatus('Requesting approval...');
     setStage('deploying');
-    addPendingDeployment(plan.name, 'wallet', connectedWallet?.id);
-    createAgentsForPlan('wallet');
-    setTimeout(() => setStage('pending'), 2500);
+
+    try {
+      const phantom = (window as any)?.solana;
+      if (!phantom?.isPhantom) {
+        setTxError('Phantom wallet not found');
+        setStage('wallet-confirm');
+        return;
+      }
+
+      // Ensure connected
+      await phantom.connect();
+
+      const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+      const fromPubkey = phantom.publicKey;
+      const toPubkey = new PublicKey(SOLANA_ADDRESS);
+      const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
+
+      setTxStatus('Creating transaction...');
+
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey,
+          toPubkey,
+          lamports,
+        })
+      );
+
+      transaction.feePayer = fromPubkey;
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+
+      setTxStatus('Approve in Phantom...');
+
+      const signed = await phantom.signTransaction(transaction);
+      setTxStatus('Sending transaction...');
+
+      const signature = await connection.sendRawTransaction(signed.serialize());
+      setTxStatus('Confirming on-chain...');
+
+      await connection.confirmTransaction(signature, 'confirmed');
+      setTxStatus('Payment confirmed!');
+
+      // Save receipt to backend
+      try {
+        await api.post('/payments/receipt', {
+          plan: plan.name,
+          amount: plan.price.toString(),
+          receiptData: `solana:${signature}`,
+          fileName: `tx_${signature.slice(0, 8)}.sol`,
+        });
+      } catch { /* non-blocking */ }
+
+      addPendingDeployment(plan.name, 'wallet', connectedWallet?.id);
+      createAgentsForPlan('wallet');
+
+      setTimeout(() => setStage('pending'), 1500);
+    } catch (err: any) {
+      const msg = err?.message || 'Transaction failed';
+      if (msg.includes('User rejected')) {
+        setTxError('Transaction cancelled');
+      } else if (msg.includes('insufficient')) {
+        setTxError('Insufficient SOL balance');
+      } else {
+        setTxError(msg);
+      }
+      setTxStatus('');
+      setStage('wallet-confirm');
+    }
   };
 
   const handleGasBalanceDeploy = () => {
@@ -375,8 +455,13 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
             </div>
             <div className="h-px bg-white/[0.05]" />
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Amount</span>
+              <span className="text-gray-400">Price</span>
               <span className="font-semibold text-white">${plan.price}</span>
+            </div>
+            <div className="h-px bg-white/[0.05]" />
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-400">Pay in SOL</span>
+              <span className="font-semibold text-[#B8FF3C]">{solAmount > 0 ? `${solAmount} SOL` : 'Loading...'}</span>
             </div>
             <div className="h-px bg-white/[0.05]" />
             <div className="flex items-center justify-between text-sm">
@@ -385,19 +470,26 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
             </div>
             <div className="h-px bg-white/[0.05]" />
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Minted to</span>
+              <span className="text-gray-400">From</span>
               <span className="font-semibold text-emerald-400">{connectedWallet.address}</span>
             </div>
           </div>
 
+          {txError && (
+            <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
+              <span className="text-xs text-red-400">{txError}</span>
+            </div>
+          )}
+
           <div className="space-y-2">
             <button
               onClick={handleWalletDeploy}
-              className="w-full py-3.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-[#B8FF3C]/20 active:scale-[0.98]"
+              disabled={solAmount <= 0}
+              className="w-full py-3.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-[#B8FF3C]/20 active:scale-[0.98] disabled:opacity-40"
             >
-              Deploy &amp; Mint Agent NFT
+              Pay {solAmount > 0 ? `${solAmount} SOL` : '...'} &amp; Deploy
             </button>
-            <p className="text-[10px] text-gray-600 text-center">Your wallet will prompt you to sign the transaction</p>
+            <p className="text-[10px] text-gray-600 text-center">Phantom will ask you to approve the transaction</p>
           </div>
         </div>
       )}
@@ -585,8 +677,8 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
             <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
           </svg>
-          <p className="text-sm font-semibold text-gray-200">Deploying your agent on-chain...</p>
-          <p className="text-xs text-gray-500">Minting NFT and registering on the blockchain</p>
+          <p className="text-sm font-semibold text-gray-200">{txStatus || 'Processing...'}</p>
+          <p className="text-xs text-gray-500">Do not close this window</p>
         </div>
       )}
 
