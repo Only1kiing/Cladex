@@ -79,6 +79,13 @@ router.delete("/users/:id", async (req: Request, res: Response) => {
   res.json({ message: `User ${user.email} deleted` });
 });
 
+// DELETE /api/admin/agents/:userId — delete all agents for a user
+router.delete("/agents/:userId", async (req: Request, res: Response) => {
+  const userId = req.params.userId as string;
+  const deleted = await prisma.agent.deleteMany({ where: { userId } });
+  res.json({ message: `Deleted ${deleted.count} agents for user ${userId}` });
+});
+
 // GET /api/admin/exchange/:userId — check user's exchange connection and balance
 router.get("/exchange/:userId", async (req: Request, res: Response) => {
   const userId = req.params.userId as string;
