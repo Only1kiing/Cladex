@@ -635,7 +635,7 @@ export default function DashboardPage() {
   };
 
   // ==================================================================
-  // FULL DASHBOARD (always shown, demo mode when not connected)
+  // FULL DASHBOARD
   // ==================================================================
 
   return (
@@ -669,21 +669,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Demo Mode Banner */}
-      {!exchangeConnected && (
-        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-          <div className="flex items-center gap-2">
-            <Badge status="warning" dot size="sm">Demo Mode</Badge>
-            <span className="text-xs text-gray-400">You&apos;re exploring in demo mode. Connect your exchange to go live.</span>
-          </div>
-          <button
-            onClick={() => setShowConnectModal(true)}
-            className="text-xs font-medium text-[#B8FF3C] hover:brightness-110 transition-colors"
-          >
-            Connect Exchange
-          </button>
-        </div>
-      )}
 
       {/* Missed Signals Banner */}
 
@@ -1240,10 +1225,9 @@ export default function DashboardPage() {
                     </button>
                   )}
 
-                  {/* Continue in Demo Mode */}
                   {connectingState === 'idle' && (
                     <button onClick={handleCloseModal} className="w-full text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors">
-                      Continue in Demo Mode
+                      Skip for now
                     </button>
                   )}
                 </div>
