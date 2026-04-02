@@ -20,6 +20,10 @@ export interface DeployedAgent {
   subscribers?: number;
   description?: string;
   price?: number;
+  subscriptionPrice?: number;
+  subscriptionStatus?: string;
+  nextBillingDate?: string;
+  sourceAgentId?: string;
 }
 
 const STORAGE_KEY = 'cladex_deployed_agents';

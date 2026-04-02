@@ -19,6 +19,7 @@ router.get("/marketplace", async (_req: Request, res: Response) => {
       assets: true,
       profit: true,
       totalTrades: true,
+      subscriptionPrice: true,
       createdAt: true,
       user: { select: { name: true } },
     },
@@ -37,6 +38,8 @@ const createAgentSchema = z.object({
   strategy: z.record(z.unknown()),
   riskLevel: z.enum(["LOW", "MEDIUM", "HIGH"]),
   assets: z.array(z.string().min(1)).min(1, "At least one asset is required"),
+  sourceAgentId: z.string().optional(),
+  subscriptionPrice: z.number().min(0).optional(),
 });
 
 const updateAgentSchema = z.object({
@@ -64,28 +67,75 @@ router.get("/", async (req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response) => {
   try {
     const body = createAgentSchema.parse(req.body);
+    const userId = req.user!.id;
+    const hasSubscription = body.subscriptionPrice && body.subscriptionPrice > 0;
 
-    const agent = await prisma.agent.create({
-      data: {
-        userId: req.user!.id,
-        name: body.name,
-        personality: body.personality as Personality,
-        strategy: body.strategy as Prisma.InputJsonValue,
-        riskLevel: body.riskLevel,
-        assets: body.assets,
-      },
-    });
+    // If subscription agent, check gas balance and charge first month
+    if (hasSubscription) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { gasBalance: true },
+      });
 
-    await prisma.activityLog.create({
-      data: {
-        userId: req.user!.id,
-        agentId: agent.id,
-        type: "INSIGHT",
-        message: `Agent "${agent.name}" created with ${agent.personality} personality`,
-      },
-    });
+      if ((user?.gasBalance || 0) < body.subscriptionPrice!) {
+        res.status(400).json({
+          error: `Insufficient gas balance. You need $${body.subscriptionPrice!.toFixed(2)} but have $${(user?.gasBalance || 0).toFixed(2)}. Top up in Settings.`,
+        });
+        return;
+      }
+    }
 
-    res.status(201).json({ agent });
+    const agentData = {
+      userId,
+      name: body.name,
+      personality: body.personality as Personality,
+      strategy: body.strategy as Prisma.InputJsonValue,
+      riskLevel: body.riskLevel,
+      assets: body.assets,
+      ...(hasSubscription
+        ? {
+            sourceAgentId: body.sourceAgentId || null,
+            subscriptionPrice: body.subscriptionPrice!,
+            subscriptionStatus: "active",
+            nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          }
+        : {}),
+    };
+
+    if (hasSubscription) {
+      // Atomic: create agent + deduct gas
+      const [agent] = await prisma.$transaction([
+        prisma.agent.create({ data: agentData }),
+        prisma.user.update({
+          where: { id: userId },
+          data: { gasBalance: { decrement: body.subscriptionPrice! } },
+        }),
+      ]);
+
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          agentId: agent.id,
+          type: "INSIGHT",
+          message: `Subscribed to "${agent.name}" — $${body.subscriptionPrice!.toFixed(2)}/mo deducted from gas balance`,
+        },
+      });
+
+      res.status(201).json({ agent });
+    } else {
+      const agent = await prisma.agent.create({ data: agentData });
+
+      await prisma.activityLog.create({
+        data: {
+          userId,
+          agentId: agent.id,
+          type: "INSIGHT",
+          message: `Agent "${agent.name}" created with ${agent.personality} personality`,
+        },
+      });
+
+      res.status(201).json({ agent });
+    }
   } catch (err) {
     if (err instanceof z.ZodError) {
       res.status(400).json({ error: "Validation failed", details: err.errors });
@@ -173,6 +223,63 @@ router.delete("/:id", async (req: Request, res: Response) => {
   await prisma.agent.delete({ where: { id: agentId } });
 
   res.json({ message: "Agent deleted successfully" });
+});
+
+// POST /api/agents/:id/resubscribe — reactivate a paused subscription
+router.post("/:id/resubscribe", async (req: Request, res: Response) => {
+  const agentId = req.params.id as string;
+  const userId = req.user!.id;
+
+  const agent = await prisma.agent.findFirst({
+    where: { id: agentId, userId },
+  });
+
+  if (!agent) {
+    res.status(404).json({ error: "Agent not found" });
+    return;
+  }
+
+  if (!agent.subscriptionPrice || agent.subscriptionStatus !== "paused_no_gas") {
+    res.status(400).json({ error: "Agent does not have a paused subscription" });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { gasBalance: true },
+  });
+
+  if ((user?.gasBalance || 0) < agent.subscriptionPrice) {
+    res.status(400).json({
+      error: `Insufficient gas balance. You need $${agent.subscriptionPrice.toFixed(2)} but have $${(user?.gasBalance || 0).toFixed(2)}.`,
+    });
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { gasBalance: { decrement: agent.subscriptionPrice } },
+    }),
+    prisma.agent.update({
+      where: { id: agentId },
+      data: {
+        subscriptionStatus: "active",
+        nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+    }),
+    prisma.activityLog.create({
+      data: {
+        userId,
+        agentId,
+        type: "INSIGHT",
+        message: `Subscription reactivated for "${agent.name}" — $${agent.subscriptionPrice.toFixed(2)} deducted`,
+      },
+    }),
+  ]);
+
+  const updated = await prisma.agent.findUnique({ where: { id: agentId } });
+  res.json({ agent: updated });
 });
 
 // GET /api/agents/comms — live agent comm feed (public-ish, requires auth)

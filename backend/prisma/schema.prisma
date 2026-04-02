@@ -62,6 +62,12 @@ model Agent {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
+  // Subscription fields (for marketplace agents)
+  sourceAgentId      String?
+  subscriptionPrice  Float?
+  subscriptionStatus String?   // "active" | "paused_no_gas" | "cancelled"
+  nextBillingDate    DateTime?
+
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   trades       Trade[]
   activityLogs ActivityLog[]

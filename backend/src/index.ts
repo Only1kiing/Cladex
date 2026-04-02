@@ -181,6 +181,20 @@ app.listen(config.port, () => {
     // First signal after 1 minute, then every 15 minutes
     setTimeout(runSignals, 60000);
     setInterval(runSignals, 15 * 60 * 1000);
+
+    // Process subscription billing daily
+    const runBilling = async () => {
+      try {
+        const { processSubscriptionBilling } = await import("./services/billing.service");
+        await processSubscriptionBilling();
+      } catch (err) {
+        console.error("[Billing] Scheduler error:", err);
+      }
+    };
+
+    // First billing check after 2 minutes, then every 24 hours
+    setTimeout(runBilling, 120000);
+    setInterval(runBilling, 24 * 60 * 60 * 1000);
   }
 });
 

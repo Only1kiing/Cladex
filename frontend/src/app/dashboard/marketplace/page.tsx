@@ -202,6 +202,21 @@ export default function MarketplacePage() {
   const [activateError, setActivateError] = useState('');
   const [agents, setAgents] = useState<MarketplaceAgent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [gasBalance, setGasBalance] = useState<number | null>(null);
+  const [loadingGas, setLoadingGas] = useState(false);
+
+  // Fetch gas balance when activation modal opens
+  const fetchGasBalance = async () => {
+    setLoadingGas(true);
+    try {
+      const data = await api.get<{ gasBalance: number }>('/dashboard/gas');
+      setGasBalance(data.gasBalance);
+    } catch {
+      setGasBalance(null);
+    } finally {
+      setLoadingGas(false);
+    }
+  };
 
   const handleActivateAgent = async (agent: MarketplaceAgent) => {
     setActivating(true);
@@ -214,6 +229,7 @@ export default function MarketplacePage() {
         strategy: agent.strategy,
         riskLevel: riskMap[agent.riskLevel],
         assets: agent.assets,
+        ...(agent.price > 0 ? { sourceAgentId: agent.id, subscriptionPrice: agent.price } : {}),
       });
 
       // Add to local store so it shows up immediately on My Agents page
@@ -248,6 +264,7 @@ export default function MarketplacePage() {
   const handleUseAgent = (agent: MarketplaceAgent) => {
     setActivateError('');
     setUseAgent(agent);
+    if (agent.price > 0) fetchGasBalance();
   };
 
   useEffect(() => {
@@ -262,6 +279,7 @@ export default function MarketplacePage() {
           assets: string[];
           profit: number;
           totalTrades: number;
+          subscriptionPrice: number | null;
           createdAt: string;
           user: { name: string };
         }> }>('/agents/marketplace');
@@ -281,7 +299,7 @@ export default function MarketplacePage() {
           users: 0,
           rating: 0,
           featured: false,
-          price: 0,
+          price: agent.subscriptionPrice || 0,
         }));
 
         setAgents(mapped);
@@ -599,8 +617,41 @@ export default function MarketplacePage() {
               </div>
             </div>
 
+            {useAgent.price > 0 ? (
+              <div className="bg-[#0a0a0f] rounded-lg p-3 border border-[#1e1e2e] space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-500">Subscription</span>
+                  <span className="font-semibold text-white">${useAgent.price.toFixed(2)}/mo</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-500">First month charged now</span>
+                  <span className="font-semibold text-[#B8FF3C]">-${useAgent.price.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#1e1e2e]">
+                  <span className="text-gray-500">Your gas balance</span>
+                  {loadingGas ? (
+                    <span className="text-gray-500 text-[10px]">Loading...</span>
+                  ) : (
+                    <span className={`font-semibold ${(gasBalance ?? 0) >= useAgent.price ? 'text-nova-400' : 'text-red-400'}`}>
+                      ${(gasBalance ?? 0).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                {!loadingGas && gasBalance !== null && gasBalance < useAgent.price && (
+                  <p className="text-[10px] text-red-400 pt-1">
+                    Insufficient gas balance. <a href="/dashboard/settings" className="underline hover:text-red-300">Top up in Settings</a> to subscribe.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 leading-relaxed">
+                This is a <span className="text-[#B8FF3C] font-medium">free</span> agent. No subscription fee.
+              </p>
+            )}
+
             <p className="text-xs text-gray-500 leading-relaxed">
               This agent will be added to your portfolio with a <span className="text-gray-300">stopped</span> status. You can start it from your Agents page when ready.
+              {useAgent.price > 0 && ' Subscription renews automatically from your gas balance every 30 days.'}
             </p>
 
             {activateError && (
@@ -613,12 +664,14 @@ export default function MarketplacePage() {
               <Button variant="secondary" fullWidth onClick={() => setUseAgent(null)} disabled={activating}>
                 Cancel
               </Button>
-              <Button fullWidth onClick={() => handleActivateAgent(useAgent)} disabled={activating}>
+              <Button fullWidth onClick={() => handleActivateAgent(useAgent)} disabled={activating || (useAgent.price > 0 && (loadingGas || (gasBalance ?? 0) < useAgent.price))}>
                 {activating ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 size={14} className="animate-spin" />
                     Activating...
                   </span>
+                ) : useAgent.price > 0 ? (
+                  `Subscribe — $${useAgent.price}/mo`
                 ) : (
                   'Activate Agent'
                 )}

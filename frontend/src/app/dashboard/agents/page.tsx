@@ -145,6 +145,15 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
                     Published
                   </span>
                 )}
+                {agent.subscriptionPrice && agent.subscriptionPrice > 0 && (
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
+                    agent.subscriptionStatus === 'paused_no_gas'
+                      ? 'bg-red-500/10 text-red-400'
+                      : 'bg-emerald-500/10 text-emerald-400'
+                  }`}>
+                    ${agent.subscriptionPrice}/mo
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -178,6 +187,33 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
           </div>
         )}
 
+        {/* Subscription paused banner */}
+        {agent.subscriptionStatus === 'paused_no_gas' && (
+          <div className="rounded-xl bg-red-500/[0.06] border border-red-500/15 p-3 mb-4 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <svg className="w-4 h-4 text-red-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span className="text-xs text-red-300">Subscription paused — insufficient gas. <a href="/dashboard/settings" className="underline hover:text-red-200">Top up</a> to resume.</span>
+            </div>
+            <button
+              onClick={async () => {
+                setStatusLoading(true);
+                try {
+                  await api.post(`/agents/${agent.id}/resubscribe`, {});
+                  window.location.reload();
+                } catch {
+                  setStatusError('Failed to resubscribe. Check gas balance.');
+                } finally {
+                  setStatusLoading(false);
+                }
+              }}
+              disabled={statusLoading}
+              className="shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-semibold text-white bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 transition-all disabled:opacity-50"
+            >
+              Resubscribe
+            </button>
+          </div>
+        )}
+
         {/* Stats */}
         {!isPending && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
@@ -194,8 +230,14 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
               <div className="text-sm font-semibold text-white">{createdDate}</div>
             </div>
             <div className="bg-[#0a0a0f] rounded-lg px-3 py-2.5">
-              <div className="text-[10px] text-gray-500 mb-0.5">Plan</div>
-              <div className="text-sm font-semibold text-white">{agent.plan}</div>
+              <div className="text-[10px] text-gray-500 mb-0.5">
+                {agent.subscriptionPrice ? 'Next Billing' : 'Plan'}
+              </div>
+              <div className="text-sm font-semibold text-white">
+                {agent.subscriptionPrice && agent.nextBillingDate
+                  ? new Date(agent.nextBillingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  : agent.plan}
+              </div>
             </div>
           </div>
         )}
@@ -492,6 +534,10 @@ function backendToDeployedAgent(agent: Record<string, unknown>): DeployedAgent {
     assets: (agent.assets as string[]) || [],
     createdAt: new Date(agent.createdAt as string).getTime(),
     strategy: (agent as Record<string, unknown>).strategy as string || undefined,
+    subscriptionPrice: (agent.subscriptionPrice as number) || undefined,
+    subscriptionStatus: (agent.subscriptionStatus as string) || undefined,
+    nextBillingDate: (agent.nextBillingDate as string) || undefined,
+    sourceAgentId: (agent.sourceAgentId as string) || undefined,
   };
 }
 
