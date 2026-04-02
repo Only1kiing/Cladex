@@ -135,6 +135,11 @@ export default function PointsPage() {
       desc: `${pointsData?.breakdown.logins.days || 0} days active (+25/day, max 30 days)`,
       progress: Math.min(((pointsData?.breakdown.logins.days || 0) / 30) * 100, 100),
     },
+    {
+      emoji: '👥', action: 'Refer Frens', reward: '+500 $CLDX',
+      desc: 'Share your referral link. Earn 500 $CLDX for each fren who signs up.',
+      progress: 0,
+    },
   ];
 
   return (
