@@ -10,12 +10,6 @@ import { api } from '@/lib/api';
 import { Badge } from '@/components/ui/Badge';
 import { ReferralCard } from '@/components/dashboard/PointsSystem';
 import { AgentAvatar } from '@/components/dashboard/AgentAvatar';
-import { SignalCard } from '@/components/dashboard/SignalCard';
-import { TradeExecutionModal } from '@/components/dashboard/TradeExecutionModal';
-import { MissedSignalsBanner } from '@/components/dashboard/MissedSignalsBanner';
-import { UpgradePrompt } from '@/components/dashboard/UpgradePrompt';
-import { useSignalGenerator } from '@/hooks/useSignalGenerator';
-import type { TradeSignal } from '@/hooks/useSignalGenerator';
 import type { AgentPersonality } from '@/types';
 import type { ActivityItem } from '@/components/dashboard/ActivityFeed';
 
@@ -220,51 +214,6 @@ function ChatPanel({
 
 // ---- Signal Section (show 1, expand for more) ----
 
-function SignalSection({
-  signals,
-  onExecute,
-  onDismiss,
-}: {
-  signals: TradeSignal[];
-  onExecute: (s: TradeSignal) => void;
-  onDismiss: (id: string) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  if (signals.length === 0) return null;
-
-  const first = signals[0];
-  const rest = signals.slice(1);
-
-  return (
-    <div className="mb-3">
-      <SignalCard key={first.id} signal={first} onExecute={onExecute} onDismiss={onDismiss} />
-
-      {rest.length > 0 && (
-        <>
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-[#1e1e2e] bg-white/[0.02] text-xs font-medium text-gray-400 hover:text-white hover:border-white/[0.1] transition-all"
-          >
-            {expanded ? 'Show Less' : `${rest.length} more signal${rest.length > 1 ? 's' : ''}`}
-            <svg className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-
-          <div className={`overflow-hidden transition-all duration-400 ease-out ${expanded ? 'max-h-[2000px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-            <div className="space-y-2">
-              {rest.map(sig => (
-                <SignalCard key={sig.id} signal={sig} onExecute={onExecute} onDismiss={onDismiss} />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 // ==============================================================
 // DASHBOARD PAGE
 // ==============================================================
@@ -308,20 +257,6 @@ export default function DashboardPage() {
   }[]>([]);
   const [executingTrade, setExecutingTrade] = useState<string | null>(null);
 
-  // Legacy signal system (for user's own agents)
-  const { signals, missedCount, missedPnl, manualTradeCount, executedTrades, executeSignal, dismissSignal, hasOwnAgents } = useSignalGenerator();
-  const [selectedSignal, setSelectedSignal] = useState<TradeSignal | null>(null);
-  const [showTradeModal, setShowTradeModal] = useState(false);
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  const [upgradePromptDismissed, setUpgradePromptDismissed] = useState(false);
-
-  // Show upgrade prompt after thresholds
-  useEffect(() => {
-    if (upgradePromptDismissed) return;
-    if (manualTradeCount >= 5 || missedCount >= 10) {
-      setShowUpgradePrompt(true);
-    }
-  }, [manualTradeCount, missedCount, upgradePromptDismissed]);
 
   // Load deployed agents
   useEffect(() => {
@@ -583,7 +518,6 @@ export default function DashboardPage() {
       )}
 
       {/* Missed Signals Banner */}
-      {!exchangeConnected && <MissedSignalsBanner count={missedCount} pnl={missedPnl} manualPnl={executedTrades.reduce((sum, t) => sum + t.result, 0)} />}
 
       {/* Header */}
       <div>
@@ -701,20 +635,6 @@ export default function DashboardPage() {
           />
         </div>
       </section>
-
-      {/* Active Signals — only when user has own agents */}
-      {hasOwnAgents && signals.filter(s => s.status === 'active' || s.status === 'missed').length > 0 && (
-        <section>
-          <div className="flex items-center gap-3 mb-4">
-            <h2 className="text-lg font-semibold text-gray-100">Signals</h2>
-          </div>
-          <SignalSection
-            signals={signals.filter(s => s.status === 'active' || s.status === 'missed')}
-            onExecute={(s) => { setSelectedSignal(s); setShowTradeModal(true); }}
-            onDismiss={dismissSignal}
-          />
-        </section>
-      )}
 
       {/* My Agents */}
       <section>
@@ -992,14 +912,9 @@ export default function DashboardPage() {
               <h2 className="text-sm font-semibold text-gray-100">Trade Log</h2>
               <span className="w-2 h-2 rounded-full bg-nova-400 animate-pulse" />
               <span className="text-[10px] text-gray-500">Live</span>
-              {executedTrades.length > 0 && (
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#B8FF3C]/10 text-[#B8FF3C] border border-[#B8FF3C]/20">
-                  {executedTrades.length} manual
-                </span>
-              )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-gray-500">{tradeLogItems.length + executedTrades.length} trades</span>
+              <span className="text-[11px] text-gray-500">{tradeLogItems.length} trades</span>
               <svg className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${showAllTrades ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
@@ -1009,20 +924,10 @@ export default function DashboardPage() {
           {/* Trade list — collapsible */}
           <div className={`overflow-hidden transition-all duration-300 ease-out ${showAllTrades ? 'max-h-[500px] border-t border-white/[0.04]' : 'max-h-0'}`}>
             <div className="max-h-[500px] overflow-y-auto scrollbar-thin p-2">
-              {executedTrades.length === 0 && tradeLogItems.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">Your agent activity will appear here</p>
+              {tradeLogItems.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">Your trade activity will appear here</p>
               ) : (
-                <ActivityFeed items={[
-                  ...executedTrades.map((t, i) => ({
-                    id: `manual-${i}-${t.signal.id}`,
-                    type: 'trade' as const,
-                    tradeDirection: (t.signal.side === 'long' ? 'buy' : 'sell') as 'buy' | 'sell',
-                    agentPersonality: t.signal.personality,
-                    message: `${t.signal.agentName}: ${t.signal.side.toUpperCase()} ${t.signal.pair} at $${t.signal.entryPrice.toLocaleString()} — ${t.result >= 0 ? '+' : ''}$${t.result.toFixed(2)} ${t.result >= 0 ? '✅' : '❌'} (manual)`,
-                    timestamp: new Date(Date.now() - i * 120000).toISOString(),
-                  })).reverse(),
-                  ...tradeLogItems,
-                ]} />
+                <ActivityFeed items={tradeLogItems} />
               )}
             </div>
           </div>
@@ -1034,25 +939,6 @@ export default function DashboardPage() {
         <ReferralCard />
       </section>
 
-
-      {/* Trade Execution Modal */}
-      {!exchangeConnected && <TradeExecutionModal
-        isOpen={showTradeModal}
-        signal={selectedSignal}
-        onClose={() => { setShowTradeModal(false); setSelectedSignal(null); }}
-        onExecute={executeSignal}
-        exchangeConnected={exchangeConnected}
-        exchangeName={selectedExchange ? exchanges.find(e => e.id === selectedExchange)?.name : undefined}
-      />}
-
-      {/* Upgrade Prompt — demo only */}
-      {!exchangeConnected && <UpgradePrompt
-        isOpen={showUpgradePrompt && !upgradePromptDismissed}
-        onClose={() => { setShowUpgradePrompt(false); setUpgradePromptDismissed(true); }}
-        manualTrades={manualTradeCount}
-        missedSignals={missedCount}
-        missedPnl={missedPnl}
-      />}
 
       {/* ============================================ */}
       {/* Connect Exchange Modal (with simulation)    */}
