@@ -94,19 +94,53 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
     setSelectedWallet(walletId);
     setConnecting(true);
 
-    // Simulate wallet connection
-    await new Promise(r => setTimeout(r, 2000));
+    try {
+      let address = '';
+      const wallet = WALLETS.find(w => w.id === walletId)!;
 
-    const wallet = WALLETS.find(w => w.id === walletId)!;
-    const address = walletId === 'phantom'
-      ? `${Math.random().toString(36).slice(2, 6)}...${Math.random().toString(36).slice(2, 6)}`
-      : `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`;
+      if (walletId === 'phantom') {
+        const phantom = (window as any)?.solana;
+        if (!phantom?.isPhantom) {
+          window.open('https://phantom.app/', '_blank');
+          setConnecting(false);
+          return;
+        }
+        const resp = await phantom.connect();
+        address = resp.publicKey.toString();
+      } else if (walletId === 'metamask') {
+        const ethereum = (window as any)?.ethereum;
+        if (!ethereum) {
+          window.open('https://metamask.io/', '_blank');
+          setConnecting(false);
+          return;
+        }
+        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        address = accounts[0] as string;
+      } else if (walletId === 'walletconnect') {
+        // WalletConnect needs a separate SDK — for now try MetaMask fallback
+        const ethereum = (window as any)?.ethereum;
+        if (!ethereum) {
+          window.open('https://walletconnect.com/', '_blank');
+          setConnecting(false);
+          return;
+        }
+        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        address = accounts[0] as string;
+      }
 
-    const connected = { id: walletId, name: wallet.name, address };
-    localStorage.setItem(CONNECTED_WALLET_KEY, JSON.stringify(connected));
-    setConnectedWallet(connected);
-    setConnecting(false);
-    setStage('wallet-confirm');
+      const truncated = address.length > 10
+        ? `${address.slice(0, 6)}...${address.slice(-4)}`
+        : address;
+
+      const connected = { id: walletId, name: wallet.name, address: truncated, fullAddress: address };
+      localStorage.setItem(CONNECTED_WALLET_KEY, JSON.stringify(connected));
+      setConnectedWallet(connected);
+      setConnecting(false);
+      setStage('wallet-confirm');
+    } catch (err: any) {
+      setConnecting(false);
+      // User rejected or wallet error — stay on wallet selection
+    }
   };
 
   const AGENT_NAMES: Record<string, string[]> = {

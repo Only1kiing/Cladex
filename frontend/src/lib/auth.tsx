@@ -209,30 +209,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Simulated wallet connection – no backend endpoint exists yet.
-  // Keeps the same behavior as before (mock address stored in localStorage).
   const connectWallet = useCallback(async (): Promise<{ success: boolean; address?: string; error?: string }> => {
-    // Simulate MetaMask connection delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Try Phantom (Solana) first
+      const phantom = (window as any)?.solana;
+      if (phantom?.isPhantom) {
+        const resp = await phantom.connect();
+        const walletAddress = resp.publicKey.toString();
 
-    const walletAddress = '0x7a3B...4f2D';
+        localStorage.setItem(STORAGE_KEYS.wallet, walletAddress);
 
-    localStorage.setItem(STORAGE_KEYS.wallet, walletAddress);
+        const token = state.token || generateToken();
+        if (!state.token) {
+          localStorage.setItem(STORAGE_KEYS.token, token);
+        }
 
-    const token = state.token || generateToken();
-    if (!state.token) {
-      localStorage.setItem(STORAGE_KEYS.token, token);
+        setState((prev) => ({
+          ...prev,
+          walletAddress,
+          token,
+          isAuthenticated: true,
+          isLoading: false,
+        }));
+
+        return { success: true, address: walletAddress };
+      }
+
+      // Try MetaMask (Ethereum)
+      const ethereum = (window as any)?.ethereum;
+      if (ethereum) {
+        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        const walletAddress = accounts[0] as string;
+
+        localStorage.setItem(STORAGE_KEYS.wallet, walletAddress);
+
+        const token = state.token || generateToken();
+        if (!state.token) {
+          localStorage.setItem(STORAGE_KEYS.token, token);
+        }
+
+        setState((prev) => ({
+          ...prev,
+          walletAddress,
+          token,
+          isAuthenticated: true,
+          isLoading: false,
+        }));
+
+        return { success: true, address: walletAddress };
+      }
+
+      return { success: false, error: 'No wallet found. Please install Phantom or MetaMask.' };
+    } catch (err: any) {
+      const message = err?.message || 'Wallet connection failed. Please try again.';
+      return { success: false, error: message };
     }
-
-    setState((prev) => ({
-      ...prev,
-      walletAddress,
-      token,
-      isAuthenticated: true,
-      isLoading: false,
-    }));
-
-    return { success: true, address: walletAddress };
   }, [state.token]);
 
   const connectExchange = useCallback(async (exchangeId: string, apiKey: string, apiSecret: string): Promise<{ success: boolean; exchange?: string; error?: string }> => {
