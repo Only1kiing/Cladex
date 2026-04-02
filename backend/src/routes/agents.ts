@@ -5,6 +5,30 @@ import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
+
+// GET /api/agents/marketplace — public marketplace agents (no auth required)
+router.get("/marketplace", async (_req: Request, res: Response) => {
+  const agents = await prisma.agent.findMany({
+    where: { status: "RUNNING" },
+    select: {
+      id: true,
+      name: true,
+      personality: true,
+      strategy: true,
+      riskLevel: true,
+      assets: true,
+      profit: true,
+      totalTrades: true,
+      createdAt: true,
+      user: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+
+  res.json({ agents });
+});
+
 router.use(authMiddleware);
 
 const createAgentSchema = z.object({

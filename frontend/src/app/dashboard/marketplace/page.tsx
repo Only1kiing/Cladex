@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Shield, BarChart3, Target, Eye, TrendingUp, Users, Activity, ArrowRight, Star, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { AgentAvatar } from '@/components/dashboard/AgentAvatar';
 import type { AgentPersonality } from '@/types';
+import { api } from '@/lib/api';
 
 // ---- Types ----
 
@@ -72,147 +73,6 @@ const RISK_STYLES: Record<string, string> = {
   Medium: 'text-amber-400 bg-amber-500/10',
   High: 'text-apex-400 bg-apex-500/10',
 };
-
-const MOCK_AGENTS: MarketplaceAgent[] = [
-  {
-    id: '1',
-    name: 'Raze',
-    creator: 'CladexTeam',
-    personality: 'apex',
-    description: 'Aggressive momentum scalper that hunts volatile breakouts with lightning-fast entries and tight trailing stops.',
-    monthlyReturn: 18,
-    winRate: 64,
-    totalTrades: 8742,
-    riskLevel: 'High',
-    assets: ['SOL', 'AVAX', 'LINK'],
-    users: 2187,
-    rating: 4.3,
-    price: 0,
-  },
-  {
-    id: '2',
-    name: 'Knox',
-    creator: 'CladexTeam',
-    personality: 'nova',
-    description: 'Capital preservation specialist focused on minimizing drawdown while steadily compounding returns.',
-    monthlyReturn: 6,
-    winRate: 81,
-    totalTrades: 1247,
-    riskLevel: 'Low',
-    assets: ['BTC', 'ETH'],
-    users: 5234,
-    rating: 4.9,
-    price: 0,
-  },
-  {
-    id: '3',
-    name: 'Byte',
-    creator: 'CladexTeam',
-    personality: 'sage',
-    description: 'Data-driven trend follower using cross-exchange volume analysis and momentum indicators for precise entries.',
-    monthlyReturn: 12,
-    winRate: 72,
-    totalTrades: 2156,
-    riskLevel: 'Medium',
-    assets: ['BTC', 'ETH', 'SOL'],
-    users: 3421,
-    rating: 4.6,
-    featured: true,
-    price: 15,
-  },
-  {
-    id: '4',
-    name: 'Iris',
-    creator: 'CladexTeam',
-    personality: 'echo',
-    description: 'Predictive pattern recognition engine using on-chain analytics, whale tracking, and historical cycle data.',
-    monthlyReturn: 22,
-    winRate: 69,
-    totalTrades: 1583,
-    riskLevel: 'Medium',
-    assets: ['BTC', 'ETH', 'SOL', 'DOT'],
-    users: 1845,
-    rating: 4.7,
-    featured: true,
-    price: 25,
-  },
-  {
-    id: '5',
-    name: 'Nova',
-    creator: 'CladexTeam',
-    personality: 'apex',
-    description: 'High-frequency breakout trader specializing in rapid multi-asset scalps with sub-second execution.',
-    monthlyReturn: 15,
-    winRate: 58,
-    totalTrades: 6891,
-    riskLevel: 'High',
-    assets: ['SOL', 'AVAX', 'MATIC'],
-    users: 987,
-    rating: 4.2,
-    price: 10,
-  },
-  {
-    id: '6',
-    name: 'Luna',
-    creator: 'CladexTeam',
-    personality: 'echo',
-    description: 'Cosmic cycle predictor leveraging macro patterns, lunar cycles, and sentiment oscillation models.',
-    monthlyReturn: 19,
-    winRate: 74,
-    totalTrades: 1893,
-    riskLevel: 'Medium',
-    assets: ['BTC', 'ETH', 'SOL'],
-    users: 1534,
-    rating: 4.5,
-    price: 20,
-  },
-  {
-    id: '7',
-    name: 'Shield',
-    creator: 'CladexTeam',
-    personality: 'nova',
-    description: 'Maximum drawdown protection agent that prioritizes capital safety above all else with zero-tolerance risk limits.',
-    monthlyReturn: 4,
-    winRate: 88,
-    totalTrades: 456,
-    riskLevel: 'Low',
-    assets: ['BTC', 'ETH'],
-    users: 4102,
-    rating: 4.8,
-    price: 0,
-  },
-  {
-    id: '8',
-    name: 'Cipher',
-    creator: 'CladexTeam',
-    personality: 'sage',
-    description: 'On-chain intelligence engine tracking wallet clusters, whale movements, and institutional accumulation patterns.',
-    monthlyReturn: 28,
-    winRate: 66,
-    totalTrades: 2341,
-    riskLevel: 'High',
-    assets: ['BTC', 'ETH', 'SOL', 'LINK'],
-    users: 1256,
-    rating: 4.4,
-    featured: true,
-    price: 30,
-  },
-  {
-    id: '9',
-    name: 'Blitz',
-    creator: 'CladexTeam',
-    personality: 'apex',
-    description: 'Speed-optimized scalper built for rapid-fire trades on high-volume pairs with ultra-low latency execution.',
-    monthlyReturn: 14,
-    winRate: 61,
-    totalTrades: 3267,
-    riskLevel: 'High',
-    assets: ['SOL', 'AVAX', 'MATIC', 'DOT'],
-    users: 672,
-    rating: 3.9,
-    price: 10,
-  },
-];
 
 type FilterType = 'all' | AgentPersonality;
 
@@ -333,24 +193,70 @@ function AgentCard({ agent, onUse, onPreview }: { agent: MarketplaceAgent; onUse
 export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [showAllLeague, setShowAllLeague] = useState(false);
   const [showConnectPrompt, setShowConnectPrompt] = useState(false);
   const [previewAgent, setPreviewAgent] = useState<MarketplaceAgent | null>(null);
   const [useAgent, setUseAgent] = useState<MarketplaceAgent | null>(null);
+  const [agents, setAgents] = useState<MarketplaceAgent[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const leaderboardAgents = [
-    { name: 'Raze', volume: '$1.2M', roi: '+34%', creator: '@hunter_x', personality: 'apex', loves: 2847 },
-    { name: 'Iris', volume: '$890K', roi: '+28%', creator: '@oracle_queen', personality: 'echo', loves: 2103 },
-    { name: 'Knox', volume: '$650K', roi: '+19%', creator: '@shield_master', personality: 'nova', loves: 1876 },
-    { name: 'Nova', volume: '$420K', roi: '+42%', creator: '@speed_demon', personality: 'apex', loves: 1654 },
-    { name: 'Byte', volume: '$380K', roi: '+15%', creator: '@data_nerd', personality: 'sage', loves: 1432 },
-    { name: 'Luna', volume: '$310K', roi: '+22%', creator: '@moon_caller', personality: 'echo', loves: 1201 },
-    { name: 'Shield', volume: '$280K', roi: '+11%', creator: '@safe_hands', personality: 'nova', loves: 987 },
-    { name: 'Poly', volume: '$240K', roi: '+31%', creator: '@prediction_king', personality: 'sage', loves: 876 },
-  ];
+  useEffect(() => {
+    async function fetchAgents() {
+      try {
+        const data = await api.get<{ agents: Array<{
+          id: string;
+          name: string;
+          personality: string;
+          strategy: Record<string, unknown>;
+          riskLevel: string;
+          assets: string[];
+          profit: number;
+          totalTrades: number;
+          createdAt: string;
+          user: { name: string };
+        }> }>('/agents/marketplace');
+
+        const mapped: MarketplaceAgent[] = data.agents.map((agent) => ({
+          id: agent.id,
+          name: agent.name,
+          creator: agent.user.name || 'Unknown',
+          personality: agent.personality.toLowerCase() as AgentPersonality,
+          description: (agent.strategy as Record<string, string>)?.description || `${agent.name} trading agent`,
+          monthlyReturn: 0,
+          winRate: 0,
+          totalTrades: agent.totalTrades,
+          riskLevel: ({ LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' } as const)[agent.riskLevel as 'LOW' | 'MEDIUM' | 'HIGH'] || 'Medium',
+          assets: agent.assets,
+          users: 0,
+          rating: 0,
+          featured: false,
+          price: 0,
+        }));
+
+        setAgents(mapped);
+      } catch {
+        // Failed to fetch — agents stays empty
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAgents();
+  }, []);
+
+  const leaderboardAgents = useMemo(() => {
+    return [...agents]
+      .sort((a, b) => b.totalTrades - a.totalTrades)
+      .slice(0, 3)
+      .map((agent) => ({
+        name: agent.name,
+        personality: agent.personality,
+        creator: agent.creator,
+        totalTrades: agent.totalTrades,
+        profit: agent.monthlyReturn,
+      }));
+  }, [agents]);
 
   const filteredAgents = useMemo(() => {
-    return MOCK_AGENTS.filter((agent) => {
+    return agents.filter((agent) => {
       const matchesFilter = activeFilter === 'all' || agent.personality === activeFilter;
       const matchesSearch =
         !searchQuery ||
@@ -359,7 +265,7 @@ export default function MarketplacePage() {
         agent.creator.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesFilter && matchesSearch;
     });
-  }, [searchQuery, activeFilter]);
+  }, [agents, searchQuery, activeFilter]);
 
   const filters: { id: FilterType; label: string; icon?: React.ReactNode }[] = [
     { id: 'all', label: 'All Agents' },
@@ -372,6 +278,7 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-gray-100">
       {/* Top Agent League */}
+      {leaderboardAgents.length > 0 && (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
         <section className="mb-10">
           <div className="flex items-center justify-between mb-4">
@@ -391,7 +298,7 @@ export default function MarketplacePage() {
 
           {/* Top 3 podium */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-            {leaderboardAgents.slice(0, 3).map((agent, idx) => {
+            {leaderboardAgents.map((agent, idx) => {
               const rank = idx + 1;
               const medalColors = ['from-amber-400 to-yellow-500', 'from-gray-300 to-gray-400', 'from-amber-600 to-amber-700'];
               const borderColors = ['border-amber-500/30', 'border-gray-400/20', 'border-amber-700/20'];
@@ -420,19 +327,12 @@ export default function MarketplacePage() {
                   {/* Stats */}
                   <div className="space-y-1.5 mb-3">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-gray-500">ROI</span>
-                      <span className="font-bold text-emerald-400">{agent.roi}</span>
+                      <span className="text-gray-500">Trades</span>
+                      <span className="font-bold text-emerald-400">{agent.totalTrades.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-gray-500">Volume</span>
-                      <span className="font-semibold text-gray-300">{agent.volume}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-gray-500">Loves</span>
-                      <span className="text-red-400 flex items-center gap-1">
-                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        {agent.loves.toLocaleString()}
-                      </span>
+                      <span className="text-gray-500">Profit</span>
+                      <span className="font-semibold text-gray-300">{agent.profit}%</span>
                     </div>
                   </div>
 
@@ -446,61 +346,9 @@ export default function MarketplacePage() {
               );
             })}
           </div>
-
-          {/* Remaining agents - compact list */}
-          <div className={`overflow-hidden transition-all duration-300 ease-out ${showAllLeague ? 'max-h-[500px]' : 'max-h-0'}`}>
-            <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
-              {leaderboardAgents.slice(3).map((agent, idx) => {
-                const rank = idx + 4;
-                const personalityColor = agent.personality === 'apex' ? 'text-red-400' : agent.personality === 'echo' ? 'text-violet-400' : agent.personality === 'nova' ? 'text-emerald-400' : 'text-cyan-400';
-
-                return (
-                  <div
-                    key={agent.name}
-                    className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-colors"
-                  >
-                    <span className="text-xs text-gray-600 font-mono w-5 text-center">{rank}</span>
-                    <AgentAvatar personality={agent.personality as AgentPersonality} size={28} active />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-semibold ${personalityColor}`}>{agent.name}</span>
-                        <span className="text-[10px] text-gray-600">{agent.creator}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 shrink-0">
-                      <div className="text-right hidden sm:block">
-                        <span className="text-xs font-bold text-emerald-400">{agent.roi}</span>
-                        <span className="text-[10px] text-gray-600 ml-2">{agent.volume}</span>
-                      </div>
-                      <span className="text-xs text-emerald-400 font-bold sm:hidden">{agent.roi}</span>
-                      <span className="text-[10px] text-red-400 flex items-center gap-0.5">
-                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        {agent.loves.toLocaleString()}
-                      </span>
-                      <button
-                        onClick={() => setShowConnectPrompt(true)}
-                        className="px-3 py-1.5 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[10px] font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-all"
-                      >
-                        Use
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {leaderboardAgents.length > 3 && (
-            <button
-              onClick={() => setShowAllLeague(!showAllLeague)}
-              className="mt-3 w-full py-2 rounded-lg border border-[#1e1e2e] bg-white/[0.02] text-xs font-medium text-gray-400 hover:text-white hover:border-white/[0.1] transition-all flex items-center justify-center gap-1.5"
-            >
-              {showAllLeague ? 'Show Less' : `View All (${leaderboardAgents.length})`}
-              <svg className={`w-3.5 h-3.5 transition-transform ${showAllLeague ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-            </button>
-          )}
         </section>
       </div>
+      )}
 
       {/* Header */}
       <div className="border-b border-[#1e1e2e] bg-[#0a0a0f]/80 backdrop-blur-xl sticky top-0 z-40">
@@ -560,15 +408,19 @@ export default function MarketplacePage() {
           <div className="text-xs text-gray-600">Sorted by popularity</div>
         </div>
 
-        {filteredAgents.length === 0 ? (
+        {loading ? (
           <div className="text-center py-12">
-            {searchQuery ? (
+            <p className="text-sm text-gray-500">Loading agents...</p>
+          </div>
+        ) : filteredAgents.length === 0 ? (
+          <div className="text-center py-12">
+            {searchQuery || activeFilter !== 'all' ? (
               <>
                 <Search size={48} className="text-gray-700 mx-auto mb-4" />
                 <p className="text-sm text-gray-500">No agents match your search.</p>
               </>
             ) : (
-              <p className="text-sm text-gray-500">Marketplace loading...</p>
+              <p className="text-sm text-gray-500">No agents available yet. Deploy your first agent to get started.</p>
             )}
           </div>
         ) : (
