@@ -198,6 +198,7 @@ export default function MarketplacePage() {
   const [useAgent, setUseAgent] = useState<MarketplaceAgent | null>(null);
   const [agents, setAgents] = useState<MarketplaceAgent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exchangeConnected, setExchangeConnected] = useState(false);
 
   useEffect(() => {
     async function fetchAgents() {
@@ -238,6 +239,12 @@ export default function MarketplacePage() {
       } finally {
         setLoading(false);
       }
+
+      // Check exchange connection
+      try {
+        const ex = await api.get<{ exchanges: { id: string }[] }>('/exchange');
+        if (ex?.exchanges?.length > 0) setExchangeConnected(true);
+      } catch { /* */ }
     }
     fetchAgents();
   }, []);
@@ -429,7 +436,7 @@ export default function MarketplacePage() {
               <AgentCard
                 key={agent.id}
                 agent={agent}
-                onUse={() => setShowConnectPrompt(true)}
+                onUse={() => exchangeConnected ? setUseAgent(agent) : setShowConnectPrompt(true)}
                 onPreview={() => setPreviewAgent(agent)}
               />
             ))}
