@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Shield, BarChart3, Target, Eye, TrendingUp, Users, Activity, ArrowRight, Star, Zap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Shield, BarChart3, Target, Eye, TrendingUp, Users, Activity, ArrowRight, Star, Zap, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { AgentAvatar } from '@/components/dashboard/AgentAvatar';
 import type { AgentPersonality } from '@/types';
 import { api } from '@/lib/api';
+import { addDeployedAgent } from '@/lib/agents-store';
 
 // ---- Types ----
 
@@ -18,6 +19,7 @@ interface MarketplaceAgent {
   creator: string;
   personality: AgentPersonality;
   description: string;
+  strategy: Record<string, unknown>;
   monthlyReturn: number;
   winRate: number;
   totalTrades: number;
@@ -191,14 +193,62 @@ function AgentCard({ agent, onUse, onPreview }: { agent: MarketplaceAgent; onUse
 // ---- Main Page ----
 
 export default function MarketplacePage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [showConnectPrompt, setShowConnectPrompt] = useState(false);
   const [previewAgent, setPreviewAgent] = useState<MarketplaceAgent | null>(null);
   const [useAgent, setUseAgent] = useState<MarketplaceAgent | null>(null);
+  const [activating, setActivating] = useState(false);
+  const [activateError, setActivateError] = useState('');
   const [agents, setAgents] = useState<MarketplaceAgent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [exchangeConnected, setExchangeConnected] = useState(false);
+
+  const handleActivateAgent = async (agent: MarketplaceAgent) => {
+    setActivating(true);
+    setActivateError('');
+    try {
+      const riskMap = { Low: 'LOW', Medium: 'MEDIUM', High: 'HIGH' } as const;
+      const data = await api.post<{ agent: { id: string; name: string; personality: string; status: string; assets: string[]; createdAt: string } }>('/agents', {
+        name: agent.name,
+        personality: agent.personality.toUpperCase(),
+        strategy: agent.strategy,
+        riskLevel: riskMap[agent.riskLevel],
+        assets: agent.assets,
+      });
+
+      // Add to local store so it shows up immediately on My Agents page
+      addDeployedAgent({
+        id: data.agent.id,
+        name: data.agent.name,
+        personality: agent.personality,
+        status: 'stopped',
+        plan: 'Marketplace',
+        walletAddress: null,
+        deployMethod: 'gas-balance',
+        pnl: 0,
+        pnlPercent: 0,
+        totalTrades: 0,
+        winRate: 0,
+        assets: agent.assets,
+        createdAt: Date.now(),
+        strategy: (agent.strategy as Record<string, string>)?.type || 'dca',
+        description: agent.description,
+      });
+
+      setUseAgent(null);
+      router.push('/dashboard/agents');
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || 'Failed to activate agent. Please try again.';
+      setActivateError(message);
+    } finally {
+      setActivating(false);
+    }
+  };
+
+  const handleUseAgent = (agent: MarketplaceAgent) => {
+    setActivateError('');
+    setUseAgent(agent);
+  };
 
   useEffect(() => {
     async function fetchAgents() {
@@ -222,7 +272,8 @@ export default function MarketplacePage() {
           creator: agent.user.name || 'Unknown',
           personality: agent.personality.toLowerCase() as AgentPersonality,
           description: (agent.strategy as Record<string, string>)?.description || `${agent.name} trading agent`,
-          monthlyReturn: 0,
+          strategy: agent.strategy,
+          monthlyReturn: agent.profit ?? 0,
           winRate: 0,
           totalTrades: agent.totalTrades,
           riskLevel: ({ LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High' } as const)[agent.riskLevel as 'LOW' | 'MEDIUM' | 'HIGH'] || 'Medium',
@@ -239,12 +290,6 @@ export default function MarketplacePage() {
       } finally {
         setLoading(false);
       }
-
-      // Check exchange connection
-      try {
-        const ex = await api.get<{ exchanges: { id: string }[] }>('/exchange');
-        if (ex?.exchanges?.length > 0) setExchangeConnected(true);
-      } catch { /* */ }
     }
     fetchAgents();
   }, []);
@@ -252,14 +297,7 @@ export default function MarketplacePage() {
   const leaderboardAgents = useMemo(() => {
     return [...agents]
       .sort((a, b) => b.totalTrades - a.totalTrades)
-      .slice(0, 3)
-      .map((agent) => ({
-        name: agent.name,
-        personality: agent.personality,
-        creator: agent.creator,
-        totalTrades: agent.totalTrades,
-        profit: agent.monthlyReturn,
-      }));
+      .slice(0, 3);
   }, [agents]);
 
   const filteredAgents = useMemo(() => {
@@ -339,12 +377,12 @@ export default function MarketplacePage() {
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-gray-500">Profit</span>
-                      <span className="font-semibold text-gray-300">{agent.profit}%</span>
+                      <span className="font-semibold text-gray-300">{agent.monthlyReturn}%</span>
                     </div>
                   </div>
 
                   <button
-                    onClick={() => setShowConnectPrompt(true)}
+                    onClick={() => handleUseAgent(agent)}
                     className="w-full py-2 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-[11px] font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-all"
                   >
                     Use Agent
@@ -436,7 +474,7 @@ export default function MarketplacePage() {
               <AgentCard
                 key={agent.id}
                 agent={agent}
-                onUse={() => exchangeConnected ? setUseAgent(agent) : setShowConnectPrompt(true)}
+                onUse={() => handleUseAgent(agent)}
                 onPreview={() => setPreviewAgent(agent)}
               />
             ))}
@@ -515,8 +553,9 @@ export default function MarketplacePage() {
             <Button
               fullWidth
               onClick={() => {
+                const agent = previewAgent;
                 setPreviewAgent(null);
-                setShowConnectPrompt(true);
+                handleUseAgent(agent);
               }}
               icon={<ArrowRight size={16} />}
               iconPosition="right"
@@ -530,7 +569,7 @@ export default function MarketplacePage() {
       {/* Use Agent Confirmation Modal */}
       <Modal
         isOpen={!!useAgent}
-        onClose={() => setUseAgent(null)}
+        onClose={() => { if (!activating) setUseAgent(null); }}
         title="Activate Agent"
         size="md"
       >
@@ -549,61 +588,46 @@ export default function MarketplacePage() {
               <p className="text-xs text-gray-400">{useAgent.description}</p>
             </div>
 
+            <div className="bg-[#0a0a0f] rounded-lg p-3 border border-[#1e1e2e]">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-gray-500">Risk Level</span>
+                <span className={`font-medium ${RISK_STYLES[useAgent.riskLevel]}`}>{useAgent.riskLevel}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Assets</span>
+                <span className="text-gray-300 font-medium">{useAgent.assets.join(', ')}</span>
+              </div>
+            </div>
+
             <p className="text-xs text-gray-500 leading-relaxed">
-              This agent will be added to your portfolio and begin monitoring the market based on its strategy. You can pause or stop it at any time from your Agents page.
+              This agent will be added to your portfolio with a <span className="text-gray-300">stopped</span> status. You can start it from your Agents page when ready.
             </p>
 
+            {activateError && (
+              <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                {activateError}
+              </div>
+            )}
+
             <div className="flex gap-3">
-              <Button variant="secondary" fullWidth onClick={() => setUseAgent(null)}>
+              <Button variant="secondary" fullWidth onClick={() => setUseAgent(null)} disabled={activating}>
                 Cancel
               </Button>
-              <Button fullWidth onClick={() => setUseAgent(null)}>
-                Activate Agent
+              <Button fullWidth onClick={() => handleActivateAgent(useAgent)} disabled={activating}>
+                {activating ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 size={14} className="animate-spin" />
+                    Activating...
+                  </span>
+                ) : (
+                  'Activate Agent'
+                )}
               </Button>
             </div>
           </div>
         )}
       </Modal>
 
-      {/* Connect Exchange Prompt */}
-      {showConnectPrompt && (
-        <>
-          <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm" onClick={() => setShowConnectPrompt(false)} />
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="w-full max-w-sm rounded-2xl border border-[#1e1e2e] bg-[#111118] shadow-2xl p-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 flex items-center justify-center mx-auto mb-4">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B8FF3C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 7L12 2L22 7L12 12L2 7Z" />
-                  <path d="M2 17L12 22L22 17" />
-                  <path d="M2 12L12 17L22 12" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Connect Exchange to Continue</h3>
-              <p className="text-sm text-gray-400 mb-5">Connect your exchange to deploy and use this agent for live trading.</p>
-              <div className="flex flex-col gap-2 mb-4 text-left">
-                {['Your funds stay on your exchange', 'No withdrawals allowed', 'Disconnect anytime'].map((t) => (
-                  <div key={t} className="flex items-center gap-2 text-xs text-gray-500">
-                    <svg className="w-3.5 h-3.5 text-[#B8FF3C]/60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17L4 12" /></svg>
-                    <span>{t}</span>
-                  </div>
-                ))}
-              </div>
-              <a
-                href="/dashboard/settings"
-                className="block w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all mb-2"
-              >
-                Connect Exchange
-              </a>
-              <button
-                onClick={() => setShowConnectPrompt(false)}
-                className="w-full text-xs text-gray-500 hover:text-gray-300 transition-colors py-1"
-              >
-                Continue Exploring
-              </button>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 }
