@@ -318,7 +318,7 @@ function AIMarketScanner() {
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white mb-1">Cladex AI is analyzing the market</p>
+            <p className="text-sm font-medium text-white mb-1">Agents at work</p>
             <p className="text-xs text-gray-400 truncate">{currentStep.label}</p>
           </div>
         </div>
