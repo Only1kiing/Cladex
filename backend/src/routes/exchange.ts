@@ -1,7 +1,53 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
+import ccxt from "ccxt";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
+
+const SUPPORTED_EXCHANGES: Record<string, string> = {
+  bybit: "bybit",
+  binance: "binance",
+  okx: "okx",
+  kucoin: "kucoin",
+};
+
+async function validateExchangeKeys(
+  exchangeName: string,
+  apiKey: string,
+  apiSecret: string
+): Promise<{ valid: boolean; error?: string }> {
+  const ccxtId = SUPPORTED_EXCHANGES[exchangeName.toLowerCase()];
+  if (!ccxtId) {
+    // Unsupported exchange — skip validation, just store
+    return { valid: true };
+  }
+
+  try {
+    const ExchangeClass = (ccxt as Record<string, any>)[ccxtId];
+    if (!ExchangeClass) return { valid: true };
+
+    const exchange = new ExchangeClass({
+      apiKey,
+      secret: apiSecret,
+      enableRateLimit: true,
+      timeout: 10000,
+    });
+
+    // Try fetching balance — if keys are invalid, this will throw
+    await exchange.fetchBalance();
+    return { valid: true };
+  } catch (err: any) {
+    const msg = err?.message || "";
+    if (msg.includes("Invalid API") || msg.includes("invalid key") || msg.includes("AuthenticationError") || msg.includes("API key")) {
+      return { valid: false, error: "Invalid API keys. Please check and try again." };
+    }
+    if (msg.includes("permission") || msg.includes("Permission")) {
+      return { valid: false, error: "API keys lack required permissions. Enable trade access." };
+    }
+    // Network/timeout errors — don't block, assume valid
+    return { valid: true };
+  }
+}
 
 const router = Router();
 router.use(authMiddleware);
@@ -17,9 +63,13 @@ router.post("/connect", async (req: Request, res: Response) => {
   try {
     const body = connectExchangeSchema.parse(req.body);
 
-    // In production, encrypt apiKey and apiSecret before storing.
-    // For now we store as-is; a real deployment would use AES-256-GCM
-    // with a key from a secrets manager.
+    // Validate API keys against the exchange
+    const validation = await validateExchangeKeys(body.name, body.apiKey, body.apiSecret);
+    if (!validation.valid) {
+      res.status(400).json({ error: validation.error });
+      return;
+    }
+
     const exchange = await prisma.exchange.create({
       data: {
         userId: req.user!.id,
