@@ -1,28 +1,62 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
+import ccxt from "ccxt";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
+
+const SUPPORTED_EXCHANGES: Record<string, string> = {
+  bybit: "bybit",
+  binance: "binance",
+  okx: "okx",
+  kucoin: "kucoin",
+};
+
+async function getExchangeInstance(userId: string) {
+  const exchangeRecord = await prisma.exchange.findFirst({
+    where: { userId, connected: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!exchangeRecord) return null;
+
+  const ccxtId = SUPPORTED_EXCHANGES[exchangeRecord.name.toLowerCase()];
+  if (!ccxtId) return null;
+
+  const ExchangeClass = (ccxt as Record<string, any>)[ccxtId];
+  if (!ExchangeClass) return null;
+
+  const exchange = new ExchangeClass({
+    apiKey: exchangeRecord.apiKey,
+    secret: exchangeRecord.apiSecret,
+    enableRateLimit: true,
+    timeout: 15000,
+  });
+
+  await exchange.loadMarkets();
+  return { exchange, name: exchangeRecord.name };
+}
 
 const router = Router();
 router.use(authMiddleware);
 
 const executeTradeSchema = z.object({
   agentId: z.string().min(1).optional(),
-  pair: z.string().min(1, "Trading pair is required"),
-  side: z.enum(["long", "short"]),
-  entryPrice: z.number().positive("Entry price must be positive"),
-  stopLoss: z.number().positive("Stop loss must be positive"),
-  takeProfit: z.number().positive("Take profit must be positive"),
-  positionSize: z.number().positive("Position size must be positive"),
+  symbol: z.string().min(1, "Trading pair is required (e.g. BTC/USDT)"),
+  side: z.enum(["buy", "sell"]),
+  amount: z.number().positive("Amount must be positive"),
+  type: z.enum(["market", "limit"]).default("market"),
+  price: z.number().positive().optional(), // required for limit orders
+  stopLoss: z.number().positive().optional(),
+  takeProfit: z.number().positive().optional(),
   reason: z.string().optional(),
 });
 
-// POST /api/trades/execute — manual trade entry
+// POST /api/trades/execute — execute a real trade on the exchange
 router.post("/execute", async (req: Request, res: Response) => {
   try {
     const body = executeTradeSchema.parse(req.body);
 
-    // If agentId is provided, verify it belongs to the user
+    // Verify agent belongs to user if provided
     if (body.agentId) {
       const agent = await prisma.agent.findFirst({
         where: { id: body.agentId, userId: req.user!.id },
@@ -33,20 +67,45 @@ router.post("/execute", async (req: Request, res: Response) => {
       }
     }
 
-    const sideMap = { long: "LONG", short: "SHORT" } as const;
+    // Get user's exchange connection
+    const exchangeData = await getExchangeInstance(req.user!.id);
+    if (!exchangeData) {
+      res.status(400).json({ error: "No exchange connected. Go to Settings to connect your exchange." });
+      return;
+    }
 
+    const { exchange, name: exchangeName } = exchangeData;
+
+    // Place the order on the real exchange
+    let order;
+    try {
+      if (body.type === "limit" && body.price) {
+        order = await exchange.createOrder(body.symbol, "limit", body.side, body.amount, body.price);
+      } else {
+        order = await exchange.createOrder(body.symbol, "market", body.side, body.amount);
+      }
+    } catch (err: any) {
+      const msg = err?.message || "Order failed";
+      res.status(400).json({ error: `Exchange error: ${msg}` });
+      return;
+    }
+
+    const executedPrice = order.average || order.price || body.price || 0;
+    const sideMap: Record<string, "BUY" | "SELL"> = { buy: "BUY", sell: "SELL" };
+
+    // Save trade to database
     const trade = await prisma.trade.create({
       data: {
         userId: req.user!.id,
         agentId: body.agentId ?? null,
-        symbol: body.pair,
-        side: sideMap[body.side],
-        amount: body.positionSize,
-        price: body.entryPrice,
-        stopLoss: body.stopLoss,
-        takeProfit: body.takeProfit,
+        symbol: body.symbol,
+        side: sideMap[body.side] || "BUY",
+        amount: body.amount,
+        price: executedPrice,
+        stopLoss: body.stopLoss ?? null,
+        takeProfit: body.takeProfit ?? null,
         status: "OPEN",
-        reason: body.reason || "Manual trade",
+        reason: body.reason || `${body.type} ${body.side} via ${exchangeName}`,
       },
       include: {
         agent: body.agentId
@@ -55,31 +114,71 @@ router.post("/execute", async (req: Request, res: Response) => {
       },
     });
 
+    // Log the activity
     await prisma.activityLog.create({
       data: {
         userId: req.user!.id,
         agentId: body.agentId ?? null,
         type: "TRADE",
-        message: `Manual ${body.side} trade opened: ${body.pair} @ ${body.entryPrice}`,
+        message: `${body.side.toUpperCase()} ${body.amount} ${body.symbol} @ $${executedPrice.toLocaleString()} on ${exchangeName}`,
         data: {
           tradeId: trade.id,
-          pair: body.pair,
+          orderId: order.id,
+          symbol: body.symbol,
           side: body.side,
-          entryPrice: body.entryPrice,
-          stopLoss: body.stopLoss,
-          takeProfit: body.takeProfit,
-          positionSize: body.positionSize,
+          amount: body.amount,
+          price: executedPrice,
+          type: body.type,
+          exchange: exchangeName,
         },
       },
     });
 
-    res.status(201).json({ trade });
+    res.status(201).json({
+      trade,
+      order: {
+        id: order.id,
+        status: order.status,
+        filled: order.filled,
+        average: order.average,
+        cost: order.cost,
+        exchange: exchangeName,
+      },
+    });
   } catch (err) {
     if (err instanceof z.ZodError) {
       res.status(400).json({ error: "Validation failed", details: err.errors });
       return;
     }
     throw err;
+  }
+});
+
+// GET /api/trades/price/:symbol — get current price for a trading pair
+router.get("/price/:symbol", async (req: Request, res: Response) => {
+  const symbol = (req.params.symbol as string).replace("-", "/");
+
+  const exchangeData = await getExchangeInstance(req.user!.id);
+  if (!exchangeData) {
+    res.status(400).json({ error: "No exchange connected" });
+    return;
+  }
+
+  try {
+    const ticker = await exchangeData.exchange.fetchTicker(symbol);
+    res.json({
+      symbol,
+      price: ticker.last,
+      bid: ticker.bid,
+      ask: ticker.ask,
+      high: ticker.high,
+      low: ticker.low,
+      volume: ticker.baseVolume,
+      change: ticker.percentage,
+      exchange: exchangeData.name,
+    });
+  } catch (err: any) {
+    res.status(400).json({ error: `Failed to fetch price: ${err?.message}` });
   }
 });
 
