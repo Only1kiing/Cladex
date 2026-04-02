@@ -397,7 +397,8 @@ function ChatPanel({
         ))}
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 py-3">
+            <div className="bg-white/[0.04] border border-white/[0.06] rounded-2xl px-4 py-3 flex items-center gap-2">
+              <span className="text-xs text-gray-400">Thinking</span>
               <TypingIndicator />
             </div>
           </div>
