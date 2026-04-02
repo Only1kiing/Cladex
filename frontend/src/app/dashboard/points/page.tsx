@@ -136,8 +136,8 @@ export default function PointsPage() {
       progress: Math.min(((pointsData?.breakdown.logins.days || 0) / 30) * 100, 100),
     },
     {
-      emoji: '👥', action: 'Refer Frens', reward: '+500 $CLDX',
-      desc: 'Share your referral link. Earn 500 $CLDX for each fren who signs up.',
+      emoji: '👥', action: 'Invite Frens', reward: '+500 $CLDX',
+      desc: 'Share your invite link. Earn 500 $CLDX for each fren who signs up.',
       progress: 0,
     },
   ];
