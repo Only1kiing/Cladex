@@ -545,9 +545,15 @@ export default function DashboardPage() {
     // Fetch dashboard stats
     (async () => {
       try {
-        const data = await api.get<{ stats: DashboardStats }>('/dashboard/stats');
+        const data = await api.get<{ stats: DashboardStats; exchangeConnected?: boolean; exchangeBalances?: { asset: string; free: number; total: number }[] }>('/dashboard/stats');
         if (data?.stats) {
           setDashStats(data.stats);
+        }
+        if (data?.exchangeConnected) {
+          setExchangeConnected(true);
+          if (data.exchangeBalances && data.exchangeBalances.length > 0) {
+            setExchangeBalance({ total: data.stats.totalBalance, balances: data.exchangeBalances });
+          }
         }
       } catch {
         // Backend unreachable or error — keep defaults (null = show placeholders)
@@ -583,18 +589,7 @@ export default function DashboardPage() {
       }
     })();
 
-    // Fetch exchange balance
-    (async () => {
-      try {
-        const data = await api.get<{ connected: boolean; exchange?: string; total: number; balances: { asset: string; free: number; total: number }[] }>('/exchange/balance');
-        if (data?.connected) {
-          setExchangeConnected(true);
-          setExchangeBalance({ total: data.total, balances: data.balances || [] });
-        }
-      } catch {
-        // No exchange connected
-      }
-    })();
+    // Exchange balance is now included in dashboard/stats response
   }, []);
 
   const feedCounterRef = useRef(100);
@@ -747,17 +742,33 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 relative">
 
-      {/* Founding Points Banner */}
-      <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-        <div className="flex items-center gap-2">
-          <span className="text-sm">&#x26A1;</span>
-          <span className="text-xs font-semibold text-indigo-300">10,000 Founding Points</span>
-          <span className="text-[10px] text-gray-500">&middot; $CLDX coming soon</span>
+      {/* Founding Points Banner — demo only */}
+      {!exchangeConnected && (
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">&#x26A1;</span>
+            <span className="text-xs font-semibold text-indigo-300">10,000 Founding Points</span>
+            <span className="text-[10px] text-gray-500">&middot; $CLDX coming soon</span>
+          </div>
+          <a href="/dashboard/points" className="text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+            Learn more
+          </a>
         </div>
-        <a href="/dashboard/points" className="text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-          Learn more
-        </a>
-      </div>
+      )}
+
+      {/* Live Mode Banner */}
+      {exchangeConnected && (
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-semibold text-emerald-300">Live Trading</span>
+            <span className="text-[10px] text-gray-500">&middot; Exchange connected</span>
+          </div>
+          <a href="/dashboard/settings" className="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
+            Manage
+          </a>
+        </div>
+      )}
 
       {/* Demo Mode Banner */}
       {!exchangeConnected && (
@@ -852,14 +863,14 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Low Gas Warning */}
-      {gasBalance < 2 && gasBalance > 0 && (
+      {/* Low Gas Warning — demo only */}
+      {!exchangeConnected && gasBalance < 2 && gasBalance > 0 && (
         <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
           <span className="text-sm">&#x26A0;&#xFE0F;</span>
           <span className="text-xs text-amber-300">Low gas — agents pause under $1</span>
         </div>
       )}
-      {gasBalance === 0 && deployedAgents.length > 0 && (
+      {!exchangeConnected && gasBalance === 0 && deployedAgents.length > 0 && (
         <div className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
           <div className="flex items-center gap-2">
             <span className="text-sm">&#x26A0;&#xFE0F;</span>
