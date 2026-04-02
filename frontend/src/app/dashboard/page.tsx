@@ -942,8 +942,8 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Agent Comms — Live Feed */}
-      <section>
+      {/* Agent Comms — Live Feed (demo only) */}
+      {!exchangeConnected && <section>
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-lg font-semibold text-gray-100">Agent Comms</h2>
           <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20">
@@ -1022,7 +1022,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* My Agents */}
       <section>
