@@ -293,7 +293,22 @@ export default function DashboardPage() {
   const [tradeLogItems, setTradeLogItems] = useState<ActivityItem[]>([]);
   const [agentComms, setAgentComms] = useState<{ id: string; agentName: string; personality: string; message: string; type: string; timestamp: string }[]>([]);
 
-  // Signal system
+  // Real signals from backend
+  const [liveSignals, setLiveSignals] = useState<{
+    id: string;
+    symbol: string;
+    side: string;
+    entryPrice: number;
+    stopLoss: number;
+    takeProfit: number;
+    confidence: number;
+    reason: string;
+    expiresAt: string;
+    agent: { id: string; name: string; personality: string };
+  }[]>([]);
+  const [executingTrade, setExecutingTrade] = useState<string | null>(null);
+
+  // Legacy signal system (for user's own agents)
   const { signals, missedCount, missedPnl, manualTradeCount, executedTrades, executeSignal, dismissSignal, hasOwnAgents } = useSignalGenerator();
   const [selectedSignal, setSelectedSignal] = useState<TradeSignal | null>(null);
   const [showTradeModal, setShowTradeModal] = useState(false);
@@ -370,6 +385,16 @@ export default function DashboardPage() {
       }
     } catch {
       // Backend unreachable
+    }
+
+    // Fetch live signals
+    try {
+      const data = await api.get<{ signals: typeof liveSignals }>('/trades/signals');
+      if (data?.signals) {
+        setLiveSignals(data.signals);
+      }
+    } catch {
+      // No signals
     }
 
     // Fetch agent comms
@@ -820,6 +845,103 @@ export default function DashboardPage() {
           </div>
         )}
       </section>
+
+      {/* Live Trade Signals */}
+      {liveSignals.length > 0 && (
+        <section>
+          <div className="flex items-center gap-3 mb-3">
+            <h2 className="text-sm font-semibold text-gray-100">Trade Signals</h2>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#B8FF3C] animate-pulse" />
+              <span className="text-[10px] text-[#B8FF3C] font-medium">AI-Powered</span>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {liveSignals.map((sig) => {
+              const pColor = sig.agent.personality === 'APEX' ? 'text-red-400 border-red-500/20' : sig.agent.personality === 'ECHO' ? 'text-violet-400 border-violet-500/20' : sig.agent.personality === 'NOVA' ? 'text-emerald-400 border-emerald-500/20' : 'text-cyan-400 border-cyan-500/20';
+              const isBuy = sig.side === 'buy';
+              const rr = Math.abs(sig.takeProfit - sig.entryPrice) / Math.abs(sig.entryPrice - sig.stopLoss);
+              const expiresIn = Math.max(0, Math.round((new Date(sig.expiresAt).getTime() - Date.now()) / 60000));
+
+              return (
+                <div key={sig.id} className={`rounded-xl border ${pColor.split(' ')[1]} bg-[#111118] p-4`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <AgentAvatar personality={(sig.agent.personality?.toLowerCase() || 'sage') as AgentPersonality} size={24} active />
+                      <span className={`text-sm font-semibold ${pColor.split(' ')[0]}`}>{sig.agent.name}</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${isBuy ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
+                        {sig.side.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-500">{expiresIn}m left</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${sig.confidence >= 80 ? 'bg-emerald-500/15 text-emerald-400' : sig.confidence >= 70 ? 'bg-amber-500/15 text-amber-400' : 'bg-gray-500/15 text-gray-400'}`}>
+                        {sig.confidence}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-lg font-bold text-white">{sig.symbol}</span>
+                    <span className="text-lg font-bold text-white tabular-nums">${sig.entryPrice.toLocaleString()}</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 mb-3 text-xs">
+                    <div>
+                      <span className="text-gray-500">Stop Loss</span>
+                      <p className="text-red-400 font-semibold tabular-nums">${sig.stopLoss.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Take Profit</span>
+                      <p className="text-emerald-400 font-semibold tabular-nums">${sig.takeProfit.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">R:R</span>
+                      <p className="text-white font-semibold">1:{rr.toFixed(1)}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-400 mb-3">{sig.reason}</p>
+
+                  {exchangeConnected ? (
+                    <button
+                      onClick={async () => {
+                        setExecutingTrade(sig.id);
+                        try {
+                          await api.post('/trades/execute', {
+                            symbol: sig.symbol,
+                            side: sig.side,
+                            amount: 0.001, // minimum amount — user should adjust
+                            type: 'market',
+                            stopLoss: sig.stopLoss,
+                            takeProfit: sig.takeProfit,
+                            reason: `Signal from ${sig.agent.name}: ${sig.reason}`,
+                          });
+                          setLiveSignals(prev => prev.filter(s => s.id !== sig.id));
+                        } catch (err: any) {
+                          alert(err?.message || 'Trade failed');
+                        }
+                        setExecutingTrade(null);
+                      }}
+                      disabled={executingTrade === sig.id}
+                      className="w-full py-2.5 rounded-lg bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-50 transition-all"
+                    >
+                      {executingTrade === sig.id ? 'Executing...' : `Execute ${sig.side.toUpperCase()} ${sig.symbol}`}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShowConnectModal(true)}
+                      className="w-full py-2.5 rounded-lg border border-[#B8FF3C]/20 bg-[#B8FF3C]/10 text-[#B8FF3C] font-semibold text-sm hover:bg-[#B8FF3C]/20 transition-all"
+                    >
+                      Connect Exchange to Execute
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Agent Comms — Live Feed from real agents */}
       {agentComms.length > 0 && (

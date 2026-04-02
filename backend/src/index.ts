@@ -146,6 +146,21 @@ app.listen(config.port, () => {
     // Generate first comm after 30 seconds, then every 5 minutes
     setTimeout(generateComms, 30000);
     setInterval(generateComms, 5 * 60 * 1000);
+
+    // Generate AI trade signals every 10 minutes
+    const runSignals = async () => {
+      try {
+        const { generateSignals, expireSignals } = await import("./services/signal.service");
+        await expireSignals();
+        await generateSignals();
+      } catch (err) {
+        console.error("[Signals] Scheduler error:", err);
+      }
+    };
+
+    // First signal after 1 minute, then every 10 minutes
+    setTimeout(runSignals, 60000);
+    setInterval(runSignals, 10 * 60 * 1000);
   }
 });
 

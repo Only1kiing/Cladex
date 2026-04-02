@@ -224,4 +224,18 @@ router.get("/recent", async (req: Request, res: Response) => {
   res.json({ trades });
 });
 
+// GET /api/trades/signals — get active signals from team agents
+router.get("/signals", async (_req: Request, res: Response) => {
+  const signals = await prisma.signal.findMany({
+    where: { status: "active" },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    include: {
+      agent: { select: { id: true, name: true, personality: true } },
+    },
+  });
+
+  res.json({ signals });
+});
+
 export default router;

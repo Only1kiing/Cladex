@@ -62,6 +62,7 @@ model Agent {
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   trades       Trade[]
   activityLogs ActivityLog[]
+  signals      Signal[]
 
   @@index([userId])
 }
@@ -136,6 +137,26 @@ model ActivityLog {
 
   @@index([userId])
   @@index([agentId])
+}
+
+model Signal {
+  id          String   @id @default(cuid())
+  agentId     String
+  symbol      String
+  side        String
+  entryPrice  Float
+  stopLoss    Float
+  takeProfit  Float
+  confidence  Int
+  reason      String
+  status      String   @default("active")
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([status])
 }
 
 model PaymentReceipt {
