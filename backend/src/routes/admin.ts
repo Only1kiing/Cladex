@@ -198,6 +198,18 @@ router.post("/generate-comms", async (req: Request, res: Response) => {
   res.json({ generated: messages.length, messages });
 });
 
+// POST /api/admin/generate-signal — force generate an AI signal
+router.post("/generate-signal", async (_req: Request, res: Response) => {
+  try {
+    const { generateSignals, expireSignals } = await import("../services/signal.service");
+    await expireSignals();
+    const count = await generateSignals();
+    res.json({ generated: count });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || "Signal generation failed" });
+  }
+});
+
 // GET /api/admin/exchange/:userId — check user's exchange connection and balance
 router.get("/exchange/:userId", async (req: Request, res: Response) => {
   const userId = req.params.userId as string;
