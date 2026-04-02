@@ -38,6 +38,87 @@ async function getExchangeInstance(userId: string) {
 }
 
 const router = Router();
+
+// POST /api/trades/report — worker reports executed trades (X-Worker-Auth)
+const reportTradeSchema = z.object({
+  agentId: z.string().min(1),
+  symbol: z.string().min(1),
+  action: z.string().min(1),         // BUY or SELL
+  amount: z.number().positive(),
+  price: z.number().positive(),
+  status: z.string().min(1),          // simulated, executed, error
+  reason: z.string().optional(),
+  orderId: z.string().optional(),
+  mode: z.string().optional(),
+  stopLoss: z.number().optional(),
+  takeProfit: z.number().optional(),
+  riskPercent: z.number().optional(),
+  takeProfitLevels: z.array(z.any()).optional(),
+  profit: z.number().optional(),
+});
+
+router.post("/report", async (req: Request, res: Response) => {
+  const workerSecret = req.headers["x-worker-auth"] as string | undefined;
+  if (!workerSecret || workerSecret !== process.env.WORKER_SECRET) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const body = reportTradeSchema.parse(req.body);
+
+    // Look up agent to get userId
+    const agent = await prisma.agent.findUnique({
+      where: { id: body.agentId },
+      select: { userId: true, totalTrades: true, profit: true },
+    });
+
+    if (!agent) {
+      res.status(404).json({ error: "Agent not found" });
+      return;
+    }
+
+    const sideMap: Record<string, "BUY" | "SELL"> = { BUY: "BUY", SELL: "SELL", buy: "BUY", sell: "SELL" };
+    const tradeSide = sideMap[body.action] || "BUY";
+
+    // Save trade
+    const trade = await prisma.trade.create({
+      data: {
+        userId: agent.userId,
+        agentId: body.agentId,
+        symbol: body.symbol,
+        side: tradeSide,
+        amount: body.amount,
+        price: body.price,
+        profit: body.profit || 0,
+        stopLoss: body.stopLoss ?? null,
+        takeProfit: body.takeProfit ?? null,
+        takeProfitLevels: body.takeProfitLevels ? body.takeProfitLevels as any : undefined,
+        riskPercent: body.riskPercent ?? null,
+        status: body.status === "error" ? "CANCELLED" : "OPEN",
+        reason: body.reason || `${body.action} via worker (${body.mode || "paper"})`,
+      },
+    });
+
+    // Update agent stats
+    await prisma.agent.update({
+      where: { id: body.agentId },
+      data: {
+        totalTrades: { increment: 1 },
+        profit: { increment: body.profit || 0 },
+      },
+    });
+
+    res.status(201).json({ trade });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: "Validation failed", details: err.errors });
+      return;
+    }
+    throw err;
+  }
+});
+
 router.use(authMiddleware);
 
 const executeTradeSchema = z.object({
@@ -214,7 +295,16 @@ router.post("/execute", async (req: Request, res: Response) => {
     });
 
     // ---- RISK ENGINE: post-trade check ----
-    const riskDecisions = await postTradeCheck(req.user!.id, body.agentId, 0);
+    // For new trades, profit is 0 at open. The real profit check matters
+    // on trade close. For now, track that a trade was opened successfully.
+    // Negative cost (slippage) is treated as initial loss signal.
+    const slippage = body.price && executedPrice
+      ? (body.side === "buy"
+          ? (executedPrice - body.price) / body.price   // paid more = negative
+          : (body.price - executedPrice) / body.price)  // got less = negative
+      : 0;
+    const initialPnl = slippage * tradeAmount * executedPrice;
+    const riskDecisions = await postTradeCheck(req.user!.id, body.agentId, initialPnl);
     // ---- END POST-TRADE ----
 
     res.status(201).json({

@@ -185,6 +185,7 @@ def process_agent(agent: Dict[str, Any]) -> None:
             trade_report = {
                 **sig,
                 **result,
+                "userId": user_id,
                 "agentId": agent_id,
                 "riskPercent": risk_result.get("riskPercent"),
                 "takeProfitLevels": risk_result.get("takeProfitLevels"),

@@ -370,10 +370,65 @@ export async function getPortfolioSnapshot(
 
   const dailyPnl = recentTrades.reduce((sum, t) => sum + t.profit, 0);
 
-  // Total balance = gas balance serves as proxy; in production this would
-  // call the exchange API. For the risk engine we use trade-derived data +
-  // peak balance tracking.
-  const totalBalance = user?.peakBalance || user?.gasBalance || 0;
+  // Fetch real exchange balance via ccxt
+  let exchangeBalance = 0;
+  try {
+    const exchangeRecord = await prisma.exchange.findFirst({
+      where: { userId, connected: true },
+      orderBy: { createdAt: "desc" },
+      select: { name: true, apiKey: true, apiSecret: true },
+    });
+
+    if (exchangeRecord) {
+      const ccxt = (await import("ccxt")).default;
+      const SUPPORTED: Record<string, string> = {
+        bybit: "bybit",
+        binance: "binance",
+        okx: "okx",
+        kucoin: "kucoin",
+      };
+      const ccxtId = SUPPORTED[exchangeRecord.name.toLowerCase()];
+      if (ccxtId) {
+        const ExchangeClass = (ccxt as Record<string, any>)[ccxtId];
+        if (ExchangeClass) {
+          const exchange = new ExchangeClass({
+            apiKey: exchangeRecord.apiKey,
+            secret: exchangeRecord.apiSecret,
+            enableRateLimit: true,
+            timeout: 10000,
+          });
+          const bal = await exchange.fetchBalance();
+          // Sum all non-zero balances in USD terms
+          const stables = ["USDT", "USDC", "USD", "BUSD", "DAI"];
+          for (const [asset, amount] of Object.entries(bal.total || {})) {
+            const val = amount as number;
+            if (val > 0) {
+              if (stables.includes(asset)) {
+                exchangeBalance += val;
+              } else {
+                // Use last known trade price as estimate — skip live ticker
+                // to avoid rate limits in the risk hot path
+                try {
+                  const ticker = await exchange.fetchTicker(`${asset}/USDT`);
+                  exchangeBalance += val * (ticker?.last || 0);
+                } catch {
+                  // Skip assets we can't price
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    // If exchange fetch fails, fall back to peak balance
+    console.error("[RISK] Exchange balance fetch failed:", err);
+  }
+
+  // Use real exchange balance if available, otherwise fall back to peak/gas
+  const totalBalance = exchangeBalance > 0
+    ? exchangeBalance
+    : (user?.peakBalance || user?.gasBalance || 0);
   const peakBalance = user?.peakBalance || 0;
 
   const currentDrawdown =

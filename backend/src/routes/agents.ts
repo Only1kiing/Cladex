@@ -6,6 +6,66 @@ import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
 
+// GET /api/agents/active — worker endpoint, returns all running agents with userId + exchange config
+router.get("/active", async (req: Request, res: Response) => {
+  const workerSecret = req.headers["x-worker-auth"] as string | undefined;
+  if (!workerSecret || workerSecret !== process.env.WORKER_SECRET) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const agents = await prisma.agent.findMany({
+    where: { status: "RUNNING" },
+    include: {
+      user: {
+        select: {
+          id: true,
+          exchanges: {
+            where: { connected: true },
+            orderBy: { createdAt: "desc" as const },
+            take: 1,
+            select: { name: true, apiKey: true, apiSecret: true },
+          },
+        },
+      },
+    },
+  });
+
+  // Flatten into the shape the worker expects
+  const result = agents.map((agent) => {
+    const exchange = agent.user.exchanges[0];
+    const strategyObj = agent.strategy as Record<string, unknown> || {};
+
+    return {
+      id: agent.id,
+      userId: agent.user.id,
+      name: agent.name,
+      personality: agent.personality,
+      strategy: strategyObj.type || strategyObj.strategy || "dca",
+      strategyConfig: {
+        ...strategyObj,
+        assets: agent.assets,
+      },
+      riskLevel: agent.riskLevel,
+      assets: agent.assets,
+      profit: agent.profit,
+      totalTrades: agent.totalTrades,
+      consecutiveLosses: agent.consecutiveLosses,
+      cooldownUntil: agent.cooldownUntil,
+      exchangeConfig: exchange
+        ? {
+            exchange: exchange.name.toLowerCase(),
+            apiKey: exchange.apiKey,
+            secret: exchange.apiSecret,
+            mode: process.env.TRADING_MODE || "paper",
+          }
+        : { mode: "paper" },
+    };
+  });
+
+  res.json({ agents: result });
+});
+
 // GET /api/agents/marketplace — public marketplace agents (no auth required)
 router.get("/marketplace", async (_req: Request, res: Response) => {
   const agents = await prisma.agent.findMany({

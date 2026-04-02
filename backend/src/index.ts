@@ -66,6 +66,59 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/risk", riskRoutes);
 
 // ---------------------------------------------------------------------------
+// Worker activity log endpoint
+// ---------------------------------------------------------------------------
+app.post("/api/activity/log", async (req: Request, res: Response) => {
+  const workerSecret = req.headers["x-worker-auth"] as string | undefined;
+  if (!workerSecret || workerSecret !== process.env.WORKER_SECRET) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const { agentId, type, message, details } = req.body;
+    if (!agentId || !message) {
+      res.status(400).json({ error: "agentId and message required" });
+      return;
+    }
+
+    // Look up agent to get userId
+    const prisma = (await import("./lib/prisma")).default;
+    const agent = await prisma.agent.findUnique({
+      where: { id: agentId },
+      select: { userId: true },
+    });
+
+    if (!agent) {
+      res.status(404).json({ error: "Agent not found" });
+      return;
+    }
+
+    const typeMap: Record<string, string> = {
+      trade: "TRADE",
+      error: "ALERT",
+      alert: "ALERT",
+      insight: "INSIGHT",
+    };
+
+    await prisma.activityLog.create({
+      data: {
+        userId: agent.userId,
+        agentId,
+        type: (typeMap[type?.toLowerCase()] || "INSIGHT") as any,
+        message,
+        data: details || undefined,
+      },
+    });
+
+    res.json({ ok: true });
+  } catch (err: any) {
+    console.error("[Activity Log] Error:", err);
+    res.status(500).json({ error: "Failed to log activity" });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // 404 handler
 // ---------------------------------------------------------------------------
 app.use((_req: Request, res: Response) => {
