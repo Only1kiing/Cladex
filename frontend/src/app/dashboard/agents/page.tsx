@@ -133,15 +133,22 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
     }
   };
 
-  const handleAsk = () => {
+  const handleAsk = async () => {
     const text = askInput.trim();
     if (!text || isAsking) return;
     setIsAsking(true);
     setAskResponse(null);
-    setTimeout(() => {
+    try {
+      const data = await api.post<{ response: string }>('/ai/ask-agent', {
+        agentId: agent.id,
+        question: text,
+      });
+      setAskResponse(data.response);
+    } catch {
+      // Fallback to mock if API fails
       setAskResponse(getAskResponse(agent.name, agent.personality, text));
-      setIsAsking(false);
-    }, 800 + Math.random() * 600);
+    }
+    setIsAsking(false);
   };
 
   const handlePublish = () => {

@@ -319,18 +319,40 @@ export default function AgentBuilderPage() {
     setInputValue('');
     setIsThinking(true);
 
-    setTimeout(() => {
-      const { text: responseText, config } = getMockResponse(text);
-      const assistantMsg: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: responseText,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-      setDraft((prev) => ({ ...prev, ...config }));
+    (async () => {
+      try {
+        const data = await api.post<{ agentConfig: { name: string; personality: string; strategy: Record<string, unknown>; riskLevel: string; assets: string[] } }>('/ai/generate-agent', { prompt: text });
+        const config = data.agentConfig;
+        const riskMap: Record<string, number> = { LOW: 3, MEDIUM: 5, HIGH: 8 };
+        const assistantMsg: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: `I've configured "${config.name}" — a ${config.personality} agent trading ${config.assets.join(', ')} with ${config.riskLevel.toLowerCase()} risk. ${(config.strategy as any)?.description || 'Ready to deploy.'}`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+        setDraft((prev) => ({
+          ...prev,
+          name: config.name,
+          personality: (config.personality?.toLowerCase() || 'sage') as AgentPersonality,
+          riskLevel: riskMap[config.riskLevel] || 5,
+          assets: config.assets,
+          strategy: (config.strategy as any)?.description || JSON.stringify(config.strategy),
+        }));
+      } catch {
+        // Fallback to mock if AI fails
+        const { text: responseText, config } = getMockResponse(text);
+        const assistantMsg: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: responseText,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+        setDraft((prev) => ({ ...prev, ...config }));
+      }
       setIsThinking(false);
-    }, 1500 + Math.random() * 1000);
+    })();
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
