@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 const EXCHANGES = [
   { id: 'bybit', name: 'Bybit', letter: 'BY', color: '#F7A600' },
@@ -18,6 +19,13 @@ export default function SettingsPage() {
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState('');
   const [isDark, setIsDark] = useState(true);
+  const [gasBalance, setGasBalance] = useState(0);
+  const [topUpAmount, setTopUpAmount] = useState('');
+  const [topUpStatus, setTopUpStatus] = useState<'idle' | 'paying' | 'confirming' | 'done' | 'error'>('idle');
+  const [topUpError, setTopUpError] = useState('');
+  const [solPrice, setSolPrice] = useState(0);
+
+  const SOLANA_ADDRESS = 'Pz1eoDHDQhH8Tb5buYDPSWSRP1ydxvDyqWhdJYxEznU';
 
   useEffect(() => {
     const saved = localStorage.getItem('cladex_theme');
@@ -34,6 +42,16 @@ export default function SettingsPage() {
       } catch {
         // Backend unreachable
       }
+      try {
+        const gas = await api.get<{ gasBalance: number }>('/dashboard/gas');
+        if (gas) setGasBalance(gas.gasBalance);
+      } catch { /* */ }
+      // Fetch SOL price
+      try {
+        const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        const d = await r.json();
+        if (d?.solana?.usd) setSolPrice(d.solana.usd);
+      } catch { setSolPrice(140); }
     })();
   }, []);
 
@@ -178,6 +196,153 @@ export default function SettingsPage() {
                 No withdrawals
               </span>
             </div>
+          </div>
+        )}
+      </section>
+
+      {/* Gas Balance */}
+      <section className="rounded-2xl border border-[#1e1e2e] bg-[#111118] p-6">
+        <h2 className="text-lg font-semibold text-gray-100 mb-1">Gas Balance</h2>
+        <p className="text-xs text-gray-500 mb-4">Gas is required to execute trades. $0.50 per trade.</p>
+
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-3xl font-black text-white tabular-nums">${gasBalance.toFixed(2)}</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {gasBalance > 0 ? `${Math.floor(gasBalance / 0.5)} trades available` : 'Top up to start trading'}
+            </p>
+          </div>
+        </div>
+
+        {topUpStatus === 'done' ? (
+          <div className="text-center py-4">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center mb-3">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <h3 className="text-sm font-bold text-white mb-1">Gas Topped Up!</h3>
+            <p className="text-xs text-gray-400">${topUpAmount} gas added to your balance.</p>
+            <button
+              onClick={() => { setTopUpStatus('idle'); setTopUpAmount(''); }}
+              className="mt-3 text-xs text-[#B8FF3C] hover:brightness-110 transition-colors"
+            >
+              Top up more
+            </button>
+          </div>
+        ) : topUpStatus === 'paying' || topUpStatus === 'confirming' ? (
+          <div className="flex flex-col items-center py-6 gap-3">
+            <svg className="w-10 h-10 animate-spin text-[#B8FF3C]" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+            </svg>
+            <p className="text-sm font-semibold text-gray-200">
+              {topUpStatus === 'paying' ? 'Approve in Phantom...' : 'Confirming on-chain...'}
+            </p>
+            <p className="text-xs text-gray-500">Do not close this page</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-gray-400 font-medium mb-2 block">Select amount</label>
+              <div className="grid grid-cols-4 gap-2">
+                {['5', '10', '25', '50'].map((amt) => {
+                  const solAmt = solPrice > 0 ? (parseFloat(amt) / solPrice).toFixed(4) : '...';
+                  return (
+                    <button
+                      key={amt}
+                      onClick={() => { setTopUpAmount(amt); setTopUpError(''); }}
+                      className={`py-3 rounded-xl text-center transition-all ${
+                        topUpAmount === amt
+                          ? 'bg-[#B8FF3C]/20 text-[#B8FF3C] border-2 border-[#B8FF3C]/40'
+                          : 'bg-white/[0.03] text-gray-400 border-2 border-white/[0.06] hover:border-[#B8FF3C]/20'
+                      }`}
+                    >
+                      <span className="text-sm font-bold block">${amt}</span>
+                      <span className="text-[9px] text-gray-500">{solAmt} SOL</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {topUpError && (
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
+                <span className="text-xs text-red-400">{topUpError}</span>
+              </div>
+            )}
+
+            {topUpAmount && (
+              <button
+                onClick={async () => {
+                  setTopUpError('');
+                  const phantom = (window as any)?.solana;
+                  if (!phantom?.isPhantom) {
+                    window.open('https://phantom.app/', '_blank');
+                    return;
+                  }
+
+                  try {
+                    setTopUpStatus('paying');
+                    await phantom.connect();
+
+                    const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+                    const fromPubkey = phantom.publicKey;
+                    const toPubkey = new PublicKey(SOLANA_ADDRESS);
+                    const usd = parseFloat(topUpAmount);
+                    const solAmt = solPrice > 0 ? usd / solPrice : 0;
+                    const lamports = Math.round(solAmt * LAMPORTS_PER_SOL);
+
+                    const transaction = new Transaction().add(
+                      SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
+                    );
+                    transaction.feePayer = fromPubkey;
+                    const { blockhash } = await connection.getLatestBlockhash();
+                    transaction.recentBlockhash = blockhash;
+
+                    const signed = await phantom.signTransaction(transaction);
+                    setTopUpStatus('confirming');
+
+                    const signature = await connection.sendRawTransaction(signed.serialize());
+                    await connection.confirmTransaction(signature, 'confirmed');
+
+                    // Credit gas on backend
+                    await api.post('/dashboard/gas/topup', { amount: usd });
+                    setGasBalance(prev => prev + usd);
+
+                    // Save receipt
+                    try {
+                      await api.post('/payments/receipt', {
+                        plan: `Gas Top-Up $${topUpAmount}`,
+                        amount: topUpAmount,
+                        receiptData: `solana:${signature}`,
+                        fileName: `gas_${signature.slice(0, 8)}.sol`,
+                      });
+                    } catch { /* */ }
+
+                    setTopUpStatus('done');
+                  } catch (err: any) {
+                    setTopUpStatus('idle');
+                    const msg = err?.message || 'Payment failed';
+                    if (msg.includes('User rejected')) {
+                      setTopUpError('Transaction cancelled');
+                    } else if (msg.includes('insufficient')) {
+                      setTopUpError('Insufficient SOL in wallet');
+                    } else {
+                      setTopUpError(msg);
+                    }
+                  }
+                }}
+                className="w-full py-3 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all shadow-lg shadow-[#B8FF3C]/20"
+              >
+                Pay {solPrice > 0 ? `${(parseFloat(topUpAmount) / solPrice).toFixed(4)} SOL` : `$${topUpAmount}`} via Phantom
+              </button>
+            )}
+
+            <p className="text-[10px] text-gray-600 text-center">
+              Phantom wallet required. Payment is instant and on-chain.
+            </p>
           </div>
         )}
       </section>
