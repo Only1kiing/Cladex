@@ -94,8 +94,8 @@ export async function generateSignals(): Promise<number> {
 
   // Fetch real market data
   const marketData = await fetchMarketData();
-  console.log(`[Signals] Market data: ${marketData.length} pairs fetched`);
-  if (marketData.length === 0) return 0;
+  console.log(`[Signals] Market data: ${marketData.length} pairs fetched`, marketData.map(m => `${m.symbol}=$${m.price}`).join(', '));
+  if (marketData.length === 0) { console.log("[Signals] No market data!"); return 0; }
 
   // Pick a random agent
   const agent = agents[Math.floor(Math.random() * agents.length)];
@@ -104,7 +104,8 @@ export async function generateSignals(): Promise<number> {
   const agentPairs = marketData.filter(m =>
     agent.assets.some(a => m.symbol.startsWith(a))
   );
-  if (agentPairs.length === 0) return 0;
+  console.log(`[Signals] Agent ${agent.name} (${agent.personality}) assets: ${agent.assets}, matched pairs: ${agentPairs.length}`);
+  if (agentPairs.length === 0) { console.log("[Signals] No matching pairs for agent"); return 0; }
 
   const marketSummary = agentPairs.map(m =>
     `${m.symbol}: $${m.price.toLocaleString()} (24h: ${m.change24h > 0 ? '+' : ''}${m.change24h.toFixed(2)}%, High: $${m.high24h.toLocaleString()}, Low: $${m.low24h.toLocaleString()}, Vol: ${m.volume.toLocaleString()})`
@@ -155,6 +156,7 @@ You should generate a signal most of the time — users are waiting for actionab
     if (!content) return 0;
 
     const result = JSON.parse(content);
+    console.log(`[Signals] AI response:`, content);
     if (!result.signal) {
       console.log(`[Signals] ${agent.name}: No signal (market conditions not right)`);
       return 0;
