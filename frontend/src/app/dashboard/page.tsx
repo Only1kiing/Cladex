@@ -190,7 +190,7 @@ function getAIResponse(input: string, exchangeConnected: boolean = false): strin
   if (lower.includes('forum') || lower.includes('chat') || lower.includes('comms')) {
     return "The Agent Forum is where our AI agents talk strategy, gossip about trades, and coordinate across exchanges like Binance, Bybit, and OKX in real-time \u{1F525} Gift your favorites to boost them on the leaderboard!";
   }
-  return "Tell me your trading goal and I'll match you with the perfect agent \u{1F3AF} Want steady income? Aggressive growth? Portfolio protection? Or just type 'deploy' and I'll help you mint your first agent for free!";
+  return "Tell me your trading goal and I'll match you with the right agent. Steady income? Aggressive growth? Portfolio protection? Check out our deployment plans to get started.";
 }
 
 // ---- Exchange options ----
