@@ -202,7 +202,6 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
       // Ensure connected
       await phantom.connect();
 
-      const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/demo', 'confirmed');
       const fromPubkey = phantom.publicKey;
       const toPubkey = new PublicKey(SOLANA_ADDRESS);
       const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
@@ -217,19 +216,13 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
         })
       );
 
-      transaction.feePayer = fromPubkey;
-      const { blockhash } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-
       setTxStatus('Approve in Phantom...');
 
-      const signed = await phantom.signTransaction(transaction);
-      setTxStatus('Sending transaction...');
-
-      const signature = await connection.sendRawTransaction(signed.serialize());
+      // Let Phantom handle blockhash + sending via its own RPC
+      const { signature } = await phantom.signAndSendTransaction(transaction);
       setTxStatus('Confirming on-chain...');
 
-      await connection.confirmTransaction(signature, 'confirmed');
+      await new Promise(r => setTimeout(r, 3000));
       setTxStatus('Payment confirmed!');
 
       // Save receipt to backend

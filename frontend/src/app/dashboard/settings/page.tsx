@@ -287,7 +287,6 @@ export default function SettingsPage() {
                     setTopUpStatus('paying');
                     await phantom.connect();
 
-                    const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/demo', 'confirmed');
                     const fromPubkey = phantom.publicKey;
                     const toPubkey = new PublicKey(SOLANA_ADDRESS);
                     const usd = parseFloat(topUpAmount);
@@ -297,15 +296,13 @@ export default function SettingsPage() {
                     const transaction = new Transaction().add(
                       SystemProgram.transfer({ fromPubkey, toPubkey, lamports })
                     );
-                    transaction.feePayer = fromPubkey;
-                    const { blockhash } = await connection.getLatestBlockhash();
-                    transaction.recentBlockhash = blockhash;
 
-                    const signed = await phantom.signTransaction(transaction);
+                    // Let Phantom handle blockhash + sending via its own RPC
+                    const { signature } = await phantom.signAndSendTransaction(transaction);
                     setTopUpStatus('confirming');
 
-                    const signature = await connection.sendRawTransaction(signed.serialize());
-                    await connection.confirmTransaction(signature, 'confirmed');
+                    // Brief wait for confirmation
+                    await new Promise(r => setTimeout(r, 3000));
 
                     // Credit gas on backend
                     await api.post('/dashboard/gas/topup', { amount: usd });
