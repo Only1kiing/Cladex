@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
@@ -89,8 +90,11 @@ interface PointsData {
 /* ── Page ─────────────────────────────────────────────────────────── */
 
 export default function PointsPage() {
+  const { user } = useAuth();
   const [pointsData, setPointsData] = useState<PointsData | null>(null);
   const [activeTab, setActiveTab] = useState<'earn' | 'spend' | 'airdrop'>('earn');
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteLink = typeof window !== 'undefined' && user?.id ? `${window.location.origin}/signup?ref=${user.id}` : '';
 
   useEffect(() => {
     (async () => {
@@ -259,6 +263,28 @@ export default function PointsPage() {
               </div>
             </div>
           ))}
+
+          {/* Invite Link */}
+          {inviteLink && (
+            <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/[0.05] p-4">
+              <p className="text-xs font-semibold text-indigo-300 mb-2">Your Invite Link</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-[11px] text-gray-300 font-mono bg-white/[0.04] rounded-lg px-3 py-2 truncate">
+                  {inviteLink}
+                </code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(inviteLink).catch(() => {});
+                    setInviteCopied(true);
+                    setTimeout(() => setInviteCopied(false), 2000);
+                  }}
+                  className="shrink-0 px-3 py-2 rounded-lg bg-indigo-500/15 border border-indigo-500/25 text-xs font-semibold text-indigo-400 hover:bg-indigo-500/25 transition-colors"
+                >
+                  {inviteCopied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
