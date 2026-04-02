@@ -218,25 +218,17 @@ function ChatPanel({
 // AI MARKET SCANNER
 // ==============================================================
 
-const SCAN_STEPS = [
-  { label: 'Scanning BTC/USDT orderbook', icon: '📊' },
-  { label: 'Analyzing ETH momentum', icon: '📈' },
-  { label: 'Checking SOL volume patterns', icon: '🔍' },
-  { label: 'Running RSI divergence scan', icon: '⚡' },
-  { label: 'Evaluating support/resistance', icon: '🎯' },
-  { label: 'Cross-referencing whale wallets', icon: '🐋' },
-  { label: 'Computing risk/reward ratios', icon: '🧮' },
-  { label: 'Analyzing funding rates', icon: '💰' },
-  { label: 'Scanning LINK breakout patterns', icon: '🔗' },
-  { label: 'Processing on-chain data', icon: '⛓️' },
-  { label: 'Checking liquidation heatmaps', icon: '🔥' },
-  { label: 'Evaluating market sentiment', icon: '🧠' },
-];
+interface LivePrice {
+  symbol: string;
+  price: number;
+  change: number;
+}
 
 function AIMarketScanner() {
   const [stepIdx, setStepIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const [activeAgentIdx, setActiveAgentIdx] = useState(0);
+  const [livePrices, setLivePrices] = useState<LivePrice[]>([]);
 
   const agents = [
     { name: 'Raze', personality: 'apex', color: 'text-red-400', status: 'Hunting breakouts' },
@@ -245,16 +237,49 @@ function AIMarketScanner() {
     { name: 'Byte', personality: 'sage', color: 'text-cyan-400', status: 'Crunching data' },
   ];
 
+  const scanSteps = livePrices.length > 0 ? [
+    { label: `Scanning BTC/USDT — $${livePrices.find(p => p.symbol === 'BTC/USDT')?.price.toLocaleString() || '...'}`, icon: '📊' },
+    { label: `Analyzing ETH — $${livePrices.find(p => p.symbol === 'ETH/USDT')?.price.toLocaleString() || '...'}`, icon: '📈' },
+    { label: `Checking SOL — $${livePrices.find(p => p.symbol === 'SOL/USDT')?.price.toLocaleString() || '...'}`, icon: '🔍' },
+    { label: 'Running RSI divergence scan', icon: '⚡' },
+    { label: 'Evaluating support/resistance levels', icon: '🎯' },
+    { label: 'Cross-referencing whale wallets', icon: '🐋' },
+    { label: 'Computing risk/reward ratios', icon: '🧮' },
+    { label: `Scanning LINK — $${livePrices.find(p => p.symbol === 'LINK/USDT')?.price.toLocaleString() || '...'}`, icon: '🔗' },
+    { label: 'Checking liquidation heatmaps', icon: '🔥' },
+    { label: 'Evaluating market sentiment', icon: '🧠' },
+  ] : [
+    { label: 'Connecting to markets...', icon: '📊' },
+    { label: 'Loading price data...', icon: '📈' },
+  ];
+
   useEffect(() => {
+    // Fetch real prices
+    const fetchPrices = async () => {
+      try {
+        const pairs = ['BTC-USDT', 'ETH-USDT', 'SOL-USDT', 'LINK-USDT', 'AVAX-USDT'];
+        const prices: LivePrice[] = [];
+        for (const pair of pairs) {
+          try {
+            const data = await api.get<{ symbol: string; price: number; change: number }>(`/trades/price/${pair}`);
+            if (data?.price) {
+              prices.push({ symbol: data.symbol, price: data.price, change: data.change || 0 });
+            }
+          } catch { /* skip this pair */ }
+        }
+        if (prices.length > 0) setLivePrices(prices);
+      } catch { /* no prices */ }
+    };
+
+    fetchPrices();
+    const priceInterval = setInterval(fetchPrices, 30000);
+
     const stepInterval = setInterval(() => {
-      setStepIdx(prev => (prev + 1) % SCAN_STEPS.length);
+      setStepIdx(prev => (prev + 1) % Math.max(scanSteps.length, 1));
     }, 3000);
 
     const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) return 0;
-        return prev + Math.random() * 8 + 2;
-      });
+      setProgress(prev => prev >= 100 ? 0 : prev + Math.random() * 8 + 2);
     }, 500);
 
     const agentInterval = setInterval(() => {
@@ -262,13 +287,14 @@ function AIMarketScanner() {
     }, 4000);
 
     return () => {
+      clearInterval(priceInterval);
       clearInterval(stepInterval);
       clearInterval(progressInterval);
       clearInterval(agentInterval);
     };
   }, []);
 
-  const currentStep = SCAN_STEPS[stepIdx];
+  const currentStep = scanSteps[stepIdx % scanSteps.length];
   const activeAgent = agents[activeAgentIdx];
 
   return (
@@ -293,9 +319,24 @@ function AIMarketScanner() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white mb-1">Cladex AI is analyzing the market</p>
-            <p className="text-xs text-gray-400 truncate">{currentStep.label}...</p>
+            <p className="text-xs text-gray-400 truncate">{currentStep.label}</p>
           </div>
         </div>
+
+        {/* Live prices ticker */}
+        {livePrices.length > 0 && (
+          <div className="flex items-center gap-4 mb-4 overflow-x-auto no-scrollbar py-1">
+            {livePrices.map(p => (
+              <div key={p.symbol} className="flex items-center gap-2 shrink-0">
+                <span className="text-[11px] font-semibold text-gray-300">{p.symbol.replace('/USDT', '')}</span>
+                <span className="text-[11px] font-bold text-white tabular-nums">${p.price.toLocaleString()}</span>
+                <span className={`text-[10px] font-semibold ${p.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {p.change >= 0 ? '+' : ''}{p.change?.toFixed(1)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Progress bar */}
         <div className="mb-4">
