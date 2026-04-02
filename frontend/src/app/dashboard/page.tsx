@@ -984,7 +984,7 @@ export default function DashboardPage() {
                           await api.post('/trades/execute', {
                             symbol: sig.symbol,
                             side: sig.side,
-                            usdAmount: 5, // use $5 per trade
+                            usdAmount: 2, // use $2 per trade
                             type: 'market',
                             stopLoss: sig.stopLoss,
                             takeProfit: sig.takeProfit,

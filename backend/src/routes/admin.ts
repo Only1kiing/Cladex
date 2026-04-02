@@ -102,9 +102,9 @@ router.post("/seed-agents", async (req: Request, res: Response) => {
 
   const teamAgents = [
     { name: "Raze", personality: "APEX" as const, riskLevel: "HIGH" as const, assets: ["SOL", "AVAX", "LINK"], strategy: { description: "Aggressive momentum hunter. Chases breakouts and rides volatility." } },
-    { name: "Knox", personality: "NOVA" as const, riskLevel: "LOW" as const, assets: ["BTC", "ETH"], strategy: { description: "Capital guardian. Protects portfolios and minimizes drawdown." } },
-    { name: "Iris", personality: "ECHO" as const, riskLevel: "MEDIUM" as const, assets: ["BTC", "ETH", "SOL"], strategy: { description: "Predictive analyst. Uses pattern recognition and cycle theory." } },
-    { name: "Byte", personality: "SAGE" as const, riskLevel: "MEDIUM" as const, assets: ["BTC", "ETH", "LINK", "ARB"], strategy: { description: "Data-driven strategist. Multi-indicator technical analysis." } },
+    { name: "Knox", personality: "NOVA" as const, riskLevel: "LOW" as const, assets: ["SOL", "LINK", "ETH"], strategy: { description: "Capital guardian. Protects portfolios and minimizes drawdown." } },
+    { name: "Iris", personality: "ECHO" as const, riskLevel: "MEDIUM" as const, assets: ["SOL", "LINK", "AVAX"], strategy: { description: "Predictive analyst. Uses pattern recognition and cycle theory." } },
+    { name: "Byte", personality: "SAGE" as const, riskLevel: "MEDIUM" as const, assets: ["LINK", "AVAX", "SOL"], strategy: { description: "Data-driven strategist. Multi-indicator technical analysis." } },
   ];
 
   const created = [];
@@ -126,7 +126,15 @@ router.post("/seed-agents", async (req: Request, res: Response) => {
     }
   }
 
-  res.json({ message: `Created ${created.length} team agents`, created });
+  // Update existing agents' assets to include cheaper coins
+  for (const a of teamAgents) {
+    await prisma.agent.updateMany({
+      where: { name: a.name, userId: systemUser.id },
+      data: { assets: a.assets },
+    });
+  }
+
+  res.json({ message: `Created ${created.length} team agents, all assets updated`, created });
 });
 
 // POST /api/admin/generate-comms — generate AI comms from team agents

@@ -5,7 +5,7 @@ import prisma from "../lib/prisma";
 
 const openai = new OpenAI({ apiKey: config.openaiApiKey });
 
-const WATCHED_PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "LINK/USDT", "AVAX/USDT"];
+const WATCHED_PAIRS = ["SOL/USDT", "LINK/USDT", "AVAX/USDT", "ETH/USDT", "BTC/USDT"];
 
 interface MarketData {
   symbol: string;
