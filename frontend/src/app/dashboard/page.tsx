@@ -686,10 +686,11 @@ export default function DashboardPage() {
     setApiSecret('');
   };
 
-  const handleModalConnect = () => {
+  const handleModalConnect = async () => {
     if (!selectedExchange || !apiKey || !apiSecret) return;
     setConnectingState('connecting');
-    setTimeout(() => {
+    try {
+      await api.post('/exchange/connect', { name: selectedExchange, apiKey, apiSecret });
       setConnectingState('success');
       setTimeout(() => {
         setExchangeConnected(true);
@@ -701,7 +702,6 @@ export default function DashboardPage() {
           role: 'ai',
           text: `\u2705 Your ${exchanges.find((e) => e.id === selectedExchange)?.name} account is now connected! Portfolio syncing... Let's build your first trading agent! \u{1F680}`,
         }]);
-        // After the connection success message, add suggested trades
         setTimeout(() => {
           setChatMessages((prev) => [...prev, {
             id: `ai-trades-${Date.now()}`,
@@ -710,7 +710,14 @@ export default function DashboardPage() {
           }]);
         }, 2500);
       }, 1500);
-    }, 2000);
+    } catch {
+      setConnectingState('idle');
+      setChatMessages((prev) => [...prev, {
+        id: `ai-error-${Date.now()}`,
+        role: 'ai',
+        text: "Failed to connect exchange. Please check your API keys and try again.",
+      }]);
+    }
   };
 
   // ==================================================================

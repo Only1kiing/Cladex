@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 const EXCHANGES = [
   { id: 'bybit', name: 'Bybit', letter: 'BY', color: '#F7A600' },
@@ -27,6 +28,17 @@ export default function SettingsPage() {
     if (saved === 'light') {
       setIsDark(false);
     }
+    // Load connected exchanges from backend
+    (async () => {
+      try {
+        const data = await api.get<{ exchanges: { id: string; name: string; connected: boolean }[] }>('/exchange');
+        if (data?.exchanges?.length > 0) {
+          setConnectedExchange(data.exchanges[0].name);
+        }
+      } catch {
+        // Backend unreachable
+      }
+    })();
   }, []);
 
   const toggleTheme = () => {
@@ -57,15 +69,19 @@ export default function SettingsPage() {
     }, 1500);
   };
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     if (!selectedExchange || !apiKey || !apiSecret) return;
     setConnecting(true);
-    setTimeout(() => {
+    try {
+      await api.post('/exchange/connect', { name: selectedExchange, apiKey, apiSecret });
       setConnectedExchange(selectedExchange);
-      setConnecting(false);
       setApiKey('');
       setApiSecret('');
-    }, 2000);
+    } catch {
+      // Connection failed — could show error
+    } finally {
+      setConnecting(false);
+    }
   };
 
   return (
