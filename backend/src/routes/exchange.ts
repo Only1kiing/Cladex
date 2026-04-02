@@ -33,10 +33,18 @@ async function fetchExchangeBalance(
   if (!exchange) return { total: 0, balances: [] };
 
   try {
+    await exchange.loadMarkets();
     const bal = await exchange.fetchBalance();
     const balances: { asset: string; free: number; total: number; usdValue?: number }[] = [];
     let total = 0;
     const stables = ["USDT", "USDC", "USD", "BUSD", "DAI", "TUSD"];
+
+    let tickers: Record<string, any> = {};
+    try {
+      tickers = await exchange.fetchTickers();
+    } catch {
+      // Fallback to individual fetches
+    }
 
     for (const [asset, data] of Object.entries(bal.total || {})) {
       const amount = data as number;
@@ -46,14 +54,17 @@ async function fetchExchangeBalance(
           balances.push({ asset, free, total: amount, usdValue: amount });
           total += amount;
         } else {
-          try {
-            const ticker = await exchange.fetchTicker(`${asset}/USDT`);
-            const usdValue = amount * (ticker?.last || 0);
-            balances.push({ asset, free, total: amount, usdValue });
-            total += usdValue;
-          } catch {
-            balances.push({ asset, free, total: amount, usdValue: 0 });
+          const pair = `${asset}/USDT`;
+          let price = tickers[pair]?.last || 0;
+          if (!price) {
+            try {
+              const ticker = await exchange.fetchTicker(pair);
+              price = ticker?.last || 0;
+            } catch { /* skip */ }
           }
+          const usdValue = amount * price;
+          balances.push({ asset, free, total: amount, usdValue });
+          total += usdValue;
         }
       }
     }

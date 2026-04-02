@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import ccxt from "ccxt";
 import prisma from "../lib/prisma";
 
 const router = Router();
@@ -76,6 +77,73 @@ router.delete("/users/:id", async (req: Request, res: Response) => {
 
   await prisma.user.delete({ where: { id: userId } });
   res.json({ message: `User ${user.email} deleted` });
+});
+
+// GET /api/admin/exchange/:userId — check user's exchange connection and balance
+router.get("/exchange/:userId", async (req: Request, res: Response) => {
+  const userId = req.params.userId as string;
+  const exchangeRecord = await prisma.exchange.findFirst({
+    where: { userId, connected: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!exchangeRecord) {
+    res.json({ connected: false, message: "No exchange connected for this user" });
+    return;
+  }
+
+  const SUPPORTED: Record<string, string> = { bybit: "bybit", binance: "binance", okx: "okx", kucoin: "kucoin" };
+  const ccxtId = SUPPORTED[exchangeRecord.name.toLowerCase()];
+
+  if (!ccxtId) {
+    res.json({ connected: true, exchange: exchangeRecord.name, message: "Unsupported exchange for balance check" });
+    return;
+  }
+
+  try {
+    const ExchangeClass = (ccxt as Record<string, any>)[ccxtId];
+    const exchange = new ExchangeClass({
+      apiKey: exchangeRecord.apiKey,
+      secret: exchangeRecord.apiSecret,
+      enableRateLimit: true,
+      timeout: 15000,
+    });
+
+    await exchange.loadMarkets();
+    const bal = await exchange.fetchBalance();
+
+    const balances: { asset: string; amount: number; usdValue: number }[] = [];
+    let totalUsd = 0;
+    const stables = ["USDT", "USDC", "USD", "BUSD"];
+
+    for (const [asset, amount] of Object.entries(bal.total || {})) {
+      const val = amount as number;
+      if (val > 0) {
+        if (stables.includes(asset)) {
+          balances.push({ asset, amount: val, usdValue: val });
+          totalUsd += val;
+        } else {
+          try {
+            const ticker = await exchange.fetchTicker(`${asset}/USDT`);
+            const usdValue = val * (ticker?.last || 0);
+            balances.push({ asset, amount: val, usdValue: Math.round(usdValue * 100) / 100 });
+            totalUsd += usdValue;
+          } catch {
+            balances.push({ asset, amount: val, usdValue: 0 });
+          }
+        }
+      }
+    }
+
+    res.json({
+      connected: true,
+      exchange: exchangeRecord.name,
+      totalUsd: Math.round(totalUsd * 100) / 100,
+      balances: balances.sort((a, b) => b.usdValue - a.usdValue),
+    });
+  } catch (err: any) {
+    res.json({ connected: true, exchange: exchangeRecord.name, error: err?.message || "Failed to fetch balance" });
+  }
 });
 
 export default router;

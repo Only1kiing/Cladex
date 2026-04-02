@@ -29,9 +29,13 @@ async function getExchangeBalance(
       timeout: 15000,
     });
 
+    // Load markets first so ticker calls work
+    await exchange.loadMarkets();
+
     const bal = await exchange.fetchBalance();
     const balances: { asset: string; free: number; total: number; usdValue?: number }[] = [];
     let totalUsd = 0;
+    const stables = ["USDT", "USDC", "USD", "BUSD", "DAI", "TUSD"];
 
     // Collect non-zero balances
     const nonZeroAssets: { asset: string; free: number; total: number }[] = [];
@@ -43,38 +47,39 @@ async function getExchangeBalance(
       }
     }
 
-    // Fetch USD prices for crypto assets
+    // Fetch all tickers at once for efficiency
+    let tickers: Record<string, any> = {};
+    try {
+      tickers = await exchange.fetchTickers();
+    } catch {
+      // Fallback: fetch individually below
+    }
+
     for (const item of nonZeroAssets) {
-      const stables = ["USDT", "USDC", "USD", "BUSD", "DAI", "TUSD"];
       if (stables.includes(item.asset)) {
         balances.push({ ...item, usdValue: item.total });
         totalUsd += item.total;
       } else {
-        try {
-          const ticker = await exchange.fetchTicker(`${item.asset}/USDT`);
-          const price = ticker?.last || 0;
-          const usdValue = item.total * price;
-          balances.push({ ...item, usdValue });
-          totalUsd += usdValue;
-        } catch {
-          // No USDT pair — try USD
+        const pair = `${item.asset}/USDT`;
+        let price = tickers[pair]?.last || 0;
+
+        // If bulk fetch didn't have it, try individual
+        if (!price) {
           try {
-            const ticker = await exchange.fetchTicker(`${item.asset}/USD`);
-            const price = ticker?.last || 0;
-            const usdValue = item.total * price;
-            balances.push({ ...item, usdValue });
-            totalUsd += usdValue;
+            const ticker = await exchange.fetchTicker(pair);
+            price = ticker?.last || 0;
           } catch {
-            // Can't price this asset — add without USD value
-            balances.push({ ...item, usdValue: 0 });
+            // Skip this asset's USD value
           }
         }
+
+        const usdValue = item.total * price;
+        balances.push({ ...item, usdValue });
+        totalUsd += usdValue;
       }
     }
 
-    // Sort by USD value descending
     balances.sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0));
-
     return { totalUsd: Math.round(totalUsd * 100) / 100, balances };
   } catch {
     return { totalUsd: 0, balances: [] };
