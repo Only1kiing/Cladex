@@ -294,7 +294,7 @@ export default function SettingsPage() {
                     const lamports = Math.round(solAmt * LAMPORTS_PER_SOL);
 
                     // Fetch blockhash via Phantom's connection
-                    const connection = new Connection(phantom.connection?.rpcEndpoint || 'https://api.mainnet-beta.solana.com');
+                    const connection = new Connection('https://rpc.ankr.com/solana');
                     const { blockhash } = await connection.getLatestBlockhash();
 
                     const transaction = new Transaction({
