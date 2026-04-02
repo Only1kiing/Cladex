@@ -812,7 +812,7 @@ export default function DashboardPage() {
       )}
 
       {/* Missed Signals Banner */}
-      <MissedSignalsBanner count={missedCount} pnl={missedPnl} manualPnl={executedTrades.reduce((sum, t) => sum + t.result, 0)} />
+      {!exchangeConnected && <MissedSignalsBanner count={missedCount} pnl={missedPnl} manualPnl={executedTrades.reduce((sum, t) => sum + t.result, 0)} />}
 
       {/* Header */}
       <div>
@@ -1210,23 +1210,23 @@ export default function DashboardPage() {
 
 
       {/* Trade Execution Modal */}
-      <TradeExecutionModal
+      {!exchangeConnected && <TradeExecutionModal
         isOpen={showTradeModal}
         signal={selectedSignal}
         onClose={() => { setShowTradeModal(false); setSelectedSignal(null); }}
         onExecute={executeSignal}
         exchangeConnected={exchangeConnected}
         exchangeName={selectedExchange ? exchanges.find(e => e.id === selectedExchange)?.name : undefined}
-      />
+      />}
 
-      {/* Upgrade Prompt */}
-      <UpgradePrompt
+      {/* Upgrade Prompt — demo only */}
+      {!exchangeConnected && <UpgradePrompt
         isOpen={showUpgradePrompt && !upgradePromptDismissed}
         onClose={() => { setShowUpgradePrompt(false); setUpgradePromptDismissed(true); }}
         manualTrades={manualTradeCount}
         missedSignals={missedCount}
         missedPnl={missedPnl}
-      />
+      />}
 
       {/* ============================================ */}
       {/* Connect Exchange Modal (with simulation)    */}
