@@ -1,26 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { api } from '@/lib/api';
 
 const EXCHANGES = [
   { id: 'bybit', name: 'Bybit', letter: 'BY', color: '#F7A600' },
   { id: 'binance', name: 'Binance', letter: 'B', color: '#F0B90B' },
-  { id: 'mask', name: 'Mask', letter: 'M', color: '#1C8CF0' },
-  { id: 'polymarket', name: 'Polymarket', letter: 'PM', color: '#00D395' },
+  { id: 'okx', name: 'OKX', letter: 'OK', color: '#FFFFFF' },
+  { id: 'kucoin', name: 'KuCoin', letter: 'KC', color: '#23AF91' },
 ];
 
 export default function SettingsPage() {
-  const [balance, setBalance] = useState(0);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [showDeposit, setShowDeposit] = useState(false);
-  const [depositing, setDepositing] = useState(false);
   const [connectedExchange, setConnectedExchange] = useState<string | null>(null);
   const [selectedExchange, setSelectedExchange] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState('');
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
@@ -55,32 +51,35 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeposit = () => {
-    const amount = parseFloat(depositAmount);
-    if (isNaN(amount) || amount <= 0) return;
-    setDepositing(true);
-    setTimeout(() => {
-      const newBalance = balance + amount;
-      setBalance(newBalance);
-      localStorage.setItem('cladex_gas_balance', newBalance.toString());
-      setDepositAmount('');
-      setShowDeposit(false);
-      setDepositing(false);
-    }, 1500);
-  };
-
   const handleConnect = async () => {
     if (!selectedExchange || !apiKey || !apiSecret) return;
     setConnecting(true);
+    setConnectError('');
     try {
       await api.post('/exchange/connect', { name: selectedExchange, apiKey, apiSecret });
       setConnectedExchange(selectedExchange);
       setApiKey('');
       setApiSecret('');
-    } catch {
-      // Connection failed — could show error
+      localStorage.setItem('cladex_exchange_connected', 'true');
+      localStorage.removeItem('cladex_demo_mode');
+    } catch (err: any) {
+      setConnectError(err?.message || 'Failed to connect. Check your API keys.');
     } finally {
       setConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      const data = await api.get<{ exchanges: { id: string }[] }>('/exchange');
+      if (data?.exchanges?.[0]) {
+        await api.delete(`/exchange/${data.exchanges[0].id}`);
+      }
+      setConnectedExchange(null);
+      localStorage.removeItem('cladex_exchange_connected');
+    } catch {
+      setConnectedExchange(null);
+      localStorage.removeItem('cladex_exchange_connected');
     }
   };
 
@@ -88,32 +87,32 @@ export default function SettingsPage() {
     <div className="space-y-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-sm text-gray-400 mt-1">Manage your exchange connection and balance</p>
+        <p className="text-sm text-gray-400 mt-1">Manage your exchange connection</p>
       </div>
 
       {/* Connected Exchange */}
       <section className="rounded-2xl border border-[#1e1e2e] bg-[#111118] p-6">
-        <h2 className="text-lg font-semibold text-gray-100 mb-4">Connected Exchange</h2>
+        <h2 className="text-lg font-semibold text-gray-100 mb-4">Exchange Connection</h2>
 
         {connectedExchange ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold"
-                style={{ backgroundColor: `${EXCHANGES.find(e => e.id === connectedExchange)?.color}20`, color: EXCHANGES.find(e => e.id === connectedExchange)?.color }}
+                style={{ backgroundColor: `${EXCHANGES.find(e => e.id === connectedExchange)?.color || '#666'}20`, color: EXCHANGES.find(e => e.id === connectedExchange)?.color || '#666' }}
               >
-                {EXCHANGES.find(e => e.id === connectedExchange)?.letter}
+                {EXCHANGES.find(e => e.id === connectedExchange)?.letter || connectedExchange.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-200">{EXCHANGES.find(e => e.id === connectedExchange)?.name}</p>
+                <p className="text-sm font-semibold text-gray-200">{EXCHANGES.find(e => e.id === connectedExchange)?.name || connectedExchange}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-xs text-emerald-400">Connected</span>
                 </div>
               </div>
             </div>
             <button
-              onClick={() => setConnectedExchange(null)}
+              onClick={handleDisconnect}
               className="px-4 py-2 rounded-lg border border-red-500/20 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors"
             >
               Disconnect
@@ -126,7 +125,7 @@ export default function SettingsPage() {
               {EXCHANGES.map((ex) => (
                 <button
                   key={ex.id}
-                  onClick={() => setSelectedExchange(ex.id)}
+                  onClick={() => { setSelectedExchange(ex.id); setConnectError(''); }}
                   className={`rounded-lg border-2 p-3 flex items-center gap-2 transition-all duration-200 ${
                     selectedExchange === ex.id
                       ? 'border-[#B8FF3C]/60 bg-[#B8FF3C]/10'
@@ -143,6 +142,13 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
+
+            {connectError && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 mb-4">
+                <span className="text-xs text-red-400">{connectError}</span>
+              </div>
+            )}
+
             {selectedExchange && (
               <div className="space-y-3 mb-4">
                 <div>
@@ -158,7 +164,7 @@ export default function SettingsPage() {
                   disabled={!apiKey || !apiSecret || connecting}
                   className="w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
-                  {connecting ? (<><svg className="w-4 h-4 animate-spin inline mr-1.5" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" /></svg>Connecting...</>) : 'Connect Exchange'}
+                  {connecting ? (<><svg className="w-4 h-4 animate-spin inline mr-1.5" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" /></svg>Validating keys...</>) : 'Connect Exchange'}
                 </button>
               </div>
             )}
@@ -174,122 +180,6 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
-      </section>
-
-      {/* Gas Balance */}
-      <section className="rounded-2xl border border-[#1e1e2e] bg-[#111118] p-6">
-        <h2 className="text-lg font-semibold text-gray-100 mb-1">Gas Balance</h2>
-        <p className="text-xs text-gray-500 mb-4">Gas powers your agents. Each trade costs a small gas fee. Top up to keep agents running.</p>
-
-        {balance < 2 && balance > 0 && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-4">
-            <span className="text-sm">&#x26A0;&#xFE0F;</span>
-            <span className="text-xs text-amber-300">Low gas — agents pause under $1</span>
-          </div>
-        )}
-        {balance === 0 && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 mb-4">
-            <span className="text-sm">&#x26A0;&#xFE0F;</span>
-            <span className="text-xs text-red-300">Agents paused — add gas to continue</span>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-3xl font-black text-white">${balance.toFixed(2)}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Available gas balance</p>
-            {balance === 0 && (
-              <p className="text-xs text-gray-500 mt-1">Add gas to deploy agents and start trading.</p>
-            )}
-          </div>
-          <button
-            onClick={() => setShowDeposit(!showDeposit)}
-            className="px-5 py-2.5 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-sm hover:bg-amber-500/30 transition-all"
-          >
-            Top Up Gas
-          </button>
-        </div>
-
-        {showDeposit && (
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-4 mb-4">
-            <label className="text-xs text-gray-400 font-medium mb-3 block">Select top up amount</label>
-            <div className="grid grid-cols-4 gap-2 mb-3">
-              {[5, 10, 25, 50].map((amt) => (
-                <button
-                  key={amt}
-                  onClick={() => setDepositAmount(String(amt))}
-                  className={`py-3 rounded-xl text-sm font-bold transition-all ${
-                    depositAmount === String(amt)
-                      ? 'bg-amber-500/20 text-amber-400 border-2 border-amber-500/40'
-                      : 'bg-white/[0.03] text-gray-400 border-2 border-white/[0.06] hover:border-amber-500/20 hover:text-amber-400'
-                  }`}
-                >
-                  ${amt}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={handleDeposit}
-              disabled={depositing || !depositAmount || parseFloat(depositAmount) <= 0}
-              className="w-full py-2.5 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              {depositing ? (<><svg className="w-4 h-4 animate-spin inline mr-1.5" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" /></svg>Processing...</>) : `Top Up $${depositAmount || '0'} Gas`}
-            </button>
-            <p className="text-[10px] text-gray-600 text-center mt-2">Gas will be deducted as agents execute trades</p>
-          </div>
-        )}
-
-        {/* Transaction History */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Recent Transactions</h3>
-          <div className="space-y-2">
-            {[
-              { type: 'Deposit', amount: '+$100.00', date: '2 days ago', color: 'text-emerald-400' },
-              { type: 'Trading Fee', amount: '-$2.40', date: '2 days ago', color: 'text-red-400' },
-              { type: 'Deposit', amount: '+$150.00', date: '5 days ago', color: 'text-emerald-400' },
-              { type: 'Agent Minting', amount: '-$25.00', date: '5 days ago', color: 'text-red-400' },
-              { type: 'Trading Fee', amount: '-$1.80', date: '1 week ago', color: 'text-red-400' },
-            ].map((tx, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-white/[0.03]">
-                <div>
-                  <p className="text-sm text-gray-300">{tx.type}</p>
-                  <p className="text-xs text-gray-600">{tx.date}</p>
-                </div>
-                <span className={`text-sm font-semibold ${tx.color}`}>{tx.amount}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Notice */}
-        <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <p className="text-xs text-amber-400">
-            Balance is used for trading fees and agent deployment costs only. Withdrawals are not supported — your trading funds stay on your connected exchange.
-          </p>
-        </div>
-      </section>
-
-      {/* Payment Preferences */}
-      <section className="rounded-2xl border border-[#1e1e2e] bg-[#111118] p-6">
-        <h2 className="text-lg font-semibold text-gray-100 mb-1">Payment Preferences</h2>
-        <p className="text-xs text-gray-500 mb-4">Choose how to pay for deployment and trading fees</p>
-
-        <div className="space-y-3">
-          <label className="flex items-center gap-3 p-4 rounded-xl border border-[#B8FF3C]/30 bg-[#B8FF3C]/[0.03] cursor-pointer">
-            <input type="radio" name="payment" defaultChecked className="accent-[#B8FF3C]" />
-            <div>
-              <p className="text-sm font-medium text-gray-200">Pay from Balance</p>
-              <p className="text-xs text-gray-500">Deduct fees and minting costs from your Cladex balance</p>
-            </div>
-          </label>
-          <label className="flex items-center gap-3 p-4 rounded-xl border border-[#1e1e2e] hover:border-white/[0.1] cursor-pointer transition-colors">
-            <input type="radio" name="payment" className="accent-[#B8FF3C]" />
-            <div>
-              <p className="text-sm font-medium text-gray-200">Connect Wallet</p>
-              <p className="text-xs text-gray-500">Pay directly from your connected wallet (MetaMask, etc.)</p>
-            </div>
-          </label>
-        </div>
       </section>
 
       {/* Appearance */}
@@ -328,6 +218,11 @@ export default function SettingsPage() {
           </button>
         </div>
       </section>
+
+      {/* Disclaimer */}
+      <p className="text-[10px] text-gray-600 text-center">
+        For demonstration purposes only. Past performance does not guarantee future results. Trading involves risk.
+      </p>
     </div>
   );
 }
