@@ -68,6 +68,14 @@ router.post("/execute", async (req: Request, res: Response) => {
       }
     }
 
+    // Check gas balance
+    const GAS_FEE = 0.50; // $0.50 per trade
+    const user = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { gasBalance: true } });
+    if (!user || user.gasBalance < GAS_FEE) {
+      res.status(400).json({ error: `Insufficient gas balance ($${user?.gasBalance?.toFixed(2) || '0.00'}). You need at least $${GAS_FEE} gas to execute a trade. Top up in Settings.` });
+      return;
+    }
+
     // Get user's exchange connection
     const exchangeData = await getExchangeInstance(req.user!.id);
     if (!exchangeData) {
@@ -157,8 +165,15 @@ router.post("/execute", async (req: Request, res: Response) => {
       },
     });
 
+    // Deduct gas fee
+    await prisma.user.update({
+      where: { id: req.user!.id },
+      data: { gasBalance: { decrement: GAS_FEE } },
+    });
+
     res.status(201).json({
       trade,
+      gasFee: GAS_FEE,
       order: {
         id: order.id,
         status: order.status,

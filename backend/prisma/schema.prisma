@@ -21,6 +21,7 @@ model User {
   activityLogs    ActivityLog[]
   paymentReceipts PaymentReceipt[]
   foundingPoints  Int          @default(10000)
+  gasBalance      Float        @default(0)
   referredBy    String?
   referralCode  String?   @unique
   emailVerified    Boolean  @default(false)

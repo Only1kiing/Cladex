@@ -218,6 +218,22 @@ router.post("/generate-signal", async (_req: Request, res: Response) => {
   }
 });
 
+// POST /api/admin/gas/:userId — credit gas to a user
+router.post("/gas/:userId", async (req: Request, res: Response) => {
+  const userId = req.params.userId as string;
+  const { amount } = req.body;
+  if (!amount || typeof amount !== "number") {
+    res.status(400).json({ error: "Amount required" });
+    return;
+  }
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { gasBalance: { increment: amount } },
+    select: { email: true, gasBalance: true },
+  });
+  res.json({ message: `Credited $${amount} gas to ${user.email}`, gasBalance: user.gasBalance });
+});
+
 // GET /api/admin/exchange/:userId — check user's exchange connection and balance
 router.get("/exchange/:userId", async (req: Request, res: Response) => {
   const userId = req.params.userId as string;

@@ -405,6 +405,7 @@ export default function DashboardPage() {
   // Real data from backend API
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [exchangeBalance, setExchangeBalance] = useState<{ total: number; balances: { asset: string; free: number; total: number; usdValue?: number }[] }>({ total: 0, balances: [] });
+  const [gasBalance, setGasBalance] = useState(0);
   const [tradeLogItems, setTradeLogItems] = useState<ActivityItem[]>([]);
   const [agentComms, setAgentComms] = useState<{ id: string; agentName: string; personality: string; message: string; type: string; timestamp: string }[]>([]);
 
@@ -490,6 +491,12 @@ export default function DashboardPage() {
     } catch {
       // Backend unreachable
     }
+
+    // Fetch gas balance
+    try {
+      const data = await api.get<{ gasBalance: number }>('/dashboard/gas');
+      if (data) setGasBalance(data.gasBalance);
+    } catch { /* */ }
 
     // Fetch live signals
     try {
@@ -1016,6 +1023,33 @@ export default function DashboardPage() {
         </section>
       ) : (
         <AIMarketScanner />
+      )}
+
+      {/* Gas Balance */}
+      {exchangeConnected && (
+        <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1e1e2e] bg-[#111118]">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500">Gas Balance</span>
+              <p className="text-sm font-bold text-white tabular-nums">${gasBalance.toFixed(2)}</p>
+            </div>
+            <span className="text-[10px] text-gray-600">$0.50/trade</span>
+          </div>
+          <a href="/dashboard/settings" className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-semibold text-amber-400 hover:bg-amber-500/20 transition-all">
+            Top Up
+          </a>
+        </div>
+      )}
+
+      {gasBalance <= 0 && exchangeConnected && (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+          <span className="text-xs text-red-400">No gas — top up to execute trades. $0.50 per trade.</span>
+        </div>
       )}
 
       {/* Market Intelligence — Live Feed from real agents */}

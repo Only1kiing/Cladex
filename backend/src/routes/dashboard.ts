@@ -205,4 +205,38 @@ router.get("/referrals", async (req: Request, res: Response) => {
   res.json({ referrals, total: referrals.length });
 });
 
+// GET /api/dashboard/gas — get gas balance
+router.get("/gas", async (req: Request, res: Response) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.id },
+    select: { gasBalance: true },
+  });
+  res.json({ gasBalance: user?.gasBalance || 0, feePerTrade: 0.50 });
+});
+
+// POST /api/dashboard/gas/topup — top up gas (after payment verified)
+router.post("/gas/topup", async (req: Request, res: Response) => {
+  const { amount } = req.body;
+  if (!amount || typeof amount !== "number" || amount <= 0) {
+    res.status(400).json({ error: "Invalid amount" });
+    return;
+  }
+
+  const user = await prisma.user.update({
+    where: { id: req.user!.id },
+    data: { gasBalance: { increment: amount } },
+    select: { gasBalance: true },
+  });
+
+  await prisma.activityLog.create({
+    data: {
+      userId: req.user!.id,
+      type: "INSIGHT",
+      message: `Gas topped up: +$${amount.toFixed(2)}`,
+    },
+  });
+
+  res.json({ gasBalance: user.gasBalance });
+});
+
 export default router;
