@@ -504,7 +504,7 @@ export default function DashboardPage() {
 
   // Real data from backend API
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
-  const [exchangeBalance, setExchangeBalance] = useState<{ total: number; balances: { asset: string; free: number; total: number }[] }>({ total: 0, balances: [] });
+  const [exchangeBalance, setExchangeBalance] = useState<{ total: number; balances: { asset: string; free: number; total: number; usdValue?: number }[] }>({ total: 0, balances: [] });
   const [gasBalance, setGasBalance] = useState(() => {
     if (typeof window === 'undefined') return 0;
     return parseFloat(localStorage.getItem('cladex_gas_balance') || '0');
@@ -856,15 +856,15 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="space-y-2">
-            {exchangeBalance.balances.slice(0, 6).map((b) => (
-              <div key={b.asset} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-300">{b.asset}</span>
-                <div className="text-right">
-                  <span className="text-sm font-semibold text-white tabular-nums">{b.total.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
-                  {b.free !== b.total && (
-                    <span className="text-[10px] text-gray-500 ml-1.5">({b.free.toLocaleString(undefined, { maximumFractionDigits: 4 })} free)</span>
-                  )}
+            {exchangeBalance.balances.slice(0, 8).map((b) => (
+              <div key={b.asset} className="flex items-center justify-between py-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-white">{b.asset}</span>
+                  <span className="text-xs text-gray-500">{b.total.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
                 </div>
+                <span className="text-sm font-semibold text-white tabular-nums">
+                  {b.usdValue ? `$${b.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+                </span>
               </div>
             ))}
           </div>

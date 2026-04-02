@@ -30,21 +30,52 @@ async function getExchangeBalance(
     });
 
     const bal = await exchange.fetchBalance();
-    const balances: { asset: string; free: number; total: number }[] = [];
+    const balances: { asset: string; free: number; total: number; usdValue?: number }[] = [];
     let totalUsd = 0;
 
+    // Collect non-zero balances
+    const nonZeroAssets: { asset: string; free: number; total: number }[] = [];
     for (const [asset, amount] of Object.entries(bal.total || {})) {
       const val = amount as number;
       if (val > 0) {
         const free = (bal.free?.[asset] as number) || 0;
-        balances.push({ asset, free, total: val });
-        if (asset === "USDT" || asset === "USDC" || asset === "USD" || asset === "BUSD") {
-          totalUsd += val;
+        nonZeroAssets.push({ asset, free, total: val });
+      }
+    }
+
+    // Fetch USD prices for crypto assets
+    for (const item of nonZeroAssets) {
+      const stables = ["USDT", "USDC", "USD", "BUSD", "DAI", "TUSD"];
+      if (stables.includes(item.asset)) {
+        balances.push({ ...item, usdValue: item.total });
+        totalUsd += item.total;
+      } else {
+        try {
+          const ticker = await exchange.fetchTicker(`${item.asset}/USDT`);
+          const price = ticker?.last || 0;
+          const usdValue = item.total * price;
+          balances.push({ ...item, usdValue });
+          totalUsd += usdValue;
+        } catch {
+          // No USDT pair — try USD
+          try {
+            const ticker = await exchange.fetchTicker(`${item.asset}/USD`);
+            const price = ticker?.last || 0;
+            const usdValue = item.total * price;
+            balances.push({ ...item, usdValue });
+            totalUsd += usdValue;
+          } catch {
+            // Can't price this asset — add without USD value
+            balances.push({ ...item, usdValue: 0 });
+          }
         }
       }
     }
 
-    return { totalUsd, balances };
+    // Sort by USD value descending
+    balances.sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0));
+
+    return { totalUsd: Math.round(totalUsd * 100) / 100, balances };
   } catch {
     return { totalUsd: 0, balances: [] };
   }

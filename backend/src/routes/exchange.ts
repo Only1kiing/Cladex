@@ -34,22 +34,32 @@ async function fetchExchangeBalance(
 
   try {
     const bal = await exchange.fetchBalance();
-    const balances: { asset: string; free: number; total: number }[] = [];
+    const balances: { asset: string; free: number; total: number; usdValue?: number }[] = [];
     let total = 0;
+    const stables = ["USDT", "USDC", "USD", "BUSD", "DAI", "TUSD"];
 
     for (const [asset, data] of Object.entries(bal.total || {})) {
       const amount = data as number;
       if (amount > 0) {
         const free = (bal.free?.[asset] as number) || 0;
-        balances.push({ asset, free, total: amount });
-        // Rough USD estimate — USDT/USDC count as $1
-        if (asset === "USDT" || asset === "USDC" || asset === "USD") {
+        if (stables.includes(asset)) {
+          balances.push({ asset, free, total: amount, usdValue: amount });
           total += amount;
+        } else {
+          try {
+            const ticker = await exchange.fetchTicker(`${asset}/USDT`);
+            const usdValue = amount * (ticker?.last || 0);
+            balances.push({ asset, free, total: amount, usdValue });
+            total += usdValue;
+          } catch {
+            balances.push({ asset, free, total: amount, usdValue: 0 });
+          }
         }
       }
     }
 
-    return { total, balances };
+    balances.sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0));
+    return { total: Math.round(total * 100) / 100, balances };
   } catch {
     return { total: 0, balances: [] };
   }
