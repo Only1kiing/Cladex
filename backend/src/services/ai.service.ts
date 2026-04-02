@@ -23,23 +23,31 @@ Return ONLY valid JSON with this exact structure:
   "name": "<creative agent name>",
   "personality": "<NOVA|SAGE|APEX|ECHO>",
   "strategy": {
+    "type": "<safeflow|trend_pro|beast_mode|dca>",
     "description": "<brief strategy description>",
     "indicators": ["<list of technical indicators>"],
     "timeframe": "<trading timeframe>",
     "entryConditions": ["<conditions>"],
     "exitConditions": ["<conditions>"],
     "stopLoss": <percentage as number>,
-    "takeProfit": <percentage as number>
+    "takeProfit": <percentage as number>,
+    "amount": 10
   },
   "riskLevel": "<LOW|MEDIUM|HIGH>",
   "assets": ["<crypto symbols like BTC, ETH, SOL>"]
 }
 
+Strategy types (pick the best match):
+- "safeflow": Capital preservation. Buys dips in uptrends using RSI + moving averages + volatility filter. Best for conservative users. Pairs with NOVA personality.
+- "trend_pro": Momentum trading. Rides trends using EMA crossovers + volume confirmation + breakout detection. Best for balanced users. Pairs with SAGE personality.
+- "beast_mode": Aggressive breakout hunter. Detects price compression + volume accumulation + explosive breakouts. Best for aggressive users. Pairs with APEX personality.
+- "dca": Simple dollar-cost averaging. Buys fixed amounts at regular intervals. Best for passive long-term holders.
+
 Personality guide:
-- NOVA: Conservative, capital preservation, low risk
-- SAGE: Data-driven, technical analysis focused, medium risk
-- APEX: Aggressive, seeks high-reward opportunities, high risk
-- ECHO: Sentiment-based, macro analysis, variable risk`;
+- NOVA: Conservative, capital preservation, low risk → use "safeflow"
+- SAGE: Data-driven, technical analysis focused, medium risk → use "trend_pro"
+- APEX: Aggressive, seeks high-reward opportunities, high risk → use "beast_mode"
+- ECHO: Predictive, pattern-based, variable risk → use "trend_pro" or "beast_mode"`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",

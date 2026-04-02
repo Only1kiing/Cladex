@@ -36,12 +36,25 @@ router.get("/active", async (req: Request, res: Response) => {
     const exchange = agent.user.exchanges[0];
     const strategyObj = agent.strategy as Record<string, unknown> || {};
 
+    // Resolve strategy type: explicit > personality-based fallback
+    const personalityStrategyMap: Record<string, string> = {
+      NOVA: "safeflow",
+      SAGE: "trend_pro",
+      APEX: "beast_mode",
+      ECHO: "trend_pro",
+    };
+    const strategyType =
+      (strategyObj.type as string) ||
+      (strategyObj.strategy as string) ||
+      personalityStrategyMap[agent.personality] ||
+      "dca";
+
     return {
       id: agent.id,
       userId: agent.user.id,
       name: agent.name,
       personality: agent.personality,
-      strategy: strategyObj.type || strategyObj.strategy || "dca",
+      strategy: strategyType,
       strategyConfig: {
         ...strategyObj,
         assets: agent.assets,
