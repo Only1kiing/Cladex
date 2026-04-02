@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
@@ -51,22 +52,10 @@ const LEVELS = [
   { level: 5, name: 'Whale', min: 15000, max: Infinity, color: 'text-yellow-400' },
 ];
 
-const EARN_METHODS = [
-  { emoji: '🚀', action: 'Deploy an Agent', reward: '+100 $CLDX', desc: 'One-time per agent deployed. More agents = more points.', progress: 100 },
-  { emoji: '📊', action: 'Daily Login', reward: '+25 $CLDX', desc: 'Log in every day to claim. Streak bonuses after 7 days.', progress: 100 },
-  { emoji: '💰', action: 'Profitable Trade', reward: '+10 $CLDX/trade', desc: 'Every trade that closes in profit earns you points.', progress: 60 },
-  { emoji: '🎁', action: 'Gift an Agent', reward: '+5 $CLDX', desc: 'Send gifts to agents in Agent Comms to earn points.', progress: 0 },
-  { emoji: '👥', action: 'Refer a Friend', reward: '+500 $CLDX', desc: 'Share your referral code. Earn 500 $CLDX per friend who signs up.', progress: 20 },
-  { emoji: '🏪', action: 'Use Marketplace Agent', reward: '+50 $CLDX', desc: 'Try agents from the Explore page to earn bonus points.', progress: 50 },
-  { emoji: '🏆', action: 'Top Agent Performance', reward: '+200 $CLDX', desc: 'Your agent reaches top 10 in the leaderboard weekly.', progress: 0 },
-  { emoji: '📈', action: 'Complete a Strategy', reward: '+75 $CLDX', desc: 'Finish a full DCA or Trend strategy cycle successfully.', progress: 30 },
-];
-
 const SPEND_OPTIONS = [
   { emoji: '🔓', name: 'Unlock Agent Slot', cost: 500, desc: 'Deploy one more agent simultaneously' },
   { emoji: '⚡', name: 'Boost Agent (24hr)', cost: 100, desc: 'Priority execution & lower latency for 24 hours' },
   { emoji: '💎', name: 'Reduce Fees (-2%)', cost: 1000, desc: 'Permanent fee reduction on all your trades' },
-  { emoji: '🎨', name: 'Premium Agent Skin', cost: 250, desc: 'Exclusive agent appearance & visual effects' },
   { emoji: '🏆', name: 'Featured in Leaderboard', cost: 2000, desc: 'Spotlight your agent for 7 days' },
 ];
 
@@ -84,16 +73,69 @@ const AIRDROP_BOOSTERS = [
   { action: 'Account age', boost: '+2% per month active' },
 ];
 
+interface PointsData {
+  totalPoints: number;
+  foundingPoints: number;
+  totalEarned: number;
+  breakdown: {
+    agents: { count: number; points: number };
+    trades: { count: number; total: number; points: number };
+    exchange: { connected: boolean; points: number };
+    logins: { days: number; points: number };
+  };
+  accountAge: number;
+}
+
 /* ── Page ─────────────────────────────────────────────────────────── */
 
 export default function PointsPage() {
-  const totalPoints = 2450;
+  const [pointsData, setPointsData] = useState<PointsData | null>(null);
+  const [activeTab, setActiveTab] = useState<'earn' | 'spend' | 'airdrop'>('earn');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await api.get<PointsData>('/dashboard/points');
+        setPointsData(data);
+      } catch {
+        // Backend unreachable
+      }
+    })();
+  }, []);
+
+  const totalPoints = pointsData?.totalPoints || 0;
   const displayPoints = useCountUp(totalPoints);
   const currentLevel = LEVELS.find((l) => totalPoints >= l.min && totalPoints < l.max) ?? LEVELS[LEVELS.length - 1];
   const progress = currentLevel.max === Infinity ? 100 : ((totalPoints - currentLevel.min) / (currentLevel.max - currentLevel.min)) * 100;
   const nextLevel = LEVELS.find((l) => l.min > totalPoints);
 
-  const [activeTab, setActiveTab] = useState<'earn' | 'spend' | 'airdrop'>('earn');
+  const earnMethods = [
+    {
+      emoji: '🎁', action: 'Founding Points', reward: `${(pointsData?.foundingPoints || 0).toLocaleString()} $CLDX`,
+      desc: 'Welcome bonus for early adopters.',
+      progress: pointsData?.foundingPoints ? 100 : 0,
+    },
+    {
+      emoji: '🚀', action: 'Deploy Agents', reward: `+${pointsData?.breakdown.agents.points || 0} $CLDX`,
+      desc: `${pointsData?.breakdown.agents.count || 0} agents deployed (+100 each)`,
+      progress: Math.min((pointsData?.breakdown.agents.count || 0) * 20, 100),
+    },
+    {
+      emoji: '💰', action: 'Profitable Trades', reward: `+${pointsData?.breakdown.trades.points || 0} $CLDX`,
+      desc: `${pointsData?.breakdown.trades.count || 0} profitable out of ${pointsData?.breakdown.trades.total || 0} total (+10 each)`,
+      progress: pointsData?.breakdown.trades.total ? Math.round((pointsData.breakdown.trades.count / pointsData.breakdown.trades.total) * 100) : 0,
+    },
+    {
+      emoji: '🔗', action: 'Connect Exchange', reward: pointsData?.breakdown.exchange.connected ? '+50 $CLDX' : '0 $CLDX',
+      desc: pointsData?.breakdown.exchange.connected ? 'Exchange connected!' : 'Connect your exchange to earn 50 $CLDX',
+      progress: pointsData?.breakdown.exchange.connected ? 100 : 0,
+    },
+    {
+      emoji: '📊', action: 'Daily Activity', reward: `+${pointsData?.breakdown.logins.points || 0} $CLDX`,
+      desc: `${pointsData?.breakdown.logins.days || 0} days active (+25/day, max 30 days)`,
+      progress: Math.min(((pointsData?.breakdown.logins.days || 0) / 30) * 100, 100),
+    },
+  ];
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
@@ -109,13 +151,14 @@ export default function PointsPage() {
         <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-purple-600/[0.08] blur-3xl" />
 
         <div className="relative flex flex-col sm:flex-row sm:items-center gap-6">
-          {/* Points balance */}
           <div className="flex items-center gap-4 flex-1">
             <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20">
               <BoltIcon />
             </div>
             <div>
-              <p className="text-3xl sm:text-4xl font-black text-white tabular-nums">{displayPoints.toLocaleString()} <span className="text-lg font-medium text-gray-500">$CLDX</span></p>
+              <p className="text-3xl sm:text-4xl font-black text-white tabular-nums">
+                {pointsData ? displayPoints.toLocaleString() : '—'} <span className="text-lg font-medium text-gray-500">$CLDX</span>
+              </p>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/15 ${currentLevel.color}`}>
                   {currentLevel.name}
@@ -125,7 +168,6 @@ export default function PointsPage() {
             </div>
           </div>
 
-          {/* Progress to next level */}
           {nextLevel && (
             <div className="sm:w-60">
               <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
@@ -143,27 +185,28 @@ export default function PointsPage() {
           )}
         </div>
 
-        {/* Daily streak */}
-        <div className="relative mt-6 pt-6 border-t border-white/[0.06]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-300 font-medium">Daily Streak</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 font-semibold">7 days 🔥</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Today&apos;s earnings</span>
-              <span className="text-sm font-bold text-emerald-400">+125 $CLDX</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 mt-3">
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-              <div key={`${day}-${i}`} className="flex-1 flex flex-col items-center gap-1">
-                <div className={`w-full h-1.5 rounded-full ${i < 5 ? 'bg-emerald-500' : i === 5 ? 'bg-indigo-500 animate-pulse' : 'bg-white/[0.06]'}`} />
-                <span className="text-[9px] text-gray-600">{day}</span>
+        {/* Summary */}
+        {pointsData && (
+          <div className="relative mt-6 pt-6 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-white">{pointsData.foundingPoints.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-500">Founding</p>
+                </div>
+                <span className="text-gray-700">+</span>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-emerald-400">{pointsData.totalEarned.toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-500">Earned</p>
+                </div>
               </div>
-            ))}
+              <div className="text-right">
+                <p className="text-[10px] text-gray-500">Account age</p>
+                <p className="text-sm font-semibold text-gray-300">{pointsData.accountAge} days</p>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Tab Navigation */}
@@ -191,7 +234,7 @@ export default function PointsPage() {
       {/* ===== EARN TAB ===== */}
       {activeTab === 'earn' && (
         <div className="space-y-3">
-          {EARN_METHODS.map((item) => (
+          {earnMethods.map((item) => (
             <div key={item.action} className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4 hover:border-white/[0.08] transition-colors">
               <div className="flex items-center gap-3">
                 <span className="text-2xl w-10 text-center shrink-0">{item.emoji}</span>
@@ -243,7 +286,6 @@ export default function PointsPage() {
       {/* ===== AIRDROP TAB ===== */}
       {activeTab === 'airdrop' && (
         <div className="space-y-6">
-          {/* Airdrop hero */}
           <div className="relative overflow-hidden rounded-2xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/[0.08] to-purple-500/[0.05] p-6 sm:p-8">
             <div className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full bg-indigo-500/15 blur-3xl" />
             <div className="relative">
@@ -252,16 +294,14 @@ export default function PointsPage() {
                 <h2 className="text-xl font-bold text-white">$CLADEX Token Airdrop</h2>
               </div>
               <p className="text-sm text-gray-300 leading-relaxed max-w-2xl">
-                The $CLADEX utility token powers the Cladex ecosystem — governance, fee discounts, staking rewards, and premium features. All deployment plan holders are automatically eligible for the airdrop. Your allocation depends on your plan, activity, and $CLDX balance.
+                The $CLADEX utility token powers the Cladex ecosystem — governance, fee discounts, staking rewards, and premium features. All deployment plan holders are automatically eligible. Your allocation depends on your plan, activity, and $CLDX balance.
               </p>
               <div className="mt-4 flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">You&apos;re eligible ✓</span>
                 <span className="text-xs text-gray-500">Snapshot date: TBA</span>
               </div>
             </div>
           </div>
 
-          {/* Allocation by plan */}
           <div>
             <h3 className="text-sm font-semibold text-gray-300 mb-3">Allocation by Deployment Plan</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -275,7 +315,6 @@ export default function PointsPage() {
             </div>
           </div>
 
-          {/* Boost your allocation */}
           <div>
             <h3 className="text-sm font-semibold text-gray-300 mb-3">Boost Your Allocation</h3>
             <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] divide-y divide-[#1e1e2e]">
@@ -288,32 +327,12 @@ export default function PointsPage() {
             </div>
           </div>
 
-          {/* Token utility */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-300 mb-3">$CLADEX Token Utility</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { icon: '🗳️', name: 'Governance', desc: 'Vote on platform decisions' },
-                { icon: '💸', name: 'Fee Discounts', desc: 'Pay less on every trade' },
-                { icon: '📈', name: 'Staking Rewards', desc: 'Stake to earn passive yield' },
-                { icon: '⭐', name: 'Premium Access', desc: 'Unlock exclusive features' },
-              ].map((item) => (
-                <div key={item.name} className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4 text-center">
-                  <span className="text-2xl block mb-2">{item.icon}</span>
-                  <p className="text-sm font-semibold text-gray-200">{item.name}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* CTA */}
           <div className="text-center pt-2">
             <Link
               href="/pricing"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#B8FF3C] text-black shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 hover:brightness-110 transition-all"
             >
-              Get a Deployment Plan to Maximize Your Airdrop
+              Get a Deployment Plan
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
@@ -341,6 +360,10 @@ export default function PointsPage() {
           ))}
         </div>
       </div>
+
+      <p className="text-[10px] text-gray-600 text-center">
+        For demonstration purposes only. Past performance does not guarantee future results. Trading involves risk.
+      </p>
     </div>
   );
 }

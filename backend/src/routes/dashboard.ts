@@ -149,4 +149,47 @@ router.get("/stats", async (req: Request, res: Response) => {
   });
 });
 
+// GET /api/dashboard/points — real points data
+router.get("/points", async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+
+  const [user, agentCount, tradeCount, profitableTrades, exchangeCount, referralCount] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { foundingPoints: true, createdAt: true } }),
+    prisma.agent.count({ where: { userId } }),
+    prisma.trade.count({ where: { userId } }),
+    prisma.trade.count({ where: { userId, profit: { gt: 0 } } }),
+    prisma.exchange.count({ where: { userId } }),
+    prisma.user.count(), // placeholder — real referral tracking would need a referral model
+  ]);
+
+  const foundingPoints = user?.foundingPoints || 0;
+
+  // Calculate earned points from real activity
+  const agentPoints = agentCount * 100;       // +100 per agent deployed
+  const tradePoints = profitableTrades * 10;   // +10 per profitable trade
+  const exchangePoints = exchangeCount > 0 ? 50 : 0; // +50 for connecting exchange
+
+  // Days since account creation (daily login approximation)
+  const daysSinceCreation = user?.createdAt
+    ? Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const loginPoints = Math.min(daysSinceCreation, 30) * 25; // +25/day, max 30 days
+
+  const totalEarned = agentPoints + tradePoints + exchangePoints + loginPoints;
+  const totalPoints = foundingPoints + totalEarned;
+
+  res.json({
+    totalPoints,
+    foundingPoints,
+    totalEarned,
+    breakdown: {
+      agents: { count: agentCount, points: agentPoints },
+      trades: { count: profitableTrades, total: tradeCount, points: tradePoints },
+      exchange: { connected: exchangeCount > 0, points: exchangePoints },
+      logins: { days: Math.min(daysSinceCreation, 30), points: loginPoints },
+    },
+    accountAge: daysSinceCreation,
+  });
+});
+
 export default router;
