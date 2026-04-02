@@ -158,9 +158,9 @@ app.listen(config.port, () => {
       }
     };
 
-    // First signal after 1 minute, then every 10 minutes
+    // First signal after 1 minute, then every 15 minutes
     setTimeout(runSignals, 60000);
-    setInterval(runSignals, 10 * 60 * 1000);
+    setInterval(runSignals, 15 * 60 * 1000);
   }
 });
 

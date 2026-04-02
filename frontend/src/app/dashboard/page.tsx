@@ -215,6 +215,135 @@ function ChatPanel({
 // ---- Signal Section (show 1, expand for more) ----
 
 // ==============================================================
+// AI MARKET SCANNER
+// ==============================================================
+
+const SCAN_STEPS = [
+  { label: 'Scanning BTC/USDT orderbook', icon: '📊' },
+  { label: 'Analyzing ETH momentum', icon: '📈' },
+  { label: 'Checking SOL volume patterns', icon: '🔍' },
+  { label: 'Running RSI divergence scan', icon: '⚡' },
+  { label: 'Evaluating support/resistance', icon: '🎯' },
+  { label: 'Cross-referencing whale wallets', icon: '🐋' },
+  { label: 'Computing risk/reward ratios', icon: '🧮' },
+  { label: 'Analyzing funding rates', icon: '💰' },
+  { label: 'Scanning LINK breakout patterns', icon: '🔗' },
+  { label: 'Processing on-chain data', icon: '⛓️' },
+  { label: 'Checking liquidation heatmaps', icon: '🔥' },
+  { label: 'Evaluating market sentiment', icon: '🧠' },
+];
+
+function AIMarketScanner() {
+  const [stepIdx, setStepIdx] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [activeAgentIdx, setActiveAgentIdx] = useState(0);
+
+  const agents = [
+    { name: 'Raze', personality: 'apex', color: 'text-red-400', status: 'Hunting breakouts' },
+    { name: 'Knox', personality: 'nova', color: 'text-emerald-400', status: 'Checking risk levels' },
+    { name: 'Iris', personality: 'echo', color: 'text-violet-400', status: 'Pattern matching' },
+    { name: 'Byte', personality: 'sage', color: 'text-cyan-400', status: 'Crunching data' },
+  ];
+
+  useEffect(() => {
+    const stepInterval = setInterval(() => {
+      setStepIdx(prev => (prev + 1) % SCAN_STEPS.length);
+    }, 3000);
+
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) return 0;
+        return prev + Math.random() * 8 + 2;
+      });
+    }, 500);
+
+    const agentInterval = setInterval(() => {
+      setActiveAgentIdx(prev => (prev + 1) % agents.length);
+    }, 4000);
+
+    return () => {
+      clearInterval(stepInterval);
+      clearInterval(progressInterval);
+      clearInterval(agentInterval);
+    };
+  }, []);
+
+  const currentStep = SCAN_STEPS[stepIdx];
+  const activeAgent = agents[activeAgentIdx];
+
+  return (
+    <section>
+      <div className="flex items-center gap-3 mb-3">
+        <h2 className="text-sm font-semibold text-gray-100">Trade Signals</h2>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#B8FF3C] animate-pulse" />
+          <span className="text-[10px] text-[#B8FF3C] font-medium">AI Scanning</span>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-5 overflow-hidden">
+        {/* Main scanner visual */}
+        <div className="flex items-center gap-4 mb-4">
+          <div className="relative w-12 h-12 shrink-0">
+            <div className="absolute inset-0 rounded-full border-2 border-[#B8FF3C]/20 animate-spin" style={{ animationDuration: '3s' }} />
+            <div className="absolute inset-1 rounded-full border-2 border-t-[#B8FF3C] border-r-transparent border-b-transparent border-l-transparent animate-spin" style={{ animationDuration: '1.5s' }} />
+            <div className="absolute inset-3 rounded-full bg-[#B8FF3C]/10 flex items-center justify-center">
+              <span className="text-sm">{currentStep.icon}</span>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white mb-1">Cladex AI is analyzing the market</p>
+            <p className="text-xs text-gray-400 truncate">{currentStep.label}...</p>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mb-4">
+          <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#B8FF3C]/60 to-[#B8FF3C] transition-all duration-500"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Active agents row */}
+        <div className="flex items-center gap-3 mb-3">
+          {agents.map((agent, i) => (
+            <div
+              key={agent.name}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all duration-500 ${
+                i === activeAgentIdx ? 'bg-white/[0.06] border border-white/[0.08]' : ''
+              }`}
+            >
+              <AgentAvatar personality={agent.personality as AgentPersonality} size={16} active={i === activeAgentIdx} />
+              <span className={`text-[11px] font-medium ${i === activeAgentIdx ? agent.color : 'text-gray-600'}`}>
+                {agent.name}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Current agent action */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+          <span className={`text-xs font-semibold ${activeAgent.color}`}>{activeAgent.name}:</span>
+          <span className="text-xs text-gray-400">{activeAgent.status}</span>
+          <span className="ml-auto flex items-center gap-1">
+            <span className="w-1 h-1 rounded-full bg-[#B8FF3C] animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-1 h-1 rounded-full bg-[#B8FF3C] animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-1 h-1 rounded-full bg-[#B8FF3C] animate-bounce" style={{ animationDelay: '300ms' }} />
+          </span>
+        </div>
+
+        <p className="text-[10px] text-gray-600 text-center mt-3">
+          Signals generated every 15 min from real market data + AI analysis
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ==============================================================
 // DASHBOARD PAGE
 // ==============================================================
 
@@ -766,8 +895,8 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Live Trade Signals */}
-      {liveSignals.length > 0 && (
+      {/* Live Trade Signals or AI Scanner */}
+      {liveSignals.length > 0 ? (
         <section>
           <div className="flex items-center gap-3 mb-3">
             <h2 className="text-sm font-semibold text-gray-100">Trade Signals</h2>
@@ -861,6 +990,8 @@ export default function DashboardPage() {
             })}
           </div>
         </section>
+      ) : (
+        <AIMarketScanner />
       )}
 
       {/* Agent Comms — Live Feed from real agents */}
