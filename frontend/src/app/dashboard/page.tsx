@@ -500,6 +500,7 @@ export default function DashboardPage() {
 
   // Real data from backend API
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
+  const [exchangeBalance, setExchangeBalance] = useState<{ total: number; balances: { asset: string; free: number; total: number }[] }>({ total: 0, balances: [] });
   const [gasBalance, setGasBalance] = useState(() => {
     if (typeof window === 'undefined') return 0;
     return parseFloat(localStorage.getItem('cladex_gas_balance') || '0');
@@ -579,6 +580,19 @@ export default function DashboardPage() {
         }
       } catch {
         // Backend unreachable — trade log stays empty
+      }
+    })();
+
+    // Fetch exchange balance
+    (async () => {
+      try {
+        const data = await api.get<{ connected: boolean; exchange?: string; total: number; balances: { asset: string; free: number; total: number }[] }>('/exchange/balance');
+        if (data?.connected) {
+          setExchangeConnected(true);
+          setExchangeBalance({ total: data.total, balances: data.balances || [] });
+        }
+      } catch {
+        // No exchange connected
       }
     })();
   }, []);
@@ -769,7 +783,7 @@ export default function DashboardPage() {
         <StatCard
           icon={<BalanceIcon />}
           label="Total Balance"
-          value={dashStats ? `$${dashStats.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '\u2014'}
+          value={exchangeBalance.total > 0 ? `$${exchangeBalance.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : dashStats ? `$${dashStats.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '\u2014'}
         />
         <StatCard
           icon={<PnlIcon />}

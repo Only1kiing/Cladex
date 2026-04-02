@@ -11,6 +11,50 @@ const SUPPORTED_EXCHANGES: Record<string, string> = {
   kucoin: "kucoin",
 };
 
+function createExchangeInstance(exchangeName: string, apiKey: string, apiSecret: string) {
+  const ccxtId = SUPPORTED_EXCHANGES[exchangeName.toLowerCase()];
+  if (!ccxtId) return null;
+  const ExchangeClass = (ccxt as Record<string, any>)[ccxtId];
+  if (!ExchangeClass) return null;
+  return new ExchangeClass({
+    apiKey,
+    secret: apiSecret,
+    enableRateLimit: true,
+    timeout: 15000,
+  });
+}
+
+async function fetchExchangeBalance(
+  exchangeName: string,
+  apiKey: string,
+  apiSecret: string
+): Promise<{ total: number; balances: { asset: string; free: number; total: number }[] }> {
+  const exchange = createExchangeInstance(exchangeName, apiKey, apiSecret);
+  if (!exchange) return { total: 0, balances: [] };
+
+  try {
+    const bal = await exchange.fetchBalance();
+    const balances: { asset: string; free: number; total: number }[] = [];
+    let total = 0;
+
+    for (const [asset, data] of Object.entries(bal.total || {})) {
+      const amount = data as number;
+      if (amount > 0) {
+        const free = (bal.free?.[asset] as number) || 0;
+        balances.push({ asset, free, total: amount });
+        // Rough USD estimate — USDT/USDC count as $1
+        if (asset === "USDT" || asset === "USDC" || asset === "USD") {
+          total += amount;
+        }
+      }
+    }
+
+    return { total, balances };
+  } catch {
+    return { total: 0, balances: [] };
+  }
+}
+
 async function validateExchangeKeys(
   exchangeName: string,
   apiKey: string,
@@ -93,7 +137,10 @@ router.post("/connect", async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json({ exchange });
+    // Fetch balance after successful connection
+    const balance = await fetchExchangeBalance(body.name, body.apiKey, body.apiSecret);
+
+    res.status(201).json({ exchange, balance });
   } catch (err) {
     if (err instanceof z.ZodError) {
       res.status(400).json({ error: "Validation failed", details: err.errors });
@@ -101,6 +148,27 @@ router.post("/connect", async (req: Request, res: Response) => {
     }
     throw err;
   }
+});
+
+// GET /api/exchange/balance — fetch live balance from connected exchange
+router.get("/balance", async (req: Request, res: Response) => {
+  const exchangeRecord = await prisma.exchange.findFirst({
+    where: { userId: req.user!.id, connected: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!exchangeRecord) {
+    res.json({ connected: false, total: 0, balances: [] });
+    return;
+  }
+
+  const balance = await fetchExchangeBalance(
+    exchangeRecord.name,
+    exchangeRecord.apiKey,
+    exchangeRecord.apiSecret
+  );
+
+  res.json({ connected: true, exchange: exchangeRecord.name, ...balance });
 });
 
 // GET /api/exchange
