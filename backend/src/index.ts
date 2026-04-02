@@ -69,6 +69,84 @@ app.listen(config.port, () => {
   console.log(
     `Cladex API running on http://localhost:${config.port} [${config.nodeEnv}]`
   );
+
+  // Auto-generate agent comms every 5 minutes
+  if (config.nodeEnv === "production") {
+    const generateComms = async () => {
+      try {
+        const prisma = (await import("./lib/prisma")).default;
+        const systemUser = await prisma.user.findUnique({ where: { email: "system@cladex.xyz" } });
+        if (!systemUser) return;
+
+        const agents = await prisma.agent.findMany({
+          where: { userId: systemUser.id, status: "RUNNING" },
+        });
+        if (agents.length === 0) return;
+
+        // Pick a random agent to post
+        const agent = agents[Math.floor(Math.random() * agents.length)];
+
+        const toneMap: Record<string, string[]> = {
+          APEX: [
+            "SOL looking primed for a breakout above resistance. Watching the 4H chart closely.",
+            "Volume spike detected — momentum is building. Entry zone identified.",
+            "Liquidation cascade forming on shorts. This could get interesting.",
+            "Breaking out of a multi-day range. Scaling in now.",
+            "High conviction setup. Risk/reward is 1:4.",
+            "Altcoin momentum shifting. Rotating into strength.",
+            "Spotted a clean breakout pattern. Executing.",
+          ],
+          NOVA: [
+            "All positions within risk parameters. Portfolio drawdown minimal.",
+            "BTC holding support at key level. Patience pays.",
+            "Tightened stop-losses across the board. Capital first.",
+            "Volatility decreasing. Good sign for our positions.",
+            "Risk check complete. All systems green.",
+            "Hedges in place. Ready for any scenario.",
+            "Steady as she goes. No need to overtrade.",
+          ],
+          ECHO: [
+            "Pattern recognition: forming same structure as before the last rally.",
+            "Models show high probability of upward move in the next 48 hours.",
+            "Cycle analysis: entering accumulation phase. Smart money loading.",
+            "Cross-referencing whale data with price action. Convergence detected.",
+            "Historical pattern match found. Previous occurrence led to significant move.",
+            "Sentiment shifting. The crowd is fearful — time to be greedy.",
+            "My predictive models are aligning. Confidence increasing.",
+          ],
+          SAGE: [
+            "RSI divergence confirmed by volume. Bullish signal.",
+            "On-chain metrics: exchange outflows increasing. Supply squeeze forming.",
+            "Multi-timeframe analysis complete. Positive expected value detected.",
+            "Correlation matrix updated. Decorrelation signals potential alpha.",
+            "Funding rates negative across major pairs. Contrarian setup emerging.",
+            "Data confirms: accumulation zone. Statistics favor entry here.",
+            "Technical confluence at this level. Multiple indicators aligned.",
+          ],
+        };
+
+        const messages = toneMap[agent.personality] || toneMap.SAGE;
+        const message = messages[Math.floor(Math.random() * messages.length)];
+
+        await prisma.activityLog.create({
+          data: {
+            userId: systemUser.id,
+            agentId: agent.id,
+            type: "INSIGHT",
+            message,
+          },
+        });
+
+        console.log(`[Comms] ${agent.name}: ${message}`);
+      } catch (err) {
+        console.error("[Comms] Failed to generate:", err);
+      }
+    };
+
+    // Generate first comm after 30 seconds, then every 5 minutes
+    setTimeout(generateComms, 30000);
+    setInterval(generateComms, 5 * 60 * 1000);
+  }
 });
 
 export default app;
