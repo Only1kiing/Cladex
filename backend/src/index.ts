@@ -31,6 +31,26 @@ app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Solana blockhash proxy — avoids CORS issues in browsers
+app.get("/api/solana/blockhash", async (_req: Request, res: Response) => {
+  try {
+    const resp = await fetch("https://api.mainnet-beta.solana.com", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getLatestBlockhash",
+        params: [{ commitment: "confirmed" }],
+      }),
+    });
+    const data = await resp.json() as any;
+    res.json({ blockhash: data.result.value.blockhash });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch blockhash" });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Routes
 // ---------------------------------------------------------------------------

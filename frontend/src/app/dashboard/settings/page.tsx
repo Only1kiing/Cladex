@@ -293,9 +293,9 @@ export default function SettingsPage() {
                     const solAmt = solPrice > 0 ? usd / solPrice : 0;
                     const lamports = Math.round(solAmt * LAMPORTS_PER_SOL);
 
-                    // Fetch blockhash via Phantom's connection
-                    const connection = new Connection('https://rpc.ankr.com/solana');
-                    const { blockhash } = await connection.getLatestBlockhash();
+                    // Fetch blockhash from our backend (avoids CORS)
+                    const bhResp = await api.get<{ blockhash: string }>('/solana/blockhash');
+                    const blockhash = bhResp.blockhash;
 
                     const transaction = new Transaction({
                       recentBlockhash: blockhash,

@@ -208,9 +208,9 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
 
       setTxStatus('Creating transaction...');
 
-      // Fetch blockhash via Phantom's connection
-      const connection = new Connection('https://rpc.ankr.com/solana');
-      const { blockhash } = await connection.getLatestBlockhash();
+      // Fetch blockhash from our backend (avoids CORS)
+      const bhResp = await api.get<{ blockhash: string }>('/solana/blockhash');
+      const blockhash = bhResp.blockhash;
 
       const transaction = new Transaction({
         recentBlockhash: blockhash,
