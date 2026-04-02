@@ -287,7 +287,7 @@ export default function SettingsPage() {
                     setTopUpStatus('paying');
                     await phantom.connect();
 
-                    const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+                    const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/demo', 'confirmed');
                     const fromPubkey = phantom.publicKey;
                     const toPubkey = new PublicKey(SOLANA_ADDRESS);
                     const usd = parseFloat(topUpAmount);

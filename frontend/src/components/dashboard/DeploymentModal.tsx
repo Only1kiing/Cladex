@@ -202,7 +202,7 @@ function DeploymentModal({ isOpen, onClose, plan }: DeploymentModalProps) {
       // Ensure connected
       await phantom.connect();
 
-      const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+      const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/demo', 'confirmed');
       const fromPubkey = phantom.publicKey;
       const toPubkey = new PublicKey(SOLANA_ADDRESS);
       const lamports = Math.round(solAmount * LAMPORTS_PER_SOL);
