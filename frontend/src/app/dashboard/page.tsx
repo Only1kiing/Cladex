@@ -290,10 +290,6 @@ export default function DashboardPage() {
   // Real data from backend API
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [exchangeBalance, setExchangeBalance] = useState<{ total: number; balances: { asset: string; free: number; total: number; usdValue?: number }[] }>({ total: 0, balances: [] });
-  const [gasBalance, setGasBalance] = useState(() => {
-    if (typeof window === 'undefined') return 0;
-    return parseFloat(localStorage.getItem('cladex_gas_balance') || '0');
-  });
   const [tradeLogItems, setTradeLogItems] = useState<ActivityItem[]>([]);
 
   // Signal system
@@ -584,80 +580,56 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Exchange Portfolio or Gas Balance */}
-      {exchangeConnected ? (
-        <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Exchange Portfolio</span>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-gray-600">Auto-refreshes every 30s</span>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[11px] text-emerald-400 font-medium">Live</span>
+      {/* Exchange Portfolio */}
+      <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4">
+        {exchangeConnected ? (
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Exchange Portfolio</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] text-gray-600">Auto-refreshes every 30s</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[11px] text-emerald-400 font-medium">Live</span>
+                </div>
               </div>
             </div>
-          </div>
-          {exchangeBalance.balances.length > 0 ? (
-            <div className="space-y-2">
-              {exchangeBalance.balances.slice(0, 8).map((b) => (
-                <div key={b.asset} className="flex items-center justify-between py-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-white">{b.asset}</span>
-                    <span className="text-xs text-gray-500">{b.total.toLocaleString(undefined, { maximumFractionDigits: 8 })}</span>
+            {exchangeBalance.balances.length > 0 ? (
+              <div className="space-y-2">
+                {exchangeBalance.balances.map((b) => (
+                  <div key={b.asset} className="flex items-center justify-between py-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-white">{b.asset}</span>
+                      <span className="text-xs text-gray-500">{b.total.toLocaleString(undefined, { maximumFractionDigits: 8 })}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-white tabular-nums">
+                      ${(b.usdValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold text-white tabular-nums">
-                    ${(b.usdValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                ))}
+                <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-400">Total</span>
+                  <span className="text-sm font-bold text-white tabular-nums">
+                    ${exchangeBalance.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                   </span>
                 </div>
-              ))}
-              <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-400">Total</span>
-                <span className="text-sm font-bold text-white tabular-nums">
-                  ${exchangeBalance.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
-                </span>
               </div>
-            </div>
-          ) : (
-            <p className="text-xs text-gray-500 py-2">Loading balances...</p>
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl border border-[#1e1e2e] bg-[#111118]">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div>
-              <span className="text-xs text-gray-500">Gas Balance</span>
-              <p className="text-sm font-bold text-white tabular-nums">${gasBalance.toFixed(2)}</p>
-            </div>
+            ) : (
+              <p className="text-xs text-gray-500 py-2">Loading balances...</p>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-sm text-gray-400 mb-3">Connect your exchange to see your portfolio</p>
+            <button
+              onClick={() => { setShowConnectModal(true); }}
+              className="px-4 py-2 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 text-xs font-semibold text-[#B8FF3C] hover:bg-[#B8FF3C]/20 transition-all"
+            >
+              Connect Exchange
+            </button>
           </div>
-          <a href="/dashboard/settings" className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-semibold text-amber-400 hover:bg-amber-500/20 transition-all">
-            Top Up Gas
-          </a>
-        </div>
-      )}
-
-      {/* Low Gas Warning — demo only */}
-      {!exchangeConnected && gasBalance < 2 && gasBalance > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <span className="text-sm">&#x26A0;&#xFE0F;</span>
-          <span className="text-xs text-amber-300">Low gas — agents pause under $1</span>
-        </div>
-      )}
-      {!exchangeConnected && gasBalance === 0 && deployedAgents.length > 0 && (
-        <div className="flex items-center justify-between px-4 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">&#x26A0;&#xFE0F;</span>
-            <span className="text-xs text-red-300">Agents paused — add gas to continue</span>
-          </div>
-          <a href="/dashboard/settings" className="text-[11px] font-semibold text-[#B8FF3C] hover:brightness-110 transition-colors">
-            Top Up Gas
-          </a>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Cladex AI Chat — Goals & Strategy */}
       <section>
