@@ -13,6 +13,7 @@ const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(1, "Name is required").max(100),
+  referralCode: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -39,14 +40,47 @@ router.post("/signup", async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(body.password, 12);
 
+    // Look up referrer if a referral code was provided
+    let referrerId: string | undefined;
+    if (body.referralCode) {
+      const referrer = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { referralCode: body.referralCode },
+            { id: body.referralCode },
+          ],
+        },
+        select: { id: true },
+      });
+      if (referrer) {
+        referrerId = referrer.id;
+      }
+    }
+
     const user = await prisma.user.create({
       data: {
         email: body.email,
         password: hashedPassword,
         name: body.name,
+        referralCode: undefined as any, // will be set after we have the id
+        ...(referrerId ? { referredBy: referrerId } : {}),
       },
       select: { id: true, email: true, name: true, createdAt: true },
     });
+
+    // Set referral code to first 8 chars of the user's cuid ID
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { referralCode: user.id.slice(0, 8) },
+    });
+
+    // Award referrer 500 founding points
+    if (referrerId) {
+      await prisma.user.update({
+        where: { id: referrerId },
+        data: { foundingPoints: { increment: 500 } },
+      });
+    }
 
     const token = generateToken(user.id);
 

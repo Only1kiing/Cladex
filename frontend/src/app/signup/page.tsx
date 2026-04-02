@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Key, ShieldCheck, Gift, Sparkles } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
@@ -609,8 +609,10 @@ function ConnectExchangeStep() {
   );
 }
 
-export default function SignupPage() {
+function SignupContent() {
   const { signup } = useAuth();
+  const searchParams = useSearchParams();
+  const ref = searchParams.get('ref') || undefined;
 
   // Steps: 'signup' | 'verification' | 'claim-points' | 'agent-comm-preview' | 'connect-exchange'
   const [step, setStep] = useState<'signup' | 'verification' | 'claim-points' | 'agent-comm-preview' | 'connect-exchange'>('signup');
@@ -667,7 +669,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const result = await signup(name, email, password);
+      const result = await signup(name, email, password, ref);
       if (result.success) {
         setStep('verification');
       } else {
@@ -849,5 +851,13 @@ export default function SignupPage() {
         </p>
       </motion.div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0f]" />}>
+      <SignupContent />
+    </Suspense>
   );
 }

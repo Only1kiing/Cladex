@@ -16,7 +16,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (name: string, email: string, password: string, referralCode?: string) => Promise<{ success: boolean; error?: string }>;
   connectWallet: () => Promise<{ success: boolean; address?: string; error?: string }>;
   connectExchange: (exchangeId: string, apiKey: string, apiSecret: string) => Promise<{ success: boolean; exchange?: string; error?: string }>;
   logout: () => void;
@@ -170,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signup = useCallback(async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const signup = useCallback(async (name: string, email: string, password: string, referralCode?: string): Promise<{ success: boolean; error?: string }> => {
     if (!name || !email || !password) {
       return { success: false, error: 'Please fill in all fields.' };
     }
@@ -184,7 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const { user, token } = await api.post<{ user: User; token: string }>('/auth/signup', { name, email, password });
+      const { user, token } = await api.post<{ user: User; token: string }>('/auth/signup', { name, email, password, ...(referralCode ? { referralCode } : {}) });
 
       localStorage.setItem(STORAGE_KEYS.token, token);
       localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user));

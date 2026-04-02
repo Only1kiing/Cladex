@@ -159,7 +159,7 @@ router.get("/points", async (req: Request, res: Response) => {
     prisma.trade.count({ where: { userId } }),
     prisma.trade.count({ where: { userId, profit: { gt: 0 } } }),
     prisma.exchange.count({ where: { userId } }),
-    prisma.user.count(), // placeholder — real referral tracking would need a referral model
+    prisma.user.count({ where: { referredBy: userId } }),
   ]);
 
   const foundingPoints = user?.foundingPoints || 0;
@@ -168,6 +168,7 @@ router.get("/points", async (req: Request, res: Response) => {
   const agentPoints = agentCount * 100;       // +100 per agent deployed
   const tradePoints = profitableTrades * 10;   // +10 per profitable trade
   const exchangePoints = exchangeCount > 0 ? 50 : 0; // +50 for connecting exchange
+  const referralPoints = referralCount * 500;  // +500 per referral
 
   // Days since account creation (daily login approximation)
   const daysSinceCreation = user?.createdAt
@@ -175,7 +176,7 @@ router.get("/points", async (req: Request, res: Response) => {
     : 0;
   const loginPoints = Math.min(daysSinceCreation, 30) * 25; // +25/day, max 30 days
 
-  const totalEarned = agentPoints + tradePoints + exchangePoints + loginPoints;
+  const totalEarned = agentPoints + tradePoints + exchangePoints + loginPoints + referralPoints;
   const totalPoints = foundingPoints + totalEarned;
 
   res.json({
@@ -187,9 +188,21 @@ router.get("/points", async (req: Request, res: Response) => {
       trades: { count: profitableTrades, total: tradeCount, points: tradePoints },
       exchange: { connected: exchangeCount > 0, points: exchangePoints },
       logins: { days: Math.min(daysSinceCreation, 30), points: loginPoints },
+      referrals: { count: referralCount, points: referralPoints },
     },
     accountAge: daysSinceCreation,
   });
+});
+
+// GET /api/dashboard/referrals
+router.get("/referrals", async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const referrals = await prisma.user.findMany({
+    where: { referredBy: userId },
+    select: { id: true, name: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
+  });
+  res.json({ referrals, total: referrals.length });
 });
 
 export default router;

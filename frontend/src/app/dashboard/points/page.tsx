@@ -74,6 +74,12 @@ const AIRDROP_BOOSTERS = [
   { action: 'Account age', boost: '+2% per month active' },
 ];
 
+interface Referral {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
 interface PointsData {
   totalPoints: number;
   foundingPoints: number;
@@ -83,6 +89,7 @@ interface PointsData {
     trades: { count: number; total: number; points: number };
     exchange: { connected: boolean; points: number };
     logins: { days: number; points: number };
+    referrals: { count: number; points: number };
   };
   accountAge: number;
 }
@@ -94,6 +101,7 @@ export default function PointsPage() {
   const [pointsData, setPointsData] = useState<PointsData | null>(null);
   const [activeTab, setActiveTab] = useState<'earn' | 'spend' | 'airdrop'>('earn');
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
   const inviteLink = typeof window !== 'undefined' && user?.id ? `${window.location.origin}/signup?ref=${user.id}` : '';
 
   useEffect(() => {
@@ -101,6 +109,12 @@ export default function PointsPage() {
       try {
         const data = await api.get<PointsData>('/dashboard/points');
         setPointsData(data);
+      } catch {
+        // Backend unreachable
+      }
+      try {
+        const data = await api.get<{ referrals: Referral[]; total: number }>('/dashboard/referrals');
+        setReferrals(data.referrals);
       } catch {
         // Backend unreachable
       }
@@ -140,9 +154,9 @@ export default function PointsPage() {
       progress: Math.min(((pointsData?.breakdown.logins.days || 0) / 30) * 100, 100),
     },
     {
-      emoji: '👥', action: 'Invite Frens', reward: '+500 $CLDX',
-      desc: 'Share your invite link. Earn 500 $CLDX for each fren who signs up.',
-      progress: 0,
+      emoji: '👥', action: 'Invite Frens', reward: `+${pointsData?.breakdown.referrals.points || 0} $CLDX`,
+      desc: `${pointsData?.breakdown.referrals.count || 0} frens invited (+500 each)`,
+      progress: Math.min((pointsData?.breakdown.referrals.count || 0) * 20, 100),
     },
   ];
 
@@ -285,6 +299,23 @@ export default function PointsPage() {
               </div>
             </div>
           )}
+
+          {/* Your Invited Frens */}
+          <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4">
+            <p className="text-xs font-semibold text-gray-300 mb-3">Your Invited Frens</p>
+            {referrals.length === 0 ? (
+              <p className="text-xs text-gray-500">No referrals yet. Share your invite link to earn 500 $CLDX per fren!</p>
+            ) : (
+              <div className="space-y-2">
+                {referrals.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0">
+                    <span className="text-sm text-gray-200">{r.name}</span>
+                    <span className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleDateString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
