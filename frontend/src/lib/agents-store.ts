@@ -33,7 +33,7 @@ export function getDeployedAgents(): DeployedAgent[] {
       ...a,
       assets: Array.isArray(a.assets) ? a.assets : [],
       name: a.name || 'Agent',
-      personality: a.personality || 'sage',
+      personality: (typeof a.personality === 'string' ? a.personality.toLowerCase() : 'sage'),
       status: a.status || 'pending',
       plan: a.plan || '',
       pnl: a.pnl ?? 0,

@@ -80,7 +80,8 @@ function generateSignal(agent: { name: string; id?: string; personality: AgentPe
     ? Math.round(entry * (1 + tpPercent) * 100) / 100
     : Math.round(entry * (1 - tpPercent) * 100) / 100;
 
-  const reasons = PERSONALITY_REASONS[agent.personality];
+  const normalizedPersonality = (agent.personality?.toLowerCase() || 'sage') as AgentPersonality;
+  const reasons = PERSONALITY_REASONS[normalizedPersonality] || PERSONALITY_REASONS.sage;
   const confidence = 65 + Math.floor(Math.random() * 30);
   const estimatedPnl = Math.round((50 + Math.random() * 400) * 100) / 100;
   const now = Date.now();
@@ -90,8 +91,8 @@ function generateSignal(agent: { name: string; id?: string; personality: AgentPe
     id: `sig-${now}-${Math.random().toString(36).slice(2, 7)}`,
     agentName: agent.name,
     agentId: agent.id,
-    personality: agent.personality,
-    color: agent.color,
+    personality: normalizedPersonality,
+    color: agent.color || PERSONALITY_COLORS[normalizedPersonality],
     pair: template.pair,
     side,
     entryPrice: entry,
@@ -119,13 +120,16 @@ export function useSignalGenerator() {
     const deployed = getDeployedAgents().filter(a => a.status === 'active');
     if (deployed.length > 0) {
       return {
-        agents: deployed.map(a => ({
-          name: a.name,
-          id: a.id,
-          personality: a.personality,
-          color: PERSONALITY_COLORS[a.personality],
-          assets: a.assets,
-        })),
+        agents: deployed.map(a => {
+          const p = (a.personality?.toLowerCase() || 'sage') as AgentPersonality;
+          return {
+            name: a.name,
+            id: a.id,
+            personality: p,
+            color: PERSONALITY_COLORS[p] || 'text-cyan-400',
+            assets: a.assets,
+          };
+        }),
         isOwn: true,
       };
     }
