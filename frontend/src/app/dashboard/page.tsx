@@ -645,16 +645,36 @@ export default function DashboardPage() {
     setInputValue('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const aiMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        role: 'ai',
-        text: getAIResponse(text, exchangeConnected),
-      };
-      setChatMessages((prev) => [...prev, aiMsg]);
+    // Call real AI
+    (async () => {
+      try {
+        const history = chatMessages.slice(-10).map(m => ({
+          role: (m.role === 'ai' ? 'assistant' : 'user') as 'user' | 'assistant',
+          content: m.text,
+        }));
+        const data = await api.post<{ response: string }>('/ai/chat', {
+          message: text,
+          history,
+          exchangeConnected,
+        });
+        const aiMsg: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          role: 'ai',
+          text: data.response,
+        };
+        setChatMessages((prev) => [...prev, aiMsg]);
+      } catch {
+        // Fallback to local response if API fails
+        const aiMsg: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          role: 'ai',
+          text: getAIResponse(text, exchangeConnected),
+        };
+        setChatMessages((prev) => [...prev, aiMsg]);
+      }
       setIsTyping(false);
-    }, 800 + Math.random() * 1200);
-  }, [inputValue, exchangeConnected]);
+    })();
+  }, [inputValue, exchangeConnected, chatMessages]);
 
   // Update watching count periodically
   useEffect(() => {

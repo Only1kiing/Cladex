@@ -135,3 +135,48 @@ Keep responses concise and actionable.`;
 
   return content;
 }
+
+export async function chatWithAI(
+  message: string,
+  history: { role: "user" | "assistant"; content: string }[],
+  exchangeConnected: boolean
+): Promise<string> {
+  const systemPrompt = `You are Cladex AI, a friendly and knowledgeable crypto trading assistant built into the Cladex platform.
+
+About Cladex:
+- AI-powered crypto trading platform with autonomous agents
+- Supports Bybit, Binance, OKX, KuCoin exchanges
+- Agent personalities: Nova (conservative), Sage (data-driven), Apex (aggressive), Echo (predictive)
+- Plans: Trader ($25, 2 agents), Builder ($80, 5 agents), Pro Creator ($200, 15 agents)
+- Non-custodial — user funds stay on their exchange
+- Agents trade 24/7 using strategies like DCA, trend following, momentum
+
+User status: ${exchangeConnected ? "Exchange is connected and live trading is active." : "No exchange connected yet — user is in demo/exploration mode."}
+
+Guidelines:
+- Be concise and actionable
+- If user asks about trading, give real market context
+- If user hasn't connected an exchange, gently encourage them to connect
+- Use a professional but friendly tone
+- Keep responses under 150 words`;
+
+  const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
+    { role: "system", content: systemPrompt },
+    ...history.slice(-10),
+    { role: "user", content: message },
+  ];
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages,
+    temperature: 0.7,
+    max_tokens: 300,
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error("No response from AI");
+  }
+
+  return content;
+}

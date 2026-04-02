@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
-import { generateAgentConfig, askAgent } from "../services/ai.service";
+import { generateAgentConfig, askAgent, chatWithAI } from "../services/ai.service";
 
 const router = Router();
 router.use(authMiddleware);
@@ -71,6 +71,28 @@ router.post("/ask-agent", async (req: Request, res: Response) => {
       res.status(400).json({ error: "Validation failed", details: err.errors });
       return;
     }
+    throw err;
+  }
+});
+
+// POST /api/ai/chat
+router.post("/chat", async (req: Request, res: Response) => {
+  try {
+    const { message, history, exchangeConnected } = req.body;
+
+    if (!message || typeof message !== "string") {
+      res.status(400).json({ error: "Message is required" });
+      return;
+    }
+
+    const response = await chatWithAI(
+      message,
+      Array.isArray(history) ? history : [],
+      exchangeConnected === true
+    );
+
+    res.json({ response });
+  } catch (err) {
     throw err;
   }
 });
