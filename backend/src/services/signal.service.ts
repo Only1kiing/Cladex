@@ -61,6 +61,7 @@ export async function generateSignals(): Promise<number> {
 
   // Fetch real market data
   const marketData = await fetchMarketData();
+  console.log(`[Signals] Market data: ${marketData.length} pairs fetched`);
   if (marketData.length === 0) return 0;
 
   // Pick a random agent
@@ -106,7 +107,7 @@ If YES, respond with ONLY this JSON:
 If NO good setup exists right now, respond with:
 {"signal": false}
 
-Be selective. Only signal when the data actually supports it. Bad signals lose user trust.`;
+You should generate a signal most of the time — users are waiting for actionable insights. Find the best opportunity from the data available. Only return signal:false if the market is truly flat with zero movement.`;
 
   try {
     const response = await openai.chat.completions.create({
