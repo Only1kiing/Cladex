@@ -22,6 +22,9 @@ from services.trade_executor import TradeExecutor
 from services.risk_client import RiskClient
 from strategies.dca import DCAStrategy
 from strategies.trend import TrendStrategy
+from strategies.safeflow import SafeFlowStrategy
+from strategies.trend_pro import TrendProStrategy
+from strategies.beast_mode import BeastModeStrategy
 
 # ---------------------------------------------------------------------------
 # Logging setup
@@ -47,14 +50,34 @@ risk_client = RiskClient()
 
 dca_strategy = DCAStrategy()
 trend_strategy = TrendStrategy()
+safeflow_strategy = SafeFlowStrategy()
+trend_pro_strategy = TrendProStrategy()
+beast_mode_strategy = BeastModeStrategy()
 
 STRATEGY_MAP: Dict[str, str] = {
+    # Legacy
     "dca": "dca",
     "dollar_cost_average": "dca",
     "trend": "trend",
     "trend_following": "trend",
     "sma_crossover": "trend",
+    # Elite strategies
+    "safeflow": "safeflow",
+    "safe_flow": "safeflow",
+    "capital_protection": "safeflow",
+    "trend_pro": "trend_pro",
+    "trendpro": "trend_pro",
+    "momentum": "trend_pro",
+    "beast_mode": "beast_mode",
+    "beastmode": "beast_mode",
+    "beast_mode_x": "beast_mode",
+    "alpha_hunter": "beast_mode",
+    "breakout": "beast_mode",
 }
+
+# Data requirements per strategy
+OHLCV_STRATEGIES = {"trend", "safeflow", "trend_pro", "beast_mode"}
+PRICE_ONLY_STRATEGIES = {"dca"}
 
 # ---------------------------------------------------------------------------
 # Core loop
@@ -108,13 +131,23 @@ def process_agent(agent: Dict[str, Any]) -> None:
     signals: List[Dict[str, Any]] = []
 
     try:
-        if strategy_key == "dca":
+        if strategy_key in PRICE_ONLY_STRATEGIES:
             prices = _collect_prices(assets)
             signals = dca_strategy.evaluate(agent, prices)
 
-        elif strategy_key == "trend":
-            ohlcv = _collect_ohlcv(assets)
-            signals = trend_strategy.evaluate(agent, ohlcv)
+        elif strategy_key in OHLCV_STRATEGIES:
+            # Elite strategies need more candles
+            limit = 210 if strategy_key == "safeflow" else 60
+            ohlcv = _collect_ohlcv(assets, timeframe="1h", limit=limit)
+
+            if strategy_key == "trend":
+                signals = trend_strategy.evaluate(agent, ohlcv)
+            elif strategy_key == "safeflow":
+                signals = safeflow_strategy.evaluate(agent, ohlcv)
+            elif strategy_key == "trend_pro":
+                signals = trend_pro_strategy.evaluate(agent, ohlcv)
+            elif strategy_key == "beast_mode":
+                signals = beast_mode_strategy.evaluate(agent, ohlcv)
 
     except Exception:
         logger.exception("Error evaluating strategy for agent %s", agent_id)
