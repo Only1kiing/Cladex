@@ -43,9 +43,10 @@ const executeTradeSchema = z.object({
   agentId: z.string().min(1).optional(),
   symbol: z.string().min(1, "Trading pair is required (e.g. BTC/USDT)"),
   side: z.enum(["buy", "sell"]),
-  amount: z.number().positive("Amount must be positive"),
+  amount: z.number().positive().optional(),
+  usdAmount: z.number().positive().optional(), // auto-calculate crypto amount from USD
   type: z.enum(["market", "limit"]).default("market"),
-  price: z.number().positive().optional(), // required for limit orders
+  price: z.number().positive().optional(),
   stopLoss: z.number().positive().optional(),
   takeProfit: z.number().positive().optional(),
   reason: z.string().optional(),
@@ -76,13 +77,35 @@ router.post("/execute", async (req: Request, res: Response) => {
 
     const { exchange, name: exchangeName } = exchangeData;
 
+    // Calculate amount
+    let tradeAmount = body.amount || 0;
+
+    if (!tradeAmount && body.usdAmount) {
+      // Convert USD to crypto amount using live price
+      try {
+        const ticker = await exchange.fetchTicker(body.symbol);
+        const price = ticker?.last || 0;
+        if (price > 0) {
+          tradeAmount = Math.floor((body.usdAmount / price) * 100000000) / 100000000; // 8 decimal precision
+        }
+      } catch {
+        res.status(400).json({ error: "Could not fetch price to calculate trade amount" });
+        return;
+      }
+    }
+
+    if (tradeAmount <= 0) {
+      res.status(400).json({ error: "Trade amount is too small" });
+      return;
+    }
+
     // Place the order on the real exchange
     let order;
     try {
       if (body.type === "limit" && body.price) {
-        order = await exchange.createOrder(body.symbol, "limit", body.side, body.amount, body.price);
+        order = await exchange.createOrder(body.symbol, "limit", body.side, tradeAmount, body.price);
       } else {
-        order = await exchange.createOrder(body.symbol, "market", body.side, body.amount);
+        order = await exchange.createOrder(body.symbol, "market", body.side, tradeAmount);
       }
     } catch (err: any) {
       const msg = err?.message || "Order failed";
@@ -100,7 +123,7 @@ router.post("/execute", async (req: Request, res: Response) => {
         agentId: body.agentId ?? null,
         symbol: body.symbol,
         side: sideMap[body.side] || "BUY",
-        amount: body.amount,
+        amount: tradeAmount,
         price: executedPrice,
         stopLoss: body.stopLoss ?? null,
         takeProfit: body.takeProfit ?? null,
