@@ -704,8 +704,14 @@ export default function DashboardPage() {
     if (!selectedExchange || !apiKey || !apiSecret) return;
     setConnectingState('connecting');
     try {
-      await api.post('/exchange/connect', { name: selectedExchange, apiKey, apiSecret });
+      const connectData = await api.post<{ exchange: Record<string, unknown>; balance?: { total: number; balances: { asset: string; free: number; total: number }[] } }>('/exchange/connect', { name: selectedExchange, apiKey, apiSecret });
       setConnectingState('success');
+
+      // Update balance immediately from connect response
+      if (connectData?.balance) {
+        setExchangeBalance({ total: connectData.balance.total, balances: connectData.balance.balances || [] });
+      }
+
       setTimeout(() => {
         setExchangeConnected(true);
         setConnectingState('idle');
@@ -803,23 +809,48 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Gas Balance */}
-      <div className="flex items-center justify-between px-4 py-2.5 rounded-xl border border-[#1e1e2e] bg-[#111118]">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+      {/* Exchange Portfolio or Gas Balance */}
+      {exchangeConnected && exchangeBalance.balances.length > 0 ? (
+        <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Exchange Portfolio</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-[11px] text-emerald-400 font-medium">Live</span>
+            </div>
           </div>
-          <div>
-            <span className="text-xs text-gray-500">Gas Balance</span>
-            <p className="text-sm font-bold text-white tabular-nums">${gasBalance.toFixed(2)}</p>
+          <div className="space-y-2">
+            {exchangeBalance.balances.slice(0, 6).map((b) => (
+              <div key={b.asset} className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-300">{b.asset}</span>
+                <div className="text-right">
+                  <span className="text-sm font-semibold text-white tabular-nums">{b.total.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
+                  {b.free !== b.total && (
+                    <span className="text-[10px] text-gray-500 ml-1.5">({b.free.toLocaleString(undefined, { maximumFractionDigits: 4 })} free)</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <a href="/dashboard/settings" className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-semibold text-amber-400 hover:bg-amber-500/20 transition-all">
-          Top Up Gas
-        </a>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-xl border border-[#1e1e2e] bg-[#111118]">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500">Gas Balance</span>
+              <p className="text-sm font-bold text-white tabular-nums">${gasBalance.toFixed(2)}</p>
+            </div>
+          </div>
+          <a href="/dashboard/settings" className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] font-semibold text-amber-400 hover:bg-amber-500/20 transition-all">
+            Top Up Gas
+          </a>
+        </div>
+      )}
 
       {/* Low Gas Warning */}
       {gasBalance < 2 && gasBalance > 0 && (
