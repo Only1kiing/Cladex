@@ -179,6 +179,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <button
           onClick={() => {
             localStorage.removeItem('cladex_connected_wallet');
+            localStorage.removeItem('cladex_exchange_connected');
             localStorage.setItem('cladex_demo_mode', 'true');
             window.location.href = '/dashboard';
           }}

@@ -481,7 +481,10 @@ function SignalSection({
 // ==============================================================
 
 export default function DashboardPage() {
-  const [exchangeConnected, setExchangeConnected] = useState<boolean>(false);
+  const [exchangeConnected, setExchangeConnected] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('cladex_exchange_connected') === 'true';
+  });
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [selectedExchange, setSelectedExchange] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
@@ -551,6 +554,7 @@ export default function DashboardPage() {
         }
         if (data?.exchangeConnected) {
           setExchangeConnected(true);
+          localStorage.setItem('cladex_exchange_connected', 'true');
           if (data.exchangeBalances && data.exchangeBalances.length > 0) {
             setExchangeBalance({ total: data.stats.totalBalance, balances: data.exchangeBalances });
           }
