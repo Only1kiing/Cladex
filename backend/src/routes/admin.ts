@@ -301,4 +301,12 @@ router.get("/exchange/:userId", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/admin/risk/unlock/:userId — unlock a risk-locked account
+router.post("/risk/unlock/:userId", async (req: Request, res: Response) => {
+  const userId = req.params.userId as string;
+  const { unlockAccount } = await import("../risk/riskEngine");
+  await unlockAccount(userId);
+  res.json({ message: `Account ${userId} unlocked` });
+});
+
 export default router;

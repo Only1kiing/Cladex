@@ -2,6 +2,9 @@
 
 Periodically fetches active agents from the backend, evaluates their
 strategies, executes trades (paper by default), and reports results.
+
+EVERY trade passes through the risk engine before execution.
+If the risk engine blocks a trade, it is NOT executed. No exceptions.
 """
 
 import logging
@@ -16,6 +19,7 @@ import config
 from services.api_client import ApiClient
 from services.price_service import PriceService
 from services.trade_executor import TradeExecutor
+from services.risk_client import RiskClient
 from strategies.dca import DCAStrategy
 from strategies.trend import TrendStrategy
 
@@ -39,6 +43,7 @@ _shutdown_requested = False
 api_client = ApiClient()
 price_service = PriceService()
 trade_executor = TradeExecutor()
+risk_client = RiskClient()
 
 dca_strategy = DCAStrategy()
 trend_strategy = TrendStrategy()
@@ -85,6 +90,7 @@ def _get_agent_assets(agent: Dict[str, Any]) -> List[str]:
 def process_agent(agent: Dict[str, Any]) -> None:
     """Evaluate one agent's strategy and execute any resulting trades."""
     agent_id: str = agent.get("id", agent.get("_id", "unknown"))
+    user_id: str = agent.get("userId", "")
     strategy_key: str = STRATEGY_MAP.get(
         (agent.get("strategy") or "").lower(), ""
     )
@@ -123,9 +129,56 @@ def process_agent(agent: Dict[str, Any]) -> None:
         logger.debug("Agent %s: no trade signals", agent_id)
         return
 
-    # Execute each signal
+    # Execute each signal — with risk engine gate
     for sig in signals:
         try:
+            # ---- RISK ENGINE: pre-trade validation ----
+            trade_request = {
+                "userId": user_id,
+                "agentId": agent_id,
+                "symbol": sig.get("symbol", ""),
+                "side": sig.get("action", "BUY").upper(),
+                "amount": float(sig.get("amount", 0)),
+                "price": float(sig.get("price", 0)),
+                "quoteAmount": float(sig.get("quoteAmount", 0)) or None,
+                "stopLoss": sig.get("stopLoss"),
+                "takeProfit": sig.get("takeProfit"),
+                "reason": sig.get("reason"),
+            }
+
+            risk_result = risk_client.validate_trade(trade_request)
+
+            if not risk_result.get("allowed", False):
+                reason = risk_result.get("reason", "Unknown risk violation")
+                logger.warning(
+                    "RISK BLOCKED: Agent %s trade %s %s — %s",
+                    agent_id, sig.get("action"), sig.get("symbol"), reason,
+                )
+                api_client.log_activity({
+                    "agentId": agent_id,
+                    "type": "alert",
+                    "message": f"Trade blocked by risk engine: {reason}",
+                })
+                continue  # Skip this trade — do NOT execute
+
+            # Apply risk engine adjustments
+            if risk_result.get("adjustedAmount") is not None:
+                original = sig["amount"]
+                sig["amount"] = risk_result["adjustedAmount"]
+                if original != sig["amount"]:
+                    logger.info(
+                        "Risk engine adjusted position: %.8f → %.8f",
+                        original, sig["amount"],
+                    )
+
+            if risk_result.get("adjustedStopLoss") is not None:
+                sig["stopLoss"] = risk_result["adjustedStopLoss"]
+
+            # Log any warnings
+            for warning in risk_result.get("warnings", []):
+                logger.info("Risk warning: %s", warning)
+
+            # ---- EXECUTE TRADE ----
             result = trade_executor.execute_trade(sig, exchange_config)
 
             # Report to backend
@@ -133,6 +186,8 @@ def process_agent(agent: Dict[str, Any]) -> None:
                 **sig,
                 **result,
                 "agentId": agent_id,
+                "riskPercent": risk_result.get("riskPercent"),
+                "takeProfitLevels": risk_result.get("takeProfitLevels"),
             }
             api_client.report_trade(trade_report)
 
@@ -142,6 +197,10 @@ def process_agent(agent: Dict[str, Any]) -> None:
                 "message": f"{result.get('status', '?').upper()}: {sig['action']} {sig['symbol']}",
                 "details": result,
             })
+
+            # ---- RISK ENGINE: post-trade check ----
+            trade_profit = float(result.get("profit", 0))
+            risk_client.post_trade(user_id, agent_id, trade_profit)
 
         except Exception:
             logger.exception("Error executing trade for agent %s: %s", agent_id, sig)
@@ -191,6 +250,7 @@ def _handle_signal(signum: int, _frame: Any) -> None:
 
 def main() -> None:
     logger.info("Cladex Worker starting (interval=%ds, mode=%s)", config.WORKER_INTERVAL, config.TRADING_MODE)
+    logger.info("Risk engine integration: ACTIVE")
 
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)

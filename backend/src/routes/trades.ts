@@ -3,6 +3,7 @@ import { z } from "zod";
 import ccxt from "ccxt";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
+import { validateTrade, postTradeCheck } from "../risk/riskEngine";
 
 const SUPPORTED_EXCHANGES: Record<string, string> = {
   bybit: "bybit",
@@ -87,14 +88,15 @@ router.post("/execute", async (req: Request, res: Response) => {
 
     // Calculate amount
     let tradeAmount = body.amount || 0;
+    let livePrice = body.price || 0;
 
     if (!tradeAmount && body.usdAmount) {
       // Convert USD to crypto amount using live price
       try {
         const ticker = await exchange.fetchTicker(body.symbol);
-        const price = ticker?.last || 0;
-        if (price > 0) {
-          tradeAmount = Math.floor((body.usdAmount / price) * 100000000) / 100000000; // 8 decimal precision
+        livePrice = ticker?.last || 0;
+        if (livePrice > 0) {
+          tradeAmount = Math.floor((body.usdAmount / livePrice) * 100000000) / 100000000; // 8 decimal precision
         }
       } catch {
         res.status(400).json({ error: "Could not fetch price to calculate trade amount" });
@@ -102,10 +104,49 @@ router.post("/execute", async (req: Request, res: Response) => {
       }
     }
 
+    if (!livePrice) {
+      try {
+        const ticker = await exchange.fetchTicker(body.symbol);
+        livePrice = ticker?.last || 0;
+      } catch { /* use body.price fallback */ }
+    }
+
     if (tradeAmount <= 0) {
       res.status(400).json({ error: "Trade amount is too small" });
       return;
     }
+
+    // ---- RISK ENGINE: pre-trade validation ----
+    const sideMap: Record<string, "BUY" | "SELL"> = { buy: "BUY", sell: "SELL" };
+    const riskCheck = await validateTrade({
+      userId: req.user!.id,
+      agentId: body.agentId,
+      symbol: body.symbol,
+      side: sideMap[body.side] || "BUY",
+      amount: tradeAmount,
+      price: livePrice || tradeAmount, // fallback
+      quoteAmount: body.usdAmount,
+      stopLoss: body.stopLoss,
+      takeProfit: body.takeProfit,
+      reason: body.reason,
+    });
+
+    if (!riskCheck.allowed) {
+      res.status(403).json({
+        error: riskCheck.reason || "Trade blocked by risk engine",
+        riskBlocked: true,
+      });
+      return;
+    }
+
+    // Apply risk engine adjustments
+    if (riskCheck.adjustedAmount && riskCheck.adjustedAmount !== tradeAmount) {
+      tradeAmount = riskCheck.adjustedAmount;
+    }
+
+    const effectiveStopLoss = riskCheck.adjustedStopLoss ?? body.stopLoss ?? null;
+    const effectiveTakeProfit = body.takeProfit ?? riskCheck.takeProfitLevels?.[1]?.targetPrice ?? null;
+    // ---- END RISK ENGINE ----
 
     // Place the order on the real exchange
     let order;
@@ -122,7 +163,6 @@ router.post("/execute", async (req: Request, res: Response) => {
     }
 
     const executedPrice = order.average || order.price || body.price || 0;
-    const sideMap: Record<string, "BUY" | "SELL"> = { buy: "BUY", sell: "SELL" };
 
     // Save trade to database
     const trade = await prisma.trade.create({
@@ -133,8 +173,10 @@ router.post("/execute", async (req: Request, res: Response) => {
         side: sideMap[body.side] || "BUY",
         amount: tradeAmount,
         price: executedPrice,
-        stopLoss: body.stopLoss ?? null,
-        takeProfit: body.takeProfit ?? null,
+        stopLoss: effectiveStopLoss,
+        takeProfit: effectiveTakeProfit,
+        takeProfitLevels: riskCheck.takeProfitLevels ? riskCheck.takeProfitLevels as any : undefined,
+        riskPercent: riskCheck.riskPercent ?? null,
         status: "OPEN",
         reason: body.reason || `${body.type} ${body.side} via ${exchangeName}`,
       },
@@ -171,6 +213,10 @@ router.post("/execute", async (req: Request, res: Response) => {
       data: { gasBalance: { decrement: GAS_FEE } },
     });
 
+    // ---- RISK ENGINE: post-trade check ----
+    const riskDecisions = await postTradeCheck(req.user!.id, body.agentId, 0);
+    // ---- END POST-TRADE ----
+
     res.status(201).json({
       trade,
       gasFee: GAS_FEE,
@@ -181,6 +227,13 @@ router.post("/execute", async (req: Request, res: Response) => {
         average: order.average,
         cost: order.cost,
         exchange: exchangeName,
+      },
+      risk: {
+        warnings: riskCheck.warnings,
+        riskPercent: riskCheck.riskPercent,
+        stopLoss: effectiveStopLoss,
+        takeProfitLevels: riskCheck.takeProfitLevels,
+        postTradeDecisions: riskDecisions,
       },
     });
   } catch (err) {

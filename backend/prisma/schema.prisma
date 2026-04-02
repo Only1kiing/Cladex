@@ -27,6 +27,16 @@ model User {
   emailVerified    Boolean  @default(false)
   verificationCode String?
   verificationExp  DateTime?
+
+  // Risk management
+  maxRiskPerTrade Float    @default(0.02)   // Max % of balance per trade (0.02 = 2%)
+  maxExposure     Float    @default(0.20)   // Max % of portfolio exposed (0.20 = 20%)
+  dailyLossLimit  Float    @default(-0.08)  // Daily loss threshold (-0.08 = -8%)
+  maxDrawdown     Float    @default(-0.20)  // Max drawdown from peak (-0.20 = -20%)
+  riskLocked      Boolean  @default(false)  // Account locked due to risk breach
+  riskLockedAt    DateTime?
+  riskLockedReason String?
+  peakBalance     Float    @default(0)      // Highest recorded balance
 }
 
 enum Personality {
@@ -68,6 +78,10 @@ model Agent {
   subscriptionStatus String?   // "active" | "paused_no_gas" | "cancelled"
   nextBillingDate    DateTime?
 
+  // Risk management
+  cooldownUntil    DateTime?
+  consecutiveLosses Int       @default(0)
+
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   trades       Trade[]
   activityLogs ActivityLog[]
@@ -100,9 +114,11 @@ model Trade {
   profit     Float       @default(0)
   reason     String
   status     TradeStatus @default(OPEN)
-  stopLoss   Float?
-  takeProfit Float?
-  createdAt  DateTime    @default(now())
+  stopLoss         Float?
+  takeProfit       Float?
+  takeProfitLevels Json?      // e.g. [{ "percent": 3, "sellFraction": 0.33 }, ...]
+  riskPercent      Float?     // What % of portfolio this trade risked
+  createdAt        DateTime   @default(now())
 
   agent Agent? @relation(fields: [agentId], references: [id], onDelete: Cascade)
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)

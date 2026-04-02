@@ -10,6 +10,7 @@ import exchangeRoutes from "./routes/exchange";
 import aiRoutes from "./routes/ai";
 import paymentRoutes from "./routes/payments";
 import adminRoutes from "./routes/admin";
+import riskRoutes from "./routes/risk";
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.use("/api/exchange", exchangeRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/risk", riskRoutes);
 
 // ---------------------------------------------------------------------------
 // 404 handler
