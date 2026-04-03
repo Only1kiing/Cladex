@@ -392,7 +392,12 @@ function AIMarketScanner() {
 // ==============================================================
 
 export default function DashboardPage() {
-  const [exchangeConnected, setExchangeConnected] = useState<boolean>(false);
+  const [exchangeConnected, setExchangeConnected] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('cladex_exchange_connected') === 'true';
+    }
+    return false;
+  });
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [selectedExchange, setSelectedExchange] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
@@ -405,10 +410,19 @@ export default function DashboardPage() {
   const [deployedAgents, setDeployedAgents] = useState<DeployedAgent[]>([]);
   const [showAllTrades, setShowAllTrades] = useState(false);
 
-  // Real data from backend API
-  const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
-  const [exchangeBalance, setExchangeBalance] = useState<{ total: number; balances: { asset: string; free: number; total: number; usdValue?: number }[] }>({ total: 0, balances: [] });
-  const [gasBalance, setGasBalance] = useState(0);
+  // Real data from backend API — hydrate from cache for instant display
+  const [dashStats, setDashStats] = useState<DashboardStats | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try { const c = localStorage.getItem('cladex_dash_stats'); return c ? JSON.parse(c) : null; } catch { return null; }
+  });
+  const [exchangeBalance, setExchangeBalance] = useState<{ total: number; balances: { asset: string; free: number; total: number; usdValue?: number }[] }>(() => {
+    if (typeof window === 'undefined') return { total: 0, balances: [] };
+    try { const c = localStorage.getItem('cladex_exchange_balance'); return c ? JSON.parse(c) : { total: 0, balances: [] }; } catch { return { total: 0, balances: [] }; }
+  });
+  const [gasBalance, setGasBalance] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    return parseFloat(localStorage.getItem('cladex_gas_balance') || '0');
+  });
   const [tradeLogItems, setTradeLogItems] = useState<ActivityItem[]>([]);
   // agentComms removed — replaced by MarketIntelligence component
 
@@ -455,16 +469,20 @@ export default function DashboardPage() {
       const data = await api.get<{ stats: DashboardStats; exchangeConnected?: boolean; exchangeBalances?: { asset: string; free: number; total: number; usdValue?: number }[] }>('/dashboard/stats');
       if (data?.stats) {
         setDashStats(data.stats);
+        localStorage.setItem('cladex_dash_stats', JSON.stringify(data.stats));
       }
       if (data?.exchangeConnected) {
         setExchangeConnected(true);
         localStorage.setItem('cladex_exchange_connected', 'true');
         if (data.exchangeBalances) {
-          setExchangeBalance({ total: data.stats.totalBalance, balances: data.exchangeBalances });
+          const bal = { total: data.stats.totalBalance, balances: data.exchangeBalances };
+          setExchangeBalance(bal);
+          localStorage.setItem('cladex_exchange_balance', JSON.stringify(bal));
         }
       } else {
         setExchangeConnected(false);
         localStorage.removeItem('cladex_exchange_connected');
+        localStorage.removeItem('cladex_exchange_balance');
       }
     } catch {
       // Backend unreachable
@@ -501,7 +519,10 @@ export default function DashboardPage() {
     // Fetch gas balance
     try {
       const data = await api.get<{ gasBalance: number }>('/dashboard/gas');
-      if (data) setGasBalance(data.gasBalance);
+      if (data) {
+        setGasBalance(data.gasBalance);
+        localStorage.setItem('cladex_gas_balance', String(data.gasBalance));
+      }
     } catch { /* */ }
 
     // Fetch live signals
