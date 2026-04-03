@@ -4,15 +4,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { getDeployedAgents, updateAgentStatus } from '@/lib/agents-store';
 import type { DeployedAgent } from '@/lib/agents-store';
-import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { api } from '@/lib/api';
 
 import { Badge } from '@/components/ui/Badge';
-import { ReferralCard } from '@/components/dashboard/PointsSystem';
 import { AgentAvatar } from '@/components/dashboard/AgentAvatar';
 import type { AgentPersonality } from '@/types';
 import MarketIntelligence from '@/components/dashboard/MarketIntelligence';
-import type { ActivityItem } from '@/components/dashboard/ActivityFeed';
 import { TradeExecutionModal } from '@/components/dashboard/TradeExecutionModal';
 import type { TradeSignal } from '@/hooks/useSignalGenerator';
 
@@ -408,7 +405,6 @@ export default function DashboardPage() {
   const [showConnectModal, setShowConnectModal] = useState<boolean>(false);
 
   const [deployedAgents, setDeployedAgents] = useState<DeployedAgent[]>([]);
-  const [showAllTrades, setShowAllTrades] = useState(false);
   const [showPortfolio, setShowPortfolio] = useState(false);
 
   // Real data from backend API — hydrate from cache for instant display
@@ -424,7 +420,6 @@ export default function DashboardPage() {
     if (typeof window === 'undefined') return 0;
     return parseFloat(localStorage.getItem('cladex_gas_balance') || '0');
   });
-  const [tradeLogItems, setTradeLogItems] = useState<ActivityItem[]>([]);
   // agentComms removed — replaced by MarketIntelligence component
 
   // Live P&L from open trades
@@ -490,34 +485,6 @@ export default function DashboardPage() {
         setExchangeConnected(false);
         localStorage.removeItem('cladex_exchange_connected');
         localStorage.removeItem('cladex_exchange_balance');
-      }
-    } catch {
-      // Backend unreachable
-    }
-
-    // Fetch recent trades
-    try {
-      const data = await api.get<{ trades: Array<{
-        id: string;
-        symbol?: string;
-        side?: string;
-        price?: number;
-        amount?: number;
-        profit?: number;
-        status?: string;
-        createdAt?: string;
-        agent?: { id?: string; name?: string; personality?: string };
-      }> }>('/trades/recent');
-      if (data?.trades && data.trades.length > 0) {
-        const items: ActivityItem[] = data.trades.map((t) => ({
-          id: t.id,
-          type: 'trade' as const,
-          tradeDirection: (t.side === 'SELL' || t.side === 'sell' ? 'sell' : 'buy') as 'buy' | 'sell',
-          agentPersonality: (t.agent?.personality?.toLowerCase() || undefined) as ActivityItem['agentPersonality'],
-          message: `${t.agent?.name || 'Manual'}: ${(t.side || 'BUY')} ${t.symbol || '???'} at $${(t.price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`,
-          timestamp: t.createdAt || new Date().toISOString(),
-        }));
-        setTradeLogItems(items);
       }
     } catch {
       // Backend unreachable
@@ -740,9 +707,9 @@ export default function DashboardPage() {
         </div>
         <div className="rounded-xl bg-[#111118] border border-[#1e1e2e] p-3 text-center">
           {(() => {
-            const pnl = livePnl.totalPnl || dashStats?.totalProfit || 0;
+            const pnl = livePnl.totalPnl !== 0 ? livePnl.totalPnl : (dashStats?.totalProfit ?? 0);
             return <p className={`text-lg font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {pnl !== 0 ? `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` : '—'}
+              {`${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`}
             </p>;
           })()}
           <p className="text-[10px] text-gray-500 mt-0.5">P&L</p>
@@ -996,12 +963,7 @@ export default function DashboardPage() {
       {liveSignals.length === 0 && <AIMarketScanner />}
 
       <section>
-        <MarketIntelligence />
-      </section>
-
-      {/* Referral */}
-      <section>
-        <ReferralCard />
+        <MarketIntelligence compact />
       </section>
 
 
