@@ -13,6 +13,8 @@ import { AgentAvatar } from '@/components/dashboard/AgentAvatar';
 import type { AgentPersonality } from '@/types';
 import MarketIntelligence from '@/components/dashboard/MarketIntelligence';
 import type { ActivityItem } from '@/components/dashboard/ActivityFeed';
+import { TradeExecutionModal } from '@/components/dashboard/TradeExecutionModal';
+import type { TradeSignal } from '@/hooks/useSignalGenerator';
 
 // Dashboard stats shape from API
 interface DashboardStats {
@@ -424,6 +426,8 @@ export default function DashboardPage() {
     agent: { id: string; name: string; personality: string };
   }[]>([]);
   const [executingTrade, setExecutingTrade] = useState<string | null>(null);
+  const [selectedSignal, setSelectedSignal] = useState<TradeSignal | null>(null);
+  const [showTradeModal, setShowTradeModal] = useState(false);
 
 
   // Load deployed agents
@@ -978,28 +982,32 @@ export default function DashboardPage() {
 
                   {exchangeConnected ? (
                     <button
-                      onClick={async () => {
-                        setExecutingTrade(sig.id);
-                        try {
-                          await api.post('/trades/execute', {
-                            symbol: sig.symbol,
-                            side: sig.side,
-                            usdAmount: 2, // use $2 per trade
-                            type: 'market',
-                            stopLoss: sig.stopLoss,
-                            takeProfit: sig.takeProfit,
-                            reason: `Signal from ${sig.agent.name}: ${sig.reason}`,
-                          });
-                          setLiveSignals(prev => prev.filter(s => s.id !== sig.id));
-                        } catch (err: any) {
-                          alert(err?.message || 'Trade failed');
-                        }
-                        setExecutingTrade(null);
+                      onClick={() => {
+                        const mapped: TradeSignal = {
+                          id: sig.id,
+                          agentName: sig.agent.name,
+                          agentId: sig.agent.id,
+                          personality: (sig.agent.personality?.toLowerCase() || 'sage') as AgentPersonality,
+                          color: '',
+                          pair: sig.symbol,
+                          side: sig.side === 'buy' ? 'long' : 'short',
+                          entryPrice: sig.entryPrice,
+                          stopLoss: sig.stopLoss,
+                          takeProfit: sig.takeProfit,
+                          confidence: sig.confidence,
+                          reason: sig.reason,
+                          timestamp: Date.now(),
+                          expiresAt: new Date(sig.expiresAt).getTime(),
+                          status: 'active',
+                          estimatedPnl: Math.abs(sig.takeProfit - sig.entryPrice) / sig.entryPrice * 100,
+                          isOwnAgent: true,
+                        };
+                        setSelectedSignal(mapped);
+                        setShowTradeModal(true);
                       }}
-                      disabled={executingTrade === sig.id}
                       className="w-full py-2.5 rounded-lg bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 disabled:opacity-50 transition-all"
                     >
-                      {executingTrade === sig.id ? 'Executing...' : `Execute ${sig.side.toUpperCase()} ${sig.symbol}`}
+                      {`Execute ${sig.side.toUpperCase()} ${sig.symbol}`}
                     </button>
                   ) : (
                     <button
@@ -1267,6 +1275,36 @@ export default function DashboardPage() {
           animation: fadeUp 1.2s ease-out forwards;
         }
       `}</style>
+
+      {/* Trade Execution Modal — spot/futures, amount, leverage */}
+      <TradeExecutionModal
+        isOpen={showTradeModal}
+        signal={selectedSignal}
+        onClose={() => { setShowTradeModal(false); setSelectedSignal(null); }}
+        onExecute={async (signalId, opts) => {
+          const sig = liveSignals.find(s => s.id === signalId);
+          if (!sig) return 0;
+          try {
+            await api.post('/trades/execute', {
+              symbol: sig.symbol,
+              side: sig.side,
+              usdAmount: opts.positionSize,
+              type: 'market',
+              marketType: opts.marketType,
+              leverage: opts.marketType === 'futures' ? opts.leverage : undefined,
+              stopLoss: sig.stopLoss,
+              takeProfit: sig.takeProfit,
+              reason: `Signal from ${sig.agent.name}: ${sig.reason}`,
+            });
+            setLiveSignals(prev => prev.filter(s => s.id !== signalId));
+          } catch (err: any) {
+            alert(err?.message || 'Trade failed');
+          }
+          return 0;
+        }}
+        exchangeConnected={exchangeConnected}
+        exchangeName="Bybit"
+      />
     </div>
   );
 }

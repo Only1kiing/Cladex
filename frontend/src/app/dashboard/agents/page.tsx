@@ -291,7 +291,7 @@ function AgentCard({ agent }: { agent: DeployedAgent }) {
               >
                 <MessageCircle size={12} /> Ask
               </button>
-              {status === 'active' && !isPublished && (
+              {status === 'active' && !isPublished && !agent.sourceAgentId && (
                 <button
                   onClick={() => { setShowPublish(!showPublish); if (showAsk) setShowAsk(false); }}
                   className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${

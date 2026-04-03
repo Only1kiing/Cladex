@@ -10,7 +10,7 @@ interface TradeExecutionModalProps {
   isOpen: boolean;
   signal: TradeSignal | null;
   onClose: () => void;
-  onExecute: (signalId: string) => Promise<number>;
+  onExecute: (signalId: string, opts: { positionSize: number; marketType: 'spot' | 'futures'; leverage: number }) => Promise<number>;
   exchangeConnected: boolean;
   exchangeName?: string;
 }
@@ -20,7 +20,7 @@ const FUTURES_WARNING_KEY = 'cladex_futures_warning_seen';
 
 function TradeExecutionModal({ isOpen, signal, onClose, onExecute, exchangeConnected, exchangeName }: TradeExecutionModalProps) {
   const [stage, setStage] = useState<'confirm' | 'futures-warning' | 'executing' | 'active'>('confirm');
-  const [positionSize, setPositionSize] = useState(500);
+  const [positionSize, setPositionSize] = useState(10);
   const [marketType, setMarketType] = useState<'spot' | 'futures'>('spot');
   const [leverage, setLeverage] = useState(5);
 
@@ -35,7 +35,7 @@ function TradeExecutionModal({ isOpen, signal, onClose, onExecute, exchangeConne
   useEffect(() => {
     if (isOpen) {
       setStage('confirm');
-      setPositionSize(500);
+      setPositionSize(10);
       setLeverage(5);
     }
   }, [isOpen]);
@@ -79,7 +79,7 @@ function TradeExecutionModal({ isOpen, signal, onClose, onExecute, exchangeConne
 
   const handleExecute = async () => {
     setStage('executing');
-    await onExecute(signal.id);
+    await onExecute(signal.id, { positionSize: effectiveSize, marketType, leverage });
 
     // Add to active trades sidebar
     addActiveTrade({
@@ -273,15 +273,15 @@ function TradeExecutionModal({ isOpen, signal, onClose, onExecute, exchangeConne
             </div>
             <input
               type="range"
-              min={100}
+              min={5}
               max={5000}
-              step={100}
+              step={5}
               value={positionSize}
               onChange={e => setPositionSize(Number(e.target.value))}
               className="w-full h-1.5 rounded-full appearance-none bg-white/[0.08] accent-[#B8FF3C] cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-gray-600 mt-1">
-              <span>$100</span>
+              <span>$5</span>
               <span>$5,000</span>
             </div>
           </div>
