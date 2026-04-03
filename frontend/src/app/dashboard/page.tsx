@@ -864,34 +864,6 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* ── Trade Log — full width, right after signals ──────── */}
-      {tradeLogItems.length > 0 && (
-        <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
-          <button
-            onClick={() => setShowAllTrades(!showAllTrades)}
-            className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Trade Log</h2>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-gray-400">{tradeLogItems.length}</span>
-              {livePnl.totalPnl !== 0 && (
-                <span className={`text-[10px] font-semibold ${livePnl.totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {livePnl.totalPnl >= 0 ? '+' : ''}${livePnl.totalPnl.toFixed(2)}
-                </span>
-              )}
-            </div>
-            <svg className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${showAllTrades ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <div className={`overflow-hidden transition-all duration-300 ease-out ${showAllTrades ? 'max-h-[500px] border-t border-white/[0.04]' : 'max-h-0'}`}>
-            <div className="max-h-[500px] overflow-y-auto scrollbar-thin p-2">
-              <ActivityFeed items={tradeLogItems} />
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Two-column layout: Portfolio + AI Chat ────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 

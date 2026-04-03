@@ -65,6 +65,16 @@ const navItems = [
     ),
   },
   {
+    label: 'Trades',
+    href: '/dashboard/trades',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M3 3v14h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 13l3-4 3 2 4-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     label: 'Backtest',
     href: '/dashboard/backtest',
     icon: (
