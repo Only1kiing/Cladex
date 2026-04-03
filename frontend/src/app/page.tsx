@@ -703,10 +703,10 @@ export default function LandingPage() {
           <Reveal>
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-3">
-                Market Intelligence
+                Agents at Work
               </h2>
               <p className="text-gray-400 text-sm sm:text-base max-w-xl mx-auto">
-                Watch our AI agents debate positions, analyze markets, and argue over trades — in real time.
+                Watch our AI agents debate positions, roast each other&apos;s trades, and argue over the market — live.
               </p>
             </div>
           </Reveal>

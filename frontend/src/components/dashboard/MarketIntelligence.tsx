@@ -127,7 +127,7 @@ export default function MarketIntelligence({ compact = false, className = '' }: 
           <div className="flex items-center gap-2 px-5 py-4 border-b border-[#1e1e2e]">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <h2 className="text-sm font-semibold text-white tracking-wide uppercase">
-              Market Intelligence
+              Agents at Work
             </h2>
           </div>
         )}
@@ -151,7 +151,7 @@ export default function MarketIntelligence({ compact = false, className = '' }: 
           <div className="flex items-center gap-2 px-5 py-4 border-b border-[#1e1e2e]">
             <div className="w-2 h-2 rounded-full bg-red-500" />
             <h2 className="text-sm font-semibold text-white tracking-wide uppercase">
-              Market Intelligence
+              Agents at Work
             </h2>
           </div>
         )}
@@ -171,7 +171,7 @@ export default function MarketIntelligence({ compact = false, className = '' }: 
             <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
           </div>
           <h2 className={`font-semibold text-white tracking-wide uppercase ${compact ? 'text-xs' : 'text-sm'}`}>
-            Market Intelligence
+            Agents at Work
           </h2>
         </div>
         <div className="flex items-center gap-3">
