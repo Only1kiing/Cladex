@@ -923,76 +923,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* RIGHT: Agents + AI */}
+        {/* RIGHT: AI Chat */}
         <div className="lg:col-span-3 space-y-4">
-          {/* My Agents */}
-          {deployedAgents.length > 0 ? (
-            <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">My Agents</h2>
-                  {activeAgentCount > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] text-emerald-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      {activeAgentCount} active
-                    </span>
-                  )}
-                </div>
-                <a href="/dashboard/agents" className="text-[10px] font-medium text-[#B8FF3C] hover:brightness-110 transition-colors">
-                  Manage
-                </a>
-              </div>
-              <div className="space-y-2">
-                {deployedAgents.slice(0, 4).map(agent => {
-                  const pColor = agent.personality === 'apex' ? 'text-red-400' : agent.personality === 'echo' ? 'text-violet-400' : agent.personality === 'nova' ? 'text-emerald-400' : 'text-cyan-400';
-                  const statusColor = agent.status === 'active' ? 'bg-emerald-400 animate-pulse' : agent.status === 'pending' ? 'bg-amber-400 animate-pulse' : 'bg-gray-500';
-
-                  return (
-                    <a key={agent.id} href="/dashboard/agents" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/[0.03] transition-all group">
-                      <AgentAvatar personality={agent.personality} size={36} active={agent.status === 'active'} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-sm font-semibold ${pColor}`}>{agent.name}</span>
-                          <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
-                        </div>
-                        <span className="text-[10px] text-gray-500">
-                          {agent.totalTrades} trades &middot; {agent.winRate > 0 ? `${agent.winRate}% win` : 'No trades yet'}
-                        </span>
-                      </div>
-                      <span className={`text-sm font-bold tabular-nums ${agent.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {agent.pnl >= 0 ? '+' : ''}${agent.pnl.toFixed(2)}
-                      </span>
-                    </a>
-                  );
-                })}
-              </div>
-              {deployedAgents.length > 4 && (
-                <a href="/dashboard/agents" className="block mt-2 text-center text-[11px] text-gray-500 hover:text-gray-300 transition-colors py-1.5">
-                  View all {deployedAgents.length} agents
-                </a>
-              )}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-white/[0.08] bg-[#111118] p-6 text-center">
-              <div className="mx-auto w-12 h-12 rounded-xl bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 flex items-center justify-center mb-3">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B8FF3C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <p className="text-sm font-semibold text-gray-200 mb-1">Deploy your first agent</p>
-              <p className="text-[11px] text-gray-500 mb-4">Build or subscribe from the marketplace — takes 30 seconds.</p>
-              <div className="flex gap-2 justify-center">
-                <a href="/dashboard/build" className="px-4 py-2 rounded-lg bg-[#B8FF3C] text-black font-bold text-xs hover:brightness-110 transition-all">
-                  Build Agent
-                </a>
-                <a href="/dashboard/marketplace" className="px-4 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] text-xs font-medium text-gray-300 hover:bg-white/[0.1] transition-all">
-                  Marketplace
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* AI Chat — more compact for returning users */}
+          {/* AI Chat */}
           <div className="rounded-xl border border-[#1e1e2e] bg-[#111118]/80 backdrop-blur-xl overflow-hidden">
             <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2.5">
               <div className="w-6 h-6 rounded-full bg-[#B8FF3C] flex items-center justify-center">
