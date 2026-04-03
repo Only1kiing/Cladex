@@ -1283,7 +1283,7 @@ export default function DashboardPage() {
         onClose={() => { setShowTradeModal(false); setSelectedSignal(null); }}
         onExecute={async (signalId, opts) => {
           const sig = liveSignals.find(s => s.id === signalId);
-          if (!sig) return 0;
+          if (!sig) return { success: false, error: 'Signal not found' };
           try {
             await api.post('/trades/execute', {
               symbol: sig.symbol,
@@ -1297,10 +1297,10 @@ export default function DashboardPage() {
               reason: `Signal from ${sig.agent.name}: ${sig.reason}`,
             });
             setLiveSignals(prev => prev.filter(s => s.id !== signalId));
+            return { success: true };
           } catch (err: any) {
-            alert(err?.message || 'Trade failed');
+            return { success: false, error: err?.message || 'Trade execution failed' };
           }
-          return 0;
         }}
         exchangeConnected={exchangeConnected}
         exchangeName="Bybit"

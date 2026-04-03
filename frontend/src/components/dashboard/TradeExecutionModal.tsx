@@ -10,7 +10,7 @@ interface TradeExecutionModalProps {
   isOpen: boolean;
   signal: TradeSignal | null;
   onClose: () => void;
-  onExecute: (signalId: string, opts: { positionSize: number; marketType: 'spot' | 'futures'; leverage: number }) => Promise<number>;
+  onExecute: (signalId: string, opts: { positionSize: number; marketType: 'spot' | 'futures'; leverage: number }) => Promise<{ success: boolean; error?: string }>;
   exchangeConnected: boolean;
   exchangeName?: string;
 }
@@ -19,7 +19,8 @@ const MARKET_KEY = 'cladex_market_type';
 const FUTURES_WARNING_KEY = 'cladex_futures_warning_seen';
 
 function TradeExecutionModal({ isOpen, signal, onClose, onExecute, exchangeConnected, exchangeName }: TradeExecutionModalProps) {
-  const [stage, setStage] = useState<'confirm' | 'futures-warning' | 'executing' | 'active'>('confirm');
+  const [stage, setStage] = useState<'confirm' | 'futures-warning' | 'executing' | 'success' | 'error'>('confirm');
+  const [errorMsg, setErrorMsg] = useState('');
   const [positionSize, setPositionSize] = useState(10);
   const [marketType, setMarketType] = useState<'spot' | 'futures'>('spot');
   const [leverage, setLeverage] = useState(5);
@@ -79,23 +80,28 @@ function TradeExecutionModal({ isOpen, signal, onClose, onExecute, exchangeConne
 
   const handleExecute = async () => {
     setStage('executing');
-    await onExecute(signal.id, { positionSize: effectiveSize, marketType, leverage });
+    setErrorMsg('');
+    const result = await onExecute(signal.id, { positionSize: effectiveSize, marketType, leverage });
 
-    // Add to active trades sidebar
-    addActiveTrade({
-      id: `trade-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      agentName: signal.agentName,
-      personality: signal.personality,
-      pair: signal.pair,
-      side: signal.side,
-      entryPrice: signal.entryPrice,
-      stopLoss: signal.stopLoss,
-      takeProfit: signal.takeProfit,
-      positionSize: effectiveSize,
-      openedAt: Date.now(),
-    });
-
-    setStage('active');
+    if (result.success) {
+      // Add to active trades sidebar
+      addActiveTrade({
+        id: `trade-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        agentName: signal.agentName,
+        personality: signal.personality,
+        pair: signal.pair,
+        side: signal.side,
+        entryPrice: signal.entryPrice,
+        stopLoss: signal.stopLoss,
+        takeProfit: signal.takeProfit,
+        positionSize: effectiveSize,
+        openedAt: Date.now(),
+      });
+      setStage('success');
+    } else {
+      setErrorMsg(result.error || 'Trade execution failed');
+      setStage('error');
+    }
   };
 
   const sideLabel = marketType === 'spot'
@@ -354,17 +360,17 @@ function TradeExecutionModal({ isOpen, signal, onClose, onExecute, exchangeConne
         </div>
       )}
 
-      {/* Trade active confirmation */}
-      {stage === 'active' && (
+      {/* Success */}
+      {stage === 'success' && (
         <div className="flex flex-col items-center justify-center py-8 gap-4">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center animate-[scaleIn_0.3s_ease-out]">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
           </div>
 
-          <p className="text-lg font-bold text-white">Trade Active</p>
+          <p className="text-lg font-bold text-white">Trade Executed Successfully</p>
 
           <div className="flex items-center gap-2">
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -395,16 +401,52 @@ function TradeExecutionModal({ isOpen, signal, onClose, onExecute, exchangeConne
             </div>
           </div>
 
-          <p className="text-[11px] text-gray-500 text-center">
-            Track this trade in the <span className="text-[#B8FF3C] font-medium">Active Trades</span> sidebar
-          </p>
+          <div className="rounded-xl bg-emerald-500/[0.06] border border-emerald-500/15 px-4 py-2.5 w-full text-center">
+            <p className="text-[11px] text-emerald-400 font-medium">
+              Order filled — track this trade in <span className="font-bold">Active Trades</span>
+            </p>
+          </div>
 
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm font-medium text-gray-200 hover:bg-white/[0.1] transition-all mt-1"
+            className="w-full py-3 rounded-xl bg-[#B8FF3C] text-black font-bold text-sm hover:brightness-110 transition-all mt-1"
           >
             Done
           </button>
+        </div>
+      )}
+
+      {/* Error */}
+      {stage === 'error' && (
+        <div className="flex flex-col items-center justify-center py-8 gap-4">
+          <div className="w-16 h-16 rounded-full bg-red-500/15 flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+          </div>
+
+          <p className="text-lg font-bold text-white">Trade Failed</p>
+
+          <div className="rounded-xl bg-red-500/[0.06] border border-red-500/15 px-4 py-3 w-full text-center">
+            <p className="text-xs text-red-400">{errorMsg}</p>
+          </div>
+
+          <div className="flex gap-2 w-full">
+            <button
+              onClick={() => setStage('confirm')}
+              className="flex-1 py-3 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm font-medium text-gray-200 hover:bg-white/[0.1] transition-all"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl bg-white/[0.04] border border-white/[0.06] text-sm font-medium text-gray-400 hover:bg-white/[0.08] transition-all"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
     </Modal>
