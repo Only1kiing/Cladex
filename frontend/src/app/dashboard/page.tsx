@@ -474,21 +474,22 @@ export default function DashboardPage() {
     try {
       const data = await api.get<{ trades: Array<{
         id: string;
-        pair?: string;
+        symbol?: string;
         side?: string;
         price?: number;
+        amount?: number;
         profit?: number;
         status?: string;
         createdAt?: string;
-        agent?: { name?: string; personality?: string };
+        agent?: { id?: string; name?: string; personality?: string };
       }> }>('/trades/recent');
       if (data?.trades && data.trades.length > 0) {
         const items: ActivityItem[] = data.trades.map((t) => ({
           id: t.id,
           type: 'trade' as const,
-          tradeDirection: (t.side === 'sell' ? 'sell' : 'buy') as 'buy' | 'sell',
+          tradeDirection: (t.side === 'SELL' || t.side === 'sell' ? 'sell' : 'buy') as 'buy' | 'sell',
           agentPersonality: (t.agent?.personality?.toLowerCase() || undefined) as ActivityItem['agentPersonality'],
-          message: `${t.agent?.name || 'Agent'}: ${(t.side || 'buy').toUpperCase()} ${t.pair || 'Unknown'} at $${(t.price ?? 0).toLocaleString()}${t.profit != null ? ` (P/L: ${t.profit >= 0 ? '+' : ''}$${t.profit.toFixed(2)})` : ''}`,
+          message: `${t.agent?.name || 'Manual'}: ${(t.side || 'BUY')} ${t.symbol || '???'} at $${(t.price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}${t.profit != null ? ` (P/L: ${t.profit >= 0 ? '+' : ''}$${t.profit.toFixed(2)})` : ''}`,
           timestamp: t.createdAt || new Date().toISOString(),
         }));
         setTradeLogItems(items);
@@ -1222,6 +1223,7 @@ export default function DashboardPage() {
           if (!sig) return { success: false, error: 'Signal not found' };
           try {
             await api.post('/trades/execute', {
+              agentId: sig.agent.id,
               symbol: sig.symbol,
               side: sig.side,
               usdAmount: opts.positionSize,

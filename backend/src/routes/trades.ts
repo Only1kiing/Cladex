@@ -132,6 +132,8 @@ const executeTradeSchema = z.object({
   stopLoss: z.number().positive().optional(),
   takeProfit: z.number().positive().optional(),
   reason: z.string().optional(),
+  marketType: z.enum(["spot", "futures"]).default("spot"),
+  leverage: z.number().int().min(1).max(100).optional(),
 });
 
 // POST /api/trades/execute — execute a real trade on the exchange
@@ -229,13 +231,31 @@ router.post("/execute", async (req: Request, res: Response) => {
     const effectiveTakeProfit = body.takeProfit ?? riskCheck.takeProfitLevels?.[1]?.targetPrice ?? null;
     // ---- END RISK ENGINE ----
 
+    // Resolve trading symbol — futures use linear contract (e.g. AVAX/USDT:USDT)
+    let tradingSymbol = body.symbol;
+    if (body.marketType === "futures") {
+      // Convert spot symbol to linear perpetual contract
+      // AVAX/USDT → AVAX/USDT:USDT
+      if (!tradingSymbol.includes(":")) {
+        const quote = tradingSymbol.split("/")[1] || "USDT";
+        tradingSymbol = `${tradingSymbol}:${quote}`;
+      }
+      // Set leverage before placing the order
+      try {
+        await exchange.setLeverage(body.leverage || 5, tradingSymbol);
+      } catch (leverageErr: any) {
+        // Some exchanges silently accept leverage, some throw if already set — continue
+        console.log(`Leverage set attempt: ${leverageErr?.message || 'ok'}`);
+      }
+    }
+
     // Place the order on the real exchange
     let order;
     try {
       if (body.type === "limit" && body.price) {
-        order = await exchange.createOrder(body.symbol, "limit", body.side, tradeAmount, body.price);
+        order = await exchange.createOrder(tradingSymbol, "limit", body.side, tradeAmount, body.price);
       } else {
-        order = await exchange.createOrder(body.symbol, "market", body.side, tradeAmount);
+        order = await exchange.createOrder(tradingSymbol, "market", body.side, tradeAmount);
       }
     } catch (err: any) {
       const msg = err?.message || "Order failed";
