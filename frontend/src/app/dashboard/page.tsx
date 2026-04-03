@@ -409,6 +409,7 @@ export default function DashboardPage() {
 
   const [deployedAgents, setDeployedAgents] = useState<DeployedAgent[]>([]);
   const [showAllTrades, setShowAllTrades] = useState(false);
+  const [showPortfolio, setShowPortfolio] = useState(false);
 
   // Real data from backend API — hydrate from cache for instant display
   const [dashStats, setDashStats] = useState<DashboardStats | null>(() => {
@@ -842,52 +843,68 @@ export default function DashboardPage() {
 
         {/* LEFT: Portfolio */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Exchange Portfolio */}
-          <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-4">
+          {/* Exchange Portfolio — collapsible */}
+          <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
             {exchangeConnected ? (
               <>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Portfolio</span>
-                  <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setShowPortfolio(!showPortfolio)}
+                  className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Portfolio</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[10px] text-emerald-400 font-medium">Live</span>
+                    {exchangeBalance.balances.length > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-gray-400">{exchangeBalance.balances.length} assets</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-white tabular-nums">
+                      ${exchangeBalance.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <svg className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${showPortfolio ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ease-out ${showPortfolio ? 'max-h-[400px] border-t border-white/[0.04]' : 'max-h-0'}`}>
+                  <div className="p-4 pt-3">
+                    {exchangeBalance.balances.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {exchangeBalance.balances.map((b) => {
+                          const pct = exchangeBalance.total > 0 ? ((b.usdValue || 0) / exchangeBalance.total * 100) : 0;
+                          return (
+                            <div key={b.asset} className="flex items-center gap-3 py-1.5">
+                              <div className="w-7 h-7 rounded-lg bg-white/[0.06] flex items-center justify-center text-[10px] font-bold text-gray-300">
+                                {b.asset.slice(0, 2)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-semibold text-white">{b.asset}</span>
+                                  <span className="text-xs font-semibold text-white tabular-nums">
+                                    ${(b.usdValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between mt-0.5">
+                                  <span className="text-[10px] text-gray-500 tabular-nums">{b.total.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
+                                  <span className="text-[10px] text-gray-500 tabular-nums">{pct.toFixed(1)}%</span>
+                                </div>
+                                <div className="mt-1 h-[2px] rounded-full bg-white/[0.06] overflow-hidden">
+                                  <div className="h-full rounded-full bg-[#B8FF3C]/40" style={{ width: `${Math.min(pct, 100)}%` }} />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-500 py-2">Loading balances...</p>
+                    )}
                   </div>
                 </div>
-                {exchangeBalance.balances.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {exchangeBalance.balances.map((b) => {
-                      const pct = exchangeBalance.total > 0 ? ((b.usdValue || 0) / exchangeBalance.total * 100) : 0;
-                      return (
-                        <div key={b.asset} className="flex items-center gap-3 py-1.5">
-                          <div className="w-7 h-7 rounded-lg bg-white/[0.06] flex items-center justify-center text-[10px] font-bold text-gray-300">
-                            {b.asset.slice(0, 2)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-white">{b.asset}</span>
-                              <span className="text-xs font-semibold text-white tabular-nums">
-                                ${(b.usdValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between mt-0.5">
-                              <span className="text-[10px] text-gray-500 tabular-nums">{b.total.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span>
-                              <span className="text-[10px] text-gray-500 tabular-nums">{pct.toFixed(1)}%</span>
-                            </div>
-                            {/* Mini bar */}
-                            <div className="mt-1 h-[2px] rounded-full bg-white/[0.06] overflow-hidden">
-                              <div className="h-full rounded-full bg-[#B8FF3C]/40" style={{ width: `${Math.min(pct, 100)}%` }} />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-500 py-2">Loading balances...</p>
-                )}
               </>
             ) : (
-              <div className="text-center py-6">
+              <div className="text-center py-6 px-4">
                 <div className="w-10 h-10 rounded-xl bg-[#B8FF3C]/10 flex items-center justify-center mx-auto mb-3">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B8FF3C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2" /><path d="M22 10H18a2 2 0 000 4h4" /></svg>
                 </div>
