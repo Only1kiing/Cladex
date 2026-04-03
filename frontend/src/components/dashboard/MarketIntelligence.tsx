@@ -73,6 +73,7 @@ function highlightMentions(text: string, messages: IntelMessage[]): React.ReactN
 
 export default function MarketIntelligence({ compact = false, className = '' }: MarketIntelligenceProps) {
   const [messages, setMessages] = useState<IntelMessage[]>([]);
+  const [viewers, setViewers] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -84,6 +85,7 @@ export default function MarketIntelligence({ compact = false, className = '' }: 
       if (!res.ok) throw new Error('Failed to fetch intel feed');
       const data = await res.json();
       const feed: IntelMessage[] = data.feed || [];
+      setViewers(data.viewers || 0);
       if (compact) {
         setMessages(feed.slice(-6));
       } else {
@@ -162,20 +164,30 @@ export default function MarketIntelligence({ compact = false, className = '' }: 
 
   return (
     <div className={`bg-[#111118] border border-[#1e1e2e] rounded-xl flex flex-col ${className}`}>
-      {!compact && (
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#1e1e2e] shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            </div>
-            <h2 className="text-sm font-semibold text-white tracking-wide uppercase">
-              Market Intelligence
-            </h2>
+      <div className={`flex items-center justify-between shrink-0 border-b border-[#1e1e2e] ${compact ? 'px-3 py-2.5' : 'px-5 py-4'}`}>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <div className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
           </div>
-          <span className="text-[10px] text-zinc-600 uppercase tracking-widest">Live Feed</span>
+          <h2 className={`font-semibold text-white tracking-wide uppercase ${compact ? 'text-xs' : 'text-sm'}`}>
+            Market Intelligence
+          </h2>
         </div>
-      )}
+        <div className="flex items-center gap-3">
+          {viewers > 0 && (
+            <div className="flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <span className="text-[11px] text-zinc-400 font-medium">{viewers.toLocaleString()}</span>
+              <span className="text-[10px] text-zinc-600">watching</span>
+            </div>
+          )}
+          <span className={`text-zinc-600 uppercase tracking-widest ${compact ? 'text-[9px]' : 'text-[10px]'}`}>Live</span>
+        </div>
+      </div>
 
       <div
         ref={scrollRef}

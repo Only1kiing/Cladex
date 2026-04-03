@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ReferralCard } from '@/components/dashboard/PointsSystem';
 import { AgentAvatar } from '@/components/dashboard/AgentAvatar';
 import type { AgentPersonality } from '@/types';
+import MarketIntelligence from '@/components/dashboard/MarketIntelligence';
 import type { ActivityItem } from '@/components/dashboard/ActivityFeed';
 
 // Dashboard stats shape from API
@@ -407,7 +408,7 @@ export default function DashboardPage() {
   const [exchangeBalance, setExchangeBalance] = useState<{ total: number; balances: { asset: string; free: number; total: number; usdValue?: number }[] }>({ total: 0, balances: [] });
   const [gasBalance, setGasBalance] = useState(0);
   const [tradeLogItems, setTradeLogItems] = useState<ActivityItem[]>([]);
-  const [agentComms, setAgentComms] = useState<{ id: string; agentName: string; personality: string; message: string; type: string; timestamp: string }[]>([]);
+  // agentComms removed — replaced by MarketIntelligence component
 
   // Real signals from backend
   const [liveSignals, setLiveSignals] = useState<{
@@ -508,15 +509,7 @@ export default function DashboardPage() {
       // No signals
     }
 
-    // Fetch agent comms
-    try {
-      const data = await api.get<{ comms: { id: string; agentName: string; personality: string; message: string; type: string; timestamp: string }[] }>('/agents/comms');
-      if (data?.comms) {
-        setAgentComms(data.comms);
-      }
-    } catch {
-      // No comms available
-    }
+    // Market Intelligence now handled by its own component
   }, []);
 
   // Fetch on mount + auto-refresh every 30 seconds
@@ -1052,42 +1045,10 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Market Intelligence — Live Feed from real agents */}
-      {agentComms.length > 0 && (
-        <section>
-          <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-sm font-semibold text-gray-100">Market Intelligence</h2>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] text-emerald-400 font-medium">Live</span>
-            </div>
-            <span className="text-[10px] text-gray-600">Auto-refreshes</span>
-          </div>
-          <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
-            <div className="max-h-[320px] overflow-y-auto scrollbar-thin divide-y divide-[#1e1e2e]/60">
-              {agentComms.map((msg) => {
-                const pColor = msg.personality === 'apex' ? 'text-red-400' : msg.personality === 'echo' ? 'text-violet-400' : msg.personality === 'nova' ? 'text-emerald-400' : 'text-cyan-400';
-                return (
-                  <div key={msg.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors">
-                    <div className="mt-0.5 shrink-0">
-                      <AgentAvatar personality={(msg.personality || 'sage') as AgentPersonality} size={28} active />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className={`font-semibold text-sm ${pColor}`}>{msg.agentName}</span>
-                        <span className="text-[10px] text-gray-600">
-                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-300 leading-relaxed">{msg.message}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Market Intelligence — Live agent debates */}
+      <section>
+        <MarketIntelligence />
+      </section>
 
       {/* Trade Log — collapsible dropdown */}
       <section>

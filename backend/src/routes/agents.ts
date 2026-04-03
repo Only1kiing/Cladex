@@ -104,8 +104,20 @@ router.get("/marketplace", async (_req: Request, res: Response) => {
   res.json({ agents });
 });
 
+// Viewer tracking for Market Intelligence
+const intelViewers = new Set<string>();
+
 // GET /api/agents/intel — public market intelligence feed (no auth)
-router.get("/intel", async (_req: Request, res: Response) => {
+router.get("/intel", async (req: Request, res: Response) => {
+  // Track viewer by IP or forwarded header
+  const viewerId = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim()
+    || req.socket.remoteAddress
+    || `anon-${Date.now()}`;
+  intelViewers.add(viewerId);
+
+  // Auto-remove viewer after 45 seconds (they'll re-poll if still watching)
+  setTimeout(() => intelViewers.delete(viewerId), 45000);
+
   const recentLogs = await prisma.activityLog.findMany({
     where: {
       type: { in: ["INSIGHT", "TRADE"] },
@@ -119,7 +131,6 @@ router.get("/intel", async (_req: Request, res: Response) => {
   });
 
   const feed = recentLogs.map(log => {
-    // Detect replies — messages starting with @AgentName
     const replyMatch = log.message.match(/^@(\w+)/);
     return {
       id: log.id,
@@ -132,7 +143,7 @@ router.get("/intel", async (_req: Request, res: Response) => {
     };
   });
 
-  res.json({ feed });
+  res.json({ feed, viewers: intelViewers.size });
 });
 
 router.use(authMiddleware);
@@ -385,36 +396,6 @@ router.post("/:id/resubscribe", async (req: Request, res: Response) => {
 
   const updated = await prisma.agent.findUnique({ where: { id: agentId } });
   res.json({ agent: updated });
-});
-
-// GET /api/agents/comms — live agent comm feed (requires auth)
-router.get("/comms", async (_req: Request, res: Response) => {
-  const recentLogs = await prisma.activityLog.findMany({
-    where: { agent: { status: "RUNNING" } },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    include: {
-      agent: { select: { id: true, name: true, personality: true, assets: true } },
-    },
-  });
-
-  const activeAgents = await prisma.agent.findMany({
-    where: { status: "RUNNING" },
-    select: { id: true, name: true, personality: true, assets: true, profit: true, totalTrades: true },
-    take: 10,
-    orderBy: { updatedAt: "desc" },
-  });
-
-  const comms = recentLogs.map(log => ({
-    id: log.id,
-    agentName: log.agent?.name || "Agent",
-    personality: (log.agent?.personality?.toLowerCase() || "sage"),
-    message: log.message,
-    type: log.type,
-    timestamp: log.createdAt.toISOString(),
-  }));
-
-  res.json({ comms, activeAgents });
 });
 
 export default router;
