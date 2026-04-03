@@ -75,16 +75,6 @@ const navItems = [
     ),
   },
   {
-    label: 'Backtest',
-    href: '/dashboard/backtest',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M3 14l4-4 3 3 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M13 6h4v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
     label: 'Risk',
     href: '/dashboard/risk',
     icon: (
