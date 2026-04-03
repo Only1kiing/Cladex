@@ -682,7 +682,7 @@ export default function DashboardPage() {
             ) : (
               <span className="text-[11px] text-gray-500">Demo Mode</span>
             )}
-            {exchangeConnected && gasBalance > 0 && (
+            {exchangeConnected && gasBalance > 0 && gasBalance < 2 && (
               <>
                 <span className="text-gray-700">|</span>
                 <span className="text-[11px] text-amber-400 font-medium">${gasBalance.toFixed(2)} gas</span>
@@ -902,15 +902,14 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Gas Balance — compact */}
-          {exchangeConnected && gasBalance > 0 && (
-            <div className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-[#1e1e2e] bg-[#111118]">
+          {/* Gas Balance — only show when low */}
+          {exchangeConnected && gasBalance > 0 && gasBalance < 2 && (
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05]">
               <div className="flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span className="text-xs font-semibold text-white tabular-nums">${gasBalance.toFixed(2)}</span>
-                <span className="text-[10px] text-gray-600">gas</span>
+                <span className="text-xs text-amber-400">Gas low: <span className="font-semibold">${gasBalance.toFixed(2)}</span></span>
               </div>
               <a href="/dashboard/settings" className="text-[10px] font-semibold text-amber-400 hover:text-amber-300">Top Up</a>
             </div>
