@@ -86,6 +86,89 @@ async function getExchangeBalance(
   }
 }
 
+// Update P&L for all open trades using live prices
+async function updateOpenTradePnL(userId: string, exchangeName: string, apiKey: string, apiSecret: string) {
+  const openTrades = await prisma.trade.findMany({
+    where: { userId, status: "OPEN" },
+  });
+
+  if (openTrades.length === 0) return;
+
+  const ccxtId = SUPPORTED_EXCHANGES[exchangeName.toLowerCase()];
+  if (!ccxtId) return;
+
+  try {
+    const ExchangeClass = (ccxt as Record<string, any>)[ccxtId];
+    if (!ExchangeClass) return;
+
+    const exchange = new ExchangeClass({
+      apiKey,
+      secret: apiSecret,
+      enableRateLimit: true,
+      timeout: 15000,
+    });
+    await exchange.loadMarkets();
+
+    // Fetch tickers for all symbols we need
+    const symbols = [...new Set(openTrades.map(t => t.symbol))];
+    const prices: Record<string, number> = {};
+
+    for (const symbol of symbols) {
+      try {
+        const ticker = await exchange.fetchTicker(symbol);
+        prices[symbol] = ticker?.last || 0;
+      } catch {
+        // Skip if can't fetch
+      }
+    }
+
+    // Update each trade's unrealized P&L
+    for (const trade of openTrades) {
+      const currentPrice = prices[trade.symbol];
+      if (!currentPrice || !trade.price) continue;
+
+      let pnl: number;
+      if (trade.side === "BUY") {
+        pnl = (currentPrice - trade.price) * trade.amount;
+      } else {
+        pnl = (trade.price - currentPrice) * trade.amount;
+      }
+      pnl = Math.round(pnl * 100) / 100;
+
+      // Check if stop loss or take profit was hit
+      let newStatus: "OPEN" | "CLOSED" = "OPEN";
+      if (trade.side === "BUY") {
+        if (trade.stopLoss && currentPrice <= trade.stopLoss) newStatus = "CLOSED";
+        if (trade.takeProfit && currentPrice >= trade.takeProfit) newStatus = "CLOSED";
+      } else {
+        if (trade.stopLoss && currentPrice >= trade.stopLoss) newStatus = "CLOSED";
+        if (trade.takeProfit && currentPrice <= trade.takeProfit) newStatus = "CLOSED";
+      }
+
+      if (pnl !== trade.profit || newStatus !== "OPEN") {
+        await prisma.trade.update({
+          where: { id: trade.id },
+          data: {
+            profit: pnl,
+            ...(newStatus === "CLOSED" ? { status: "CLOSED" } : {}),
+          },
+        });
+
+        // Update agent profit too
+        if (trade.agentId && pnl !== trade.profit) {
+          const diff = pnl - trade.profit;
+          await prisma.agent.update({
+            where: { id: trade.agentId },
+            data: { profit: { increment: diff } },
+          });
+        }
+      }
+    }
+  } catch {
+    // Non-critical — P&L update failure shouldn't break dashboard
+  }
+}
+
 const router = Router();
 router.use(authMiddleware);
 
@@ -119,8 +202,6 @@ router.get("/stats", async (req: Request, res: Response) => {
       }),
     ]);
 
-  const realProfit = profitAgg._sum.profit ?? 0;
-
   let totalBalance = 0;
   let exchangeConnected = false;
   let exchangeBalances: { asset: string; free: number; total: number }[] = [];
@@ -134,7 +215,17 @@ router.get("/stats", async (req: Request, res: Response) => {
     );
     totalBalance = exBalance.totalUsd;
     exchangeBalances = exBalance.balances;
+
+    // Update P&L for open trades using live prices
+    await updateOpenTradePnL(userId, exchangeRecord.name, exchangeRecord.apiKey, exchangeRecord.apiSecret);
   }
+
+  // Re-fetch profit after P&L update
+  const updatedProfit = await prisma.trade.aggregate({
+    where: { userId },
+    _sum: { profit: true },
+  });
+  const realProfit = updatedProfit._sum.profit ?? 0;
 
   res.json({
     stats: {
