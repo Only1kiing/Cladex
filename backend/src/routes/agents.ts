@@ -81,10 +81,9 @@ router.get("/active", async (req: Request, res: Response) => {
 });
 
 // GET /api/agents/marketplace — public marketplace agents (no auth required)
-// Only show original agents — subscribed/cloned agents (sourceAgentId set) are excluded
 router.get("/marketplace", async (_req: Request, res: Response) => {
   const agents = await prisma.agent.findMany({
-    where: { status: "RUNNING", sourceAgentId: null },
+    where: { status: "RUNNING" },
     select: {
       id: true,
       name: true,
