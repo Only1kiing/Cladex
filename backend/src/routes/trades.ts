@@ -439,4 +439,99 @@ router.get("/signals", async (_req: Request, res: Response) => {
   res.json({ signals });
 });
 
+// GET /api/trades/pnl — live P&L for open trades (lightweight, poll frequently)
+router.get("/pnl", async (req: Request, res: Response) => {
+  const openTrades = await prisma.trade.findMany({
+    where: { userId: req.user!.id, status: "OPEN" },
+    include: { agent: { select: { id: true, name: true, personality: true } } },
+  });
+
+  if (openTrades.length === 0) {
+    res.json({ trades: [], totalPnl: 0 });
+    return;
+  }
+
+  const exchangeData = await getExchangeInstance(req.user!.id);
+  if (!exchangeData) {
+    // Return trades with stored profit if exchange unavailable
+    const totalPnl = openTrades.reduce((sum, t) => sum + t.profit, 0);
+    res.json({ trades: openTrades, totalPnl });
+    return;
+  }
+
+  const { exchange } = exchangeData;
+  const symbols = [...new Set(openTrades.map(t => t.symbol))];
+  const prices: Record<string, number> = {};
+
+  // Fetch all tickers in parallel
+  await Promise.all(symbols.map(async (symbol) => {
+    try {
+      const ticker = await exchange.fetchTicker(symbol);
+      prices[symbol] = ticker?.last || 0;
+    } catch { /* skip */ }
+  }));
+
+  let totalPnl = 0;
+  const updated = openTrades.map((trade) => {
+    const currentPrice = prices[trade.symbol] || 0;
+    let pnl = trade.profit;
+
+    if (currentPrice && trade.price) {
+      if (trade.side === "BUY") {
+        pnl = (currentPrice - trade.price) * trade.amount;
+      } else {
+        pnl = (trade.price - currentPrice) * trade.amount;
+      }
+      pnl = Math.round(pnl * 100) / 100;
+
+      // Persist if changed
+      if (pnl !== trade.profit) {
+        prisma.trade.update({
+          where: { id: trade.id },
+          data: { profit: pnl },
+        }).catch(() => {});
+
+        if (trade.agentId) {
+          prisma.agent.update({
+            where: { id: trade.agentId },
+            data: { profit: { increment: pnl - trade.profit } },
+          }).catch(() => {});
+        }
+      }
+
+      // Auto-close on SL/TP hit
+      let hit = false;
+      if (trade.side === "BUY") {
+        if (trade.stopLoss && currentPrice <= trade.stopLoss) hit = true;
+        if (trade.takeProfit && currentPrice >= trade.takeProfit) hit = true;
+      } else {
+        if (trade.stopLoss && currentPrice >= trade.stopLoss) hit = true;
+        if (trade.takeProfit && currentPrice <= trade.takeProfit) hit = true;
+      }
+      if (hit) {
+        prisma.trade.update({ where: { id: trade.id }, data: { status: "CLOSED", profit: pnl } }).catch(() => {});
+      }
+    }
+
+    totalPnl += pnl;
+    return {
+      id: trade.id,
+      symbol: trade.symbol,
+      side: trade.side,
+      amount: trade.amount,
+      entryPrice: trade.price,
+      currentPrice: currentPrice || trade.price,
+      profit: pnl,
+      pnlPercent: trade.price ? ((currentPrice - trade.price) / trade.price * 100 * (trade.side === "BUY" ? 1 : -1)) : 0,
+      stopLoss: trade.stopLoss,
+      takeProfit: trade.takeProfit,
+      agent: trade.agent,
+      createdAt: trade.createdAt,
+    };
+  });
+
+  totalPnl = Math.round(totalPnl * 100) / 100;
+  res.json({ trades: updated, totalPnl });
+});
+
 export default router;

@@ -427,6 +427,12 @@ export default function DashboardPage() {
   const [tradeLogItems, setTradeLogItems] = useState<ActivityItem[]>([]);
   // agentComms removed — replaced by MarketIntelligence component
 
+  // Live P&L from open trades
+  const [livePnl, setLivePnl] = useState<{ totalPnl: number; trades: Array<{
+    id: string; symbol: string; side: string; entryPrice: number; currentPrice: number;
+    profit: number; pnlPercent: number; agent: { name: string } | null;
+  }> }>({ totalPnl: 0, trades: [] });
+
   // Real signals from backend
   const [liveSignals, setLiveSignals] = useState<{
     id: string;
@@ -508,7 +514,7 @@ export default function DashboardPage() {
           type: 'trade' as const,
           tradeDirection: (t.side === 'SELL' || t.side === 'sell' ? 'sell' : 'buy') as 'buy' | 'sell',
           agentPersonality: (t.agent?.personality?.toLowerCase() || undefined) as ActivityItem['agentPersonality'],
-          message: `${t.agent?.name || 'Manual'}: ${(t.side || 'BUY')} ${t.symbol || '???'} at $${(t.price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}${t.profit != null ? ` (P/L: ${t.profit >= 0 ? '+' : ''}$${t.profit.toFixed(2)})` : ''}`,
+          message: `${t.agent?.name || 'Manual'}: ${(t.side || 'BUY')} ${t.symbol || '???'} at $${(t.price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`,
           timestamp: t.createdAt || new Date().toISOString(),
         }));
         setTradeLogItems(items);
@@ -543,6 +549,20 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchDashboardData();
     const interval = setInterval(fetchDashboardData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchDashboardData]);
+
+  // Poll live P&L every 10 seconds for open trades
+  useEffect(() => {
+    if (!exchangeConnected) return;
+    const fetchPnl = async () => {
+      try {
+        const data = await api.get<typeof livePnl>('/trades/pnl');
+        if (data) setLivePnl(data);
+      } catch { /* */ }
+    };
+    fetchPnl();
+    const interval = setInterval(fetchPnl, 10000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
@@ -698,9 +718,12 @@ export default function DashboardPage() {
               : dashStats?.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </p>
           <p className={`text-xs font-semibold tabular-nums ${
-            dashStats && dashStats.totalProfit >= 0 ? 'text-emerald-400' : dashStats && dashStats.totalProfit < 0 ? 'text-red-400' : 'text-gray-500'
+            (livePnl.totalPnl || dashStats?.totalProfit || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
           }`}>
-            {dashStats ? `${dashStats.totalProfit >= 0 ? '+' : ''}$${dashStats.totalProfit.toFixed(2)} today` : 'No data yet'}
+            {(() => {
+              const pnl = livePnl.totalPnl || dashStats?.totalProfit || 0;
+              return `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} P&L`;
+            })()}
           </p>
         </div>
       </div>
@@ -716,10 +739,13 @@ export default function DashboardPage() {
           <p className="text-[10px] text-gray-500 mt-0.5">Trades</p>
         </div>
         <div className="rounded-xl bg-[#111118] border border-[#1e1e2e] p-3 text-center">
-          <p className={`text-lg font-bold ${(dashStats?.totalProfit ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-            {dashStats ? `${dashStats.totalProfit >= 0 ? '+' : ''}${dashStats.totalProfit.toFixed(1)}%` : '—'}
-          </p>
-          <p className="text-[10px] text-gray-500 mt-0.5">24h P&L</p>
+          {(() => {
+            const pnl = livePnl.totalPnl || dashStats?.totalProfit || 0;
+            return <p className={`text-lg font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {pnl !== 0 ? `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` : '—'}
+            </p>;
+          })()}
+          <p className="text-[10px] text-gray-500 mt-0.5">P&L</p>
         </div>
       </div>
 
