@@ -1,16 +1,17 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import Stripe from "stripe";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
 
 // Stripe init — only active if STRIPE_SECRET_KEY is set
-function getStripe(): Stripe | null {
+function getStripe(): any | null {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) return null;
-  return new Stripe(key, { apiVersion: "2025-03-31.basil" as any });
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Stripe = require("stripe");
+  return new Stripe(key);
 }
 
 // ---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ router.post("/webhook", async (req: Request, res: Response) => {
     return;
   }
 
-  let event: Stripe.Event;
+  let event: any;
   try {
     event = stripe.webhooks.constructEvent(
       (req as any).rawBody || JSON.stringify(req.body),
@@ -46,7 +47,7 @@ router.post("/webhook", async (req: Request, res: Response) => {
   }
 
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
+    const session = event.data.object as any;
     const userId = session.metadata?.userId;
     const gasAmount = parseFloat(session.metadata?.gasAmount || "0");
 

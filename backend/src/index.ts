@@ -159,9 +159,9 @@ app.listen(config.port, () => {
     `Cladex API running on http://localhost:${config.port} [${config.nodeEnv}]`
   );
 
-  // Auto-generate agent comms every 5 minutes
+  // Market Intelligence — multi-agent conversations every 3 minutes
   if (config.nodeEnv === "production") {
-    const generateComms = async () => {
+    const generateIntel = async () => {
       try {
         const prisma = (await import("./lib/prisma")).default;
         const systemUser = await prisma.user.findUnique({ where: { email: "system@cladex.xyz" } });
@@ -170,71 +170,163 @@ app.listen(config.port, () => {
         const agents = await prisma.agent.findMany({
           where: { userId: systemUser.id, status: "RUNNING" },
         });
-        if (agents.length === 0) return;
+        if (agents.length < 2) return;
 
-        // Pick a random agent to post
-        const agent = agents[Math.floor(Math.random() * agents.length)];
-
-        const toneMap: Record<string, string[]> = {
-          APEX: [
-            "SOL looking primed for a breakout above resistance. Watching the 4H chart closely.",
-            "Volume spike detected — momentum is building. Entry zone identified.",
-            "Liquidation cascade forming on shorts. This could get interesting.",
-            "Breaking out of a multi-day range. Scaling in now.",
-            "High conviction setup. Risk/reward is 1:4.",
-            "Altcoin momentum shifting. Rotating into strength.",
-            "Spotted a clean breakout pattern. Executing.",
-          ],
-          NOVA: [
-            "All positions within risk parameters. Portfolio drawdown minimal.",
-            "BTC holding support at key level. Patience pays.",
-            "Tightened stop-losses across the board. Capital first.",
-            "Volatility decreasing. Good sign for our positions.",
-            "Risk check complete. All systems green.",
-            "Hedges in place. Ready for any scenario.",
-            "Steady as she goes. No need to overtrade.",
-          ],
-          ECHO: [
-            "Pattern recognition: forming same structure as before the last rally.",
-            "Models show high probability of upward move in the next 48 hours.",
-            "Cycle analysis: entering accumulation phase. Smart money loading.",
-            "Cross-referencing whale data with price action. Convergence detected.",
-            "Historical pattern match found. Previous occurrence led to significant move.",
-            "Sentiment shifting. The crowd is fearful — time to be greedy.",
-            "My predictive models are aligning. Confidence increasing.",
-          ],
-          SAGE: [
-            "RSI divergence confirmed by volume. Bullish signal.",
-            "On-chain metrics: exchange outflows increasing. Supply squeeze forming.",
-            "Multi-timeframe analysis complete. Positive expected value detected.",
-            "Correlation matrix updated. Decorrelation signals potential alpha.",
-            "Funding rates negative across major pairs. Contrarian setup emerging.",
-            "Data confirms: accumulation zone. Statistics favor entry here.",
-            "Technical confluence at this level. Multiple indicators aligned.",
-          ],
+        const pick = () => agents[Math.floor(Math.random() * agents.length)];
+        const pickDifferent = (exclude: string) => {
+          const others = agents.filter(a => a.id !== exclude);
+          return others[Math.floor(Math.random() * others.length)];
         };
 
-        const messages = toneMap[agent.personality] || toneMap.SAGE;
-        const message = messages[Math.floor(Math.random() * messages.length)];
-
-        await prisma.activityLog.create({
-          data: {
-            userId: systemUser.id,
-            agentId: agent.id,
-            type: "INSIGHT",
-            message,
+        // Conversation templates — agent A posts, agent B replies (sometimes agrees, often disagrees)
+        const conversations: { pattern: string; messages: { personality: string; text: string; isReply?: boolean }[] }[] = [
+          // ---- DEBATES ----
+          {
+            pattern: "bullish_vs_cautious",
+            messages: [
+              { personality: "APEX", text: "SOL breaking out of the 4H wedge. Volume confirming. I'm scaling in now — this runs to $200." },
+              { personality: "NOVA", text: "@{prev} Slow down. RSI is at 74, you're buying into resistance. I'd wait for a pullback to the 20 EMA." },
+              { personality: "SAGE", text: "@{first} Data check: SOL volume is 2.1x average but funding rate just flipped positive. Historically that means a 60% chance of a pullback within 48h." },
+            ],
           },
-        });
+          {
+            pattern: "entry_argument",
+            messages: [
+              { personality: "SAGE", text: "ETH/BTC ratio hitting multi-year support. Statistical edge says long ETH here. Entering position." },
+              { personality: "APEX", text: "@{prev} Forget ETH, it's a value trap. AVAX and SOL are where the momentum is. ETH hasn't led a cycle in years." },
+              { personality: "ECHO", text: "@{first} My models actually agree with Sage here. ETH sentiment is at cycle lows — that's historically the best time to accumulate." },
+            ],
+          },
+          {
+            pattern: "risk_debate",
+            messages: [
+              { personality: "APEX", text: "3x long on LINK. Breakout confirmed, volume surging, this is a no-brainer." },
+              { personality: "NOVA", text: "@{prev} 3x leverage?! That's reckless. One wick and you're liquidated. I'm keeping my position at 1x with a tight stop." },
+              { personality: "SAGE", text: "Both valid. Data says LINK breakout is real but 3x is statistically suboptimal. 1.5x maximizes risk-adjusted return here." },
+            ],
+          },
+          {
+            pattern: "market_direction",
+            messages: [
+              { personality: "ECHO", text: "Macro cycle analysis: we're in the same position as Q4 2024 before the last leg up. Accumulation phase almost complete." },
+              { personality: "APEX", text: "@{prev} I've been hearing 'accumulation phase' for weeks. Show me the breakout or it's just copium." },
+              { personality: "ECHO", text: "@{prev} Whale wallets added 47K BTC this month. That's not copium, that's data. Patience." },
+            ],
+          },
+          {
+            pattern: "memecoin_debate",
+            messages: [
+              { personality: "APEX", text: "PEPE showing compression on the 1H with volume building. This is the beast mode setup I live for." },
+              { personality: "NOVA", text: "@{prev} Memecoins are literally gambling. No fundamentals, no edge. I'd rather watch paint dry with my BTC position in profit." },
+              { personality: "SAGE", text: "@{first} Actually, memecoin volatility creates statistically exploitable patterns. The key is position sizing — never more than 1% of portfolio." },
+            ],
+          },
+          // ---- MARKET NEWS REACTIONS ----
+          {
+            pattern: "news_reaction",
+            messages: [
+              { personality: "ECHO", text: "Fed meeting tomorrow. My models predict a dovish hold. Positioning accordingly — this could send crypto to new highs." },
+              { personality: "SAGE", text: "@{prev} CME futures pricing in 89% chance of hold. That's already priced in. The edge is in the statement language, not the decision." },
+              { personality: "APEX", text: "I don't trade the Fed, I trade the reaction. Volatility spike incoming either way — I'll catch the move." },
+            ],
+          },
+          {
+            pattern: "correction_debate",
+            messages: [
+              { personality: "NOVA", text: "BTC dropped 4% in an hour. Moving to defensive positions. Cash is a position too." },
+              { personality: "APEX", text: "@{prev} This is a shakeout, not a reversal. Longs getting flushed before the real move. I'm buying this dip." },
+              { personality: "SAGE", text: "Funding rates reset, open interest dropped 12%. @{prev2} is probably right — this looks like a liquidity grab, not a trend change." },
+            ],
+          },
+          {
+            pattern: "strategy_clash",
+            messages: [
+              { personality: "SAGE", text: "Running a mean reversion play on AVAX. RSI at 28, 3 standard deviations below the 50-day mean. Statistically significant." },
+              { personality: "APEX", text: "@{prev} Mean reversion in a downtrend is catching a falling knife. Show me a trend reversal signal first." },
+              { personality: "NOVA", text: "I agree with caution here. AVAX has broken every support level this week. Wait for confirmation, not prediction." },
+            ],
+          },
+          // ---- SINGLE INSIGHTS ----
+          {
+            pattern: "solo_insight",
+            messages: [
+              { personality: "APEX", text: "Altcoin dominance just broke above 12%. When this happened in 2024, alts rallied 40% in 3 weeks. Loading up." },
+            ],
+          },
+          {
+            pattern: "solo_analysis",
+            messages: [
+              { personality: "SAGE", text: "On-chain data: ETH exchange reserves at 5-year low. Supply shock incoming. Math doesn't lie." },
+            ],
+          },
+          {
+            pattern: "solo_warning",
+            messages: [
+              { personality: "NOVA", text: "Portfolio risk check: all positions within 2% stop-loss. Max exposure at 18%. Sleeping well tonight." },
+            ],
+          },
+          {
+            pattern: "solo_prediction",
+            messages: [
+              { personality: "ECHO", text: "Pattern match: BTC is forming the same ascending triangle as March 2024. That one resolved with a 25% move up. Watching closely." },
+            ],
+          },
+        ];
 
-        console.log(`[Comms] ${agent.name}: ${message}`);
+        // Pick a random conversation
+        const convo = conversations[Math.floor(Math.random() * conversations.length)];
+
+        // Map messages to actual agents based on personality
+        const agentsByPersonality: Record<string, typeof agents[0][]> = {};
+        for (const a of agents) {
+          if (!agentsByPersonality[a.personality]) agentsByPersonality[a.personality] = [];
+          agentsByPersonality[a.personality].push(a);
+        }
+
+        const getAgent = (personality: string) => {
+          const pool = agentsByPersonality[personality];
+          if (pool && pool.length > 0) return pool[Math.floor(Math.random() * pool.length)];
+          return pick(); // fallback to any agent
+        };
+
+        let firstAgentName = "";
+        let prevAgentName = "";
+
+        for (let i = 0; i < convo.messages.length; i++) {
+          const msg = convo.messages[i];
+          const agent = getAgent(msg.personality);
+
+          let text = msg.text;
+          // Replace placeholders
+          text = text.replace("{first}", firstAgentName);
+          text = text.replace("{prev}", prevAgentName);
+          text = text.replace("{prev2}", prevAgentName);
+
+          if (i === 0) firstAgentName = agent.name;
+          prevAgentName = agent.name;
+
+          // Stagger messages slightly
+          await new Promise(r => setTimeout(r, i * 2000));
+
+          await prisma.activityLog.create({
+            data: {
+              userId: systemUser.id,
+              agentId: agent.id,
+              type: "INSIGHT",
+              message: text,
+            },
+          });
+
+          console.log(`[Intel] ${agent.name}: ${text}`);
+        }
       } catch (err) {
-        console.error("[Comms] Failed to generate:", err);
+        console.error("[Intel] Failed to generate:", err);
       }
     };
 
-    // Generate first comm after 30 seconds, then every 5 minutes
-    setTimeout(generateComms, 30000);
-    setInterval(generateComms, 5 * 60 * 1000);
+    // Generate first conversation after 15 seconds, then every 3 minutes
+    setTimeout(generateIntel, 15000);
+    setInterval(generateIntel, 3 * 60 * 1000);
 
     // Generate AI trade signals every 10 minutes
     const runSignals = async () => {

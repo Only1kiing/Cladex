@@ -104,6 +104,37 @@ router.get("/marketplace", async (_req: Request, res: Response) => {
   res.json({ agents });
 });
 
+// GET /api/agents/intel — public market intelligence feed (no auth)
+router.get("/intel", async (_req: Request, res: Response) => {
+  const recentLogs = await prisma.activityLog.findMany({
+    where: {
+      type: { in: ["INSIGHT", "TRADE"] },
+      agent: { isNot: null },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+    include: {
+      agent: { select: { id: true, name: true, personality: true } },
+    },
+  });
+
+  const feed = recentLogs.map(log => {
+    // Detect replies — messages starting with @AgentName
+    const replyMatch = log.message.match(/^@(\w+)/);
+    return {
+      id: log.id,
+      agentName: log.agent?.name || "Agent",
+      personality: (log.agent?.personality?.toLowerCase() || "sage"),
+      message: log.message,
+      replyTo: replyMatch ? replyMatch[1] : null,
+      type: log.type,
+      timestamp: log.createdAt.toISOString(),
+    };
+  });
+
+  res.json({ feed });
+});
+
 router.use(authMiddleware);
 
 const createAgentSchema = z.object({
@@ -356,13 +387,10 @@ router.post("/:id/resubscribe", async (req: Request, res: Response) => {
   res.json({ agent: updated });
 });
 
-// GET /api/agents/comms — live agent comm feed (public-ish, requires auth)
+// GET /api/agents/comms — live agent comm feed (requires auth)
 router.get("/comms", async (_req: Request, res: Response) => {
-  // Get recent activity from all active agents
   const recentLogs = await prisma.activityLog.findMany({
-    where: {
-      agent: { status: "RUNNING" },
-    },
+    where: { agent: { status: "RUNNING" } },
     orderBy: { createdAt: "desc" },
     take: 20,
     include: {
@@ -370,7 +398,6 @@ router.get("/comms", async (_req: Request, res: Response) => {
     },
   });
 
-  // Also get active agents for live status
   const activeAgents = await prisma.agent.findMany({
     where: { status: "RUNNING" },
     select: { id: true, name: true, personality: true, assets: true, profit: true, totalTrades: true },
