@@ -12,6 +12,15 @@ import paymentRoutes from "./routes/payments";
 import adminRoutes from "./routes/admin";
 import riskRoutes from "./routes/risk";
 import backtestRoutes from "./routes/backtest";
+import billingRoutes from "./routes/billing";
+import eventsRoutes from "./routes/events";
+import {
+  generalLimiter,
+  authLimiter,
+  aiLimiter,
+  tradeLimiter,
+  backtestLimiter,
+} from "./middleware/rateLimit";
 
 const app = express();
 
@@ -25,6 +34,7 @@ app.use(
   })
 );
 app.use(express.json({ limit: "1mb" }));
+app.use("/api", generalLimiter);
 
 // ---------------------------------------------------------------------------
 // Health check
@@ -56,16 +66,18 @@ app.get("/api/solana/blockhash", async (_req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 // Routes
 // ---------------------------------------------------------------------------
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/agents", agentRoutes);
-app.use("/api/trades", tradeRoutes);
+app.use("/api/trades", tradeLimiter, tradeRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/exchange", exchangeRoutes);
-app.use("/api/ai", aiRoutes);
+app.use("/api/ai", aiLimiter, aiRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/risk", riskRoutes);
-app.use("/api/backtest", backtestRoutes);
+app.use("/api/backtest", backtestLimiter, backtestRoutes);
+app.use("/api/billing", billingRoutes);
+app.use("/api/events", eventsRoutes);
 
 // ---------------------------------------------------------------------------
 // Worker activity log endpoint

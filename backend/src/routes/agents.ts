@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Prisma, Personality } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
+import { decrypt } from "../lib/crypto";
 
 const router = Router();
 
@@ -68,8 +69,8 @@ router.get("/active", async (req: Request, res: Response) => {
       exchangeConfig: exchange
         ? {
             exchange: exchange.name.toLowerCase(),
-            apiKey: exchange.apiKey,
-            secret: exchange.apiSecret,
+            apiKey: decrypt(exchange.apiKey),
+            secret: decrypt(exchange.apiSecret),
             mode: process.env.TRADING_MODE || "paper",
           }
         : { mode: "paper" },

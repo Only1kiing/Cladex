@@ -3,6 +3,7 @@ import { z } from "zod";
 import ccxt from "ccxt";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
+import { encrypt, decrypt } from "../lib/crypto";
 
 const SUPPORTED_EXCHANGES: Record<string, string> = {
   bybit: "bybit",
@@ -139,8 +140,8 @@ router.post("/connect", async (req: Request, res: Response) => {
       data: {
         userId: req.user!.id,
         name: body.name,
-        apiKey: body.apiKey,
-        apiSecret: body.apiSecret,
+        apiKey: encrypt(body.apiKey),
+        apiSecret: encrypt(body.apiSecret),
       },
       select: {
         id: true,
@@ -185,8 +186,8 @@ router.get("/balance", async (req: Request, res: Response) => {
 
   const balance = await fetchExchangeBalance(
     exchangeRecord.name,
-    exchangeRecord.apiKey,
-    exchangeRecord.apiSecret
+    decrypt(exchangeRecord.apiKey),
+    decrypt(exchangeRecord.apiSecret)
   );
 
   res.json({ connected: true, exchange: exchangeRecord.name, ...balance });

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Shield, BarChart3, Target, Eye, Rocket, Sparkles, Check, X } from 'lucide-react';
+import { Send, Shield, BarChart3, Target, Eye, Rocket, Sparkles, Check, X, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -82,6 +82,67 @@ const PERSONALITIES: {
 ];
 
 const AVAILABLE_ASSETS = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'AVAX', 'LINK', 'MATIC'];
+
+// ---- Strategy configs ----
+
+const STRATEGIES: {
+  id: string;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+  border: string;
+  bg: string;
+  ring: string;
+}[] = [
+  {
+    id: 'safeflow',
+    label: 'SafeFlow',
+    description: 'Capital preservation — buys dips in uptrends',
+    icon: <Shield size={20} />,
+    color: 'text-nova-400',
+    border: 'border-nova-500/40',
+    bg: 'bg-nova-500/10',
+    ring: 'ring-nova-500/50',
+  },
+  {
+    id: 'trend_pro',
+    label: 'TrendPro',
+    description: 'Momentum — rides strong trends',
+    icon: <BarChart3 size={20} />,
+    color: 'text-sage-400',
+    border: 'border-sage-500/40',
+    bg: 'bg-sage-500/10',
+    ring: 'ring-sage-500/50',
+  },
+  {
+    id: 'beast_mode',
+    label: 'Beast Mode',
+    description: 'Breakout hunter — catches explosive moves',
+    icon: <Target size={20} />,
+    color: 'text-apex-400',
+    border: 'border-apex-500/40',
+    bg: 'bg-apex-500/10',
+    ring: 'ring-apex-500/50',
+  },
+  {
+    id: 'dca',
+    label: 'DCA',
+    description: 'Simple periodic buying',
+    icon: <RefreshCw size={20} />,
+    color: 'text-gray-400',
+    border: 'border-gray-500/40',
+    bg: 'bg-gray-500/10',
+    ring: 'ring-gray-500/50',
+  },
+];
+
+const PERSONALITY_STRATEGY_MAP: Record<AgentPersonality, string> = {
+  nova: 'safeflow',
+  sage: 'trend_pro',
+  apex: 'beast_mode',
+  echo: 'trend_pro',
+};
 
 
 // ---- Thinking dots animation ----
@@ -166,6 +227,7 @@ export default function AgentBuilderPage() {
     assets: ['BTC', 'ETH'],
     strategy: '',
   });
+  const [selectedStrategy, setSelectedStrategy] = useState('safeflow');
   const [isEditingName, setIsEditingName] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -223,14 +285,22 @@ export default function AgentBuilderPage() {
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, assistantMsg]);
+        const newPersonality = (config.personality?.toLowerCase() || 'sage') as AgentPersonality;
         setDraft((prev) => ({
           ...prev,
           name: config.name,
-          personality: (config.personality?.toLowerCase() || 'sage') as AgentPersonality,
+          personality: newPersonality,
           riskLevel: riskMap[config.riskLevel] || 5,
           assets: config.assets,
           strategy: (config.strategy as any)?.description || JSON.stringify(config.strategy),
         }));
+        // Auto-select strategy: prefer AI-returned type, fall back to personality mapping
+        const aiStrategyType = (config.strategy as any)?.type;
+        if (aiStrategyType && STRATEGIES.some((s) => s.id === aiStrategyType)) {
+          setSelectedStrategy(aiStrategyType);
+        } else {
+          setSelectedStrategy(PERSONALITY_STRATEGY_MAP[newPersonality]);
+        }
       } catch {
         // Fallback message if AI fails
         const assistantMsg: ChatMessage = {
@@ -317,7 +387,7 @@ export default function AgentBuilderPage() {
       const data = await api.post<{ agent: Record<string, unknown> }>('/agents', {
         name: draft.name,
         personality: draft.personality.toUpperCase(),
-        strategy: draft.strategy,
+        strategy: JSON.stringify({ type: selectedStrategy, description: draft.strategy, assets: draft.assets }),
         riskLevel: riskLevelMap(draft.riskLevel),
         assets: draft.assets,
       });
@@ -559,7 +629,10 @@ export default function AgentBuilderPage() {
                   {PERSONALITIES.map((p) => (
                     <button
                       key={p.id}
-                      onClick={() => setDraft((prev) => ({ ...prev, personality: p.id }))}
+                      onClick={() => {
+                        setDraft((prev) => ({ ...prev, personality: p.id }));
+                        setSelectedStrategy(PERSONALITY_STRATEGY_MAP[p.id]);
+                      }}
                       className={[
                         'flex items-center gap-2.5 p-3 rounded-xl border transition-all duration-200 text-left',
                         draft.personality === p.id
@@ -573,6 +646,35 @@ export default function AgentBuilderPage() {
                           {p.label}
                         </div>
                         <div className="text-[10px] text-gray-500 truncate">{p.description}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Strategy Selector */}
+              <div className="mb-5">
+                <label className="block text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">
+                  Strategy
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {STRATEGIES.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => setSelectedStrategy(s.id)}
+                      className={[
+                        'flex items-center gap-2.5 p-3 rounded-xl border transition-all duration-200 text-left',
+                        selectedStrategy === s.id
+                          ? `${s.bg} ${s.border} ring-1 ${s.ring}`
+                          : 'bg-[#0a0a0f] border-[#2a2a3a] hover:border-[#3a3a4a]',
+                      ].join(' ')}
+                    >
+                      <div className={`${s.color} shrink-0`}>{s.icon}</div>
+                      <div className="min-w-0">
+                        <div className={`text-xs font-semibold ${selectedStrategy === s.id ? s.color : 'text-gray-200'}`}>
+                          {s.label}
+                        </div>
+                        <div className="text-[10px] text-gray-500 truncate">{s.description}</div>
                       </div>
                     </button>
                   ))}

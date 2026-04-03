@@ -64,6 +64,25 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    label: 'Backtest',
+    href: '/dashboard/backtest',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M3 14l4-4 3 3 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M13 6h4v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Risk',
+    href: '/dashboard/risk',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 3l7 4v5c0 3.5-3 6-7 8-4-2-7-4.5-7-8V7l7-4z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
