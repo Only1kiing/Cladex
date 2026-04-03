@@ -89,6 +89,43 @@ class TradeExecutor:
             amount: float = float(signal["amount"])
             order_type: str = signal.get("orderType", "market")
 
+            # --- Enforce exchange minimum order size ---
+            exchange.load_markets()
+            market = exchange.market(symbol)
+            limits = market.get("limits", {})
+
+            # Always use a live ticker price for min-cost checks — the signal
+            # price may be stale or missing entirely.
+            ticker = exchange.fetch_ticker(symbol)
+            current_price = ticker.get("last") or ticker.get("close") or 0
+
+            min_amount = (limits.get("amount") or {}).get("min")
+            min_cost = (limits.get("cost") or {}).get("min")
+
+            # Check cost minimum first (most common Bybit rejection reason)
+            if current_price > 0 and min_cost:
+                order_cost = amount * current_price
+                if order_cost < min_cost:
+                    # Add 5% buffer so rounding / slippage doesn't drop below min
+                    adjusted = (min_cost * 1.05) / current_price
+                    adjusted = float(exchange.amount_to_precision(symbol, adjusted))
+                    # Verify after precision rounding we still meet minimum
+                    if adjusted * current_price < min_cost:
+                        step = float(market.get("precision", {}).get("amount", 1e-8))
+                        adjusted += step
+                    logger.warning(
+                        "Order cost $%.2f below exchange minimum $%.2f — adjusting amount %.8f → %.8f",
+                        order_cost, min_cost, amount, adjusted,
+                    )
+                    amount = adjusted
+
+            if min_amount and amount < min_amount:
+                logger.warning(
+                    "Order amount %.8f %s below exchange minimum %.8f — adjusting up",
+                    amount, symbol, min_amount,
+                )
+                amount = min_amount
+
             if action == "BUY":
                 order = exchange.create_order(symbol, order_type, "buy", amount)
             elif action == "SELL":

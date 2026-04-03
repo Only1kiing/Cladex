@@ -122,12 +122,18 @@ export async function validateTrade(
   if (drawdownCheck.reason) warnings.push(drawdownCheck.reason);
 
   // ---- 5. Position size limit ----
+  // For small balances, enforce a minimum trade floor so orders don't drop
+  // below exchange minimums (most exchanges require at least $5–$10).
+  const MIN_TRADE_USD = 5;
   const tradeValueUsd =
     trade.quoteAmount || trade.amount * trade.price;
-  const maxPositionUsd = calculatePositionSize(
+  const calculatedMax = calculatePositionSize(
     portfolio.totalBalance,
     config.maxRiskPerTrade
   );
+  // Never reduce below exchange minimum — for small accounts the percentage
+  // rule would produce an un-fillable order.
+  const maxPositionUsd = Math.max(calculatedMax, MIN_TRADE_USD);
 
   let adjustedAmount = trade.amount;
 
