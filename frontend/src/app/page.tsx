@@ -44,6 +44,39 @@ function Reveal({
   );
 }
 
+/* ── Claw mark SVG (decorative background) ──────────────────────── */
+function ClawMark({
+  className = '',
+  style = {},
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <svg
+      width="120"
+      height="144"
+      viewBox="0 0 40 48"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`absolute pointer-events-none ${className}`}
+      style={style}
+    >
+      <rect x="2" y="6" width="6" height="22" rx="3" fill="url(#claw-grad)" />
+      <rect x="13" y="2" width="6" height="32" rx="3" fill="url(#claw-grad)" />
+      <rect x="24" y="10" width="6" height="16" rx="3" fill="url(#claw-grad)" />
+      <path d="M5 28 Q5 36 2 41" stroke="url(#claw-grad)" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      <path d="M16 34 Q16 42 13 46" stroke="url(#claw-grad)" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      <path d="M27 26 Q27 34 24 38" stroke="url(#claw-grad)" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      <defs>
+        <linearGradient id="claw-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#B8FF3C" />
+          <stop offset="100%" stopColor="#6aa61c" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 /* ── Arrow icon ─────────────────────────────────────────────────── */
 const Arrow = () => (
   <svg
@@ -113,6 +146,13 @@ export default function LandingPage() {
         }
         .green-glow {
           box-shadow: 0 0 20px rgba(184, 255, 60, 0.15), 0 0 60px rgba(184, 255, 60, 0.05);
+        }
+        @keyframes breathe {
+          0%, 100% { opacity: 0.06; transform: scale(1); }
+          50% { opacity: 0.1; transform: scale(1.04); }
+        }
+        .claw-breathe {
+          animation: breathe 5s ease-in-out infinite;
         }
         .green-glow-hover:hover {
           box-shadow: 0 0 30px rgba(184, 255, 60, 0.25), 0 0 80px rgba(184, 255, 60, 0.1);
@@ -208,6 +248,12 @@ export default function LandingPage() {
          2. HERO
          ═══════════════════════════════════════════════════════════ */}
       <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
+        {/* Claw marks */}
+        <ClawMark className="claw-breathe" style={{ top: '8%', left: '5%', opacity: 0.07, transform: 'rotate(-15deg) scale(1.8)' }} />
+        <ClawMark className="claw-breathe" style={{ top: '20%', right: '8%', opacity: 0.09, transform: 'rotate(25deg) scale(2.2)', animationDelay: '1s' }} />
+        <ClawMark className="claw-breathe" style={{ bottom: '15%', left: '15%', opacity: 0.06, transform: 'rotate(-40deg) scale(1.4)', animationDelay: '2s' }} />
+        <ClawMark className="claw-breathe" style={{ bottom: '10%', right: '12%', opacity: 0.08, transform: 'rotate(10deg) scale(2.5)', animationDelay: '3s' }} />
+        <ClawMark className="claw-breathe" style={{ top: '45%', left: '60%', opacity: 0.05, transform: 'rotate(-60deg) scale(1.2)', animationDelay: '1.5s' }} />
         {/* Background gradient orbs */}
         <div className="orb absolute top-1/4 left-1/4 w-[200px] h-[200px] sm:w-[300px] sm:h-[300px] lg:w-[400px] lg:h-[400px] rounded-full bg-[#B8FF3C]/[0.06] blur-[120px]" />
         <div className="orb absolute bottom-1/3 right-1/4 w-[175px] h-[175px] sm:w-[250px] sm:h-[250px] lg:w-[350px] lg:h-[350px] rounded-full bg-[#B8FF3C]/[0.04] blur-[100px]" style={{ animationDelay: '4s' }} />
