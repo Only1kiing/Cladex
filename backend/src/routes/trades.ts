@@ -462,6 +462,85 @@ router.get("/signals", async (_req: Request, res: Response) => {
   res.json({ signals });
 });
 
+// POST /api/trades/sync-prices — pull real entry prices from exchange order history
+router.post("/sync-prices", async (req: Request, res: Response) => {
+  const exchangeData = await getExchangeInstance(req.user!.id);
+  if (!exchangeData) {
+    res.status(400).json({ error: "No exchange connected" });
+    return;
+  }
+
+  const { exchange, name: exchangeName } = exchangeData;
+
+  // Get all trades with price=0 or very small price
+  const brokenTrades = await prisma.trade.findMany({
+    where: { userId: req.user!.id, price: { lt: 0.01 } },
+  });
+
+  if (brokenTrades.length === 0) {
+    res.json({ message: "All trades have valid entry prices", fixed: 0 });
+    return;
+  }
+
+  let fixed = 0;
+  const results: Array<{ id: string; symbol: string; oldPrice: number; newPrice: number }> = [];
+
+  for (const trade of brokenTrades) {
+    try {
+      // Fetch closed orders from exchange for this symbol
+      const orders = await exchange.fetchClosedOrders(trade.symbol, undefined, 50);
+
+      // Find the matching order by time proximity (within 5 minutes of trade creation)
+      const tradeTime = new Date(trade.createdAt).getTime();
+      const matchingOrder = orders.find((o: any) => {
+        const orderTime = o.timestamp || new Date(o.datetime).getTime();
+        return Math.abs(orderTime - tradeTime) < 5 * 60 * 1000; // 5 min window
+      });
+
+      if (matchingOrder) {
+        const realPrice = matchingOrder.average || matchingOrder.price || 0;
+        if (realPrice > 0) {
+          await prisma.trade.update({
+            where: { id: trade.id },
+            data: { price: realPrice },
+          });
+          results.push({ id: trade.id, symbol: trade.symbol, oldPrice: trade.price, newPrice: realPrice });
+          fixed++;
+          continue;
+        }
+      }
+
+      // Fallback: try fetchMyTrades for this symbol
+      const myTrades = await exchange.fetchMyTrades(trade.symbol, undefined, 50);
+      const matchingTrade = myTrades.find((t: any) => {
+        const tTime = t.timestamp || new Date(t.datetime).getTime();
+        return Math.abs(tTime - tradeTime) < 5 * 60 * 1000;
+      });
+
+      if (matchingTrade && matchingTrade.price > 0) {
+        await prisma.trade.update({
+          where: { id: trade.id },
+          data: { price: matchingTrade.price },
+        });
+        results.push({ id: trade.id, symbol: trade.symbol, oldPrice: trade.price, newPrice: matchingTrade.price });
+        fixed++;
+      }
+    } catch (err: any) {
+      console.error(`Failed to sync price for trade ${trade.id}: ${err?.message}`);
+    }
+  }
+
+  // Reset profit to 0 for fixed trades so P&L recalculates from real entry
+  if (fixed > 0) {
+    await prisma.trade.updateMany({
+      where: { id: { in: results.map(r => r.id) } },
+      data: { profit: 0 },
+    });
+  }
+
+  res.json({ message: `Fixed ${fixed}/${brokenTrades.length} trades`, fixed, results });
+});
+
 // GET /api/trades/pnl — live P&L for open trades (lightweight, poll frequently)
 router.get("/pnl", async (req: Request, res: Response) => {
   const openTrades = await prisma.trade.findMany({
@@ -494,17 +573,32 @@ router.get("/pnl", async (req: Request, res: Response) => {
     } catch { /* skip */ }
   }));
 
-  // Backfill missing entry prices — trades stored with price=0
-  for (const trade of openTrades) {
-    if (!trade.price || trade.price === 0) {
-      const livePrice = prices[trade.symbol];
-      if (livePrice) {
-        // Use current price as entry (best approximation for market orders)
+  // Backfill missing entry prices — try exchange order history first
+  const tradesNeedingPrice = openTrades.filter(t => !t.price || t.price < 0.01);
+  if (tradesNeedingPrice.length > 0) {
+    for (const trade of tradesNeedingPrice) {
+      let realPrice = 0;
+
+      // Try fetchMyTrades for the real fill price
+      try {
+        const tradeTime = new Date(trade.createdAt).getTime();
+        const myTrades = await exchange.fetchMyTrades(trade.symbol, undefined, 20);
+        const match = myTrades.find((t: any) => {
+          const tTime = t.timestamp || new Date(t.datetime).getTime();
+          return Math.abs(tTime - tradeTime) < 5 * 60 * 1000;
+        });
+        if (match?.price) realPrice = match.price;
+      } catch { /* skip */ }
+
+      // Fallback to live price if exchange history unavailable
+      if (!realPrice) realPrice = prices[trade.symbol] || 0;
+
+      if (realPrice > 0) {
         await prisma.trade.update({
           where: { id: trade.id },
-          data: { price: livePrice },
+          data: { price: realPrice, profit: 0 },
         });
-        (trade as any).price = livePrice;
+        (trade as any).price = realPrice;
       }
     }
   }
