@@ -13,7 +13,17 @@ const SUPPORTED_EXCHANGES: Record<string, string> = {
   kucoin: "kucoin",
 };
 
+// Cache of exchange instances per user (markets pre-loaded). TTL 10 min.
+const exchangeCache = new Map<string, { exchange: any; name: string; loadedAt: number }>();
+const EXCHANGE_CACHE_TTL = 10 * 60 * 1000;
+
 async function getExchangeInstance(userId: string) {
+  // Return cached instance if fresh
+  const cached = exchangeCache.get(userId);
+  if (cached && Date.now() - cached.loadedAt < EXCHANGE_CACHE_TTL) {
+    return { exchange: cached.exchange, name: cached.name };
+  }
+
   const exchangeRecord = await prisma.exchange.findFirst({
     where: { userId, connected: true },
     orderBy: { createdAt: "desc" },
@@ -35,6 +45,7 @@ async function getExchangeInstance(userId: string) {
   });
 
   await exchange.loadMarkets();
+  exchangeCache.set(userId, { exchange, name: exchangeRecord.name, loadedAt: Date.now() });
   return { exchange, name: exchangeRecord.name };
 }
 
@@ -195,12 +206,7 @@ router.post("/execute", requireVerified, async (req: Request, res: Response) => 
       }
     }
 
-    if (!livePrice) {
-      try {
-        const ticker = await exchange.fetchTicker(body.symbol);
-        livePrice = ticker?.last || 0;
-      } catch { /* use body.price fallback */ }
-    }
+    // livePrice already fetched above when converting usdAmount → tradeAmount
 
     if (tradeAmount <= 0) {
       res.status(400).json({ error: "Trade amount is too small" });
@@ -248,13 +254,9 @@ router.post("/execute", requireVerified, async (req: Request, res: Response) => 
         const quote = tradingSymbol.split("/")[1] || "USDT";
         tradingSymbol = `${tradingSymbol}:${quote}`;
       }
-      // Set leverage before placing the order
-      try {
-        await exchange.setLeverage(body.leverage || 5, tradingSymbol);
-      } catch (leverageErr: any) {
-        // Some exchanges silently accept leverage, some throw if already set — continue
-        console.log(`Leverage set attempt: ${leverageErr?.message || 'ok'}`);
-      }
+      // Set leverage — fire and forget, Bybit processes it in parallel with order
+      exchange.setLeverage(body.leverage || 5, tradingSymbol)
+        .catch((e: any) => console.log(`Leverage: ${e?.message || 'ok'}`));
     }
 
     // Smart order type selection: if entry price provided and current price is
@@ -321,30 +323,9 @@ router.post("/execute", requireVerified, async (req: Request, res: Response) => 
       return;
     }
 
-    // Get the actual fill price — market orders on Bybit often don't return
-    // price immediately, so we try multiple sources
-    let executedPrice = order.average || order.price || 0;
-
-    // If no fill price from order response, fetch the order status
-    if (!executedPrice && order.id) {
-      try {
-        const fetched = await exchange.fetchOrder(order.id, tradingSymbol);
-        executedPrice = fetched.average || fetched.price || 0;
-      } catch { /* fallback below */ }
-    }
-
-    // Last resort: use the live ticker price
-    if (!executedPrice) {
-      executedPrice = livePrice || body.price || 0;
-    }
-
-    // If we STILL don't have a price, fetch ticker now
-    if (!executedPrice) {
-      try {
-        const ticker = await exchange.fetchTicker(body.symbol);
-        executedPrice = ticker?.last || 0;
-      } catch { /* give up */ }
-    }
+    // Get the actual fill price — use order response first, then cached livePrice
+    // (no extra API calls — we already fetched the ticker earlier)
+    const executedPrice = order.average || order.price || livePrice || body.price || 0;
 
     // Save trade to database
     const trade = await prisma.trade.create({
