@@ -1156,6 +1156,7 @@ export default function DashboardPage() {
               side: sig.side,
               usdAmount: opts.positionSize,
               type: 'market',
+              price: sig.entryPrice, // signal entry — backend auto-switches to limit if current price drifted >0.5%
               marketType: opts.marketType,
               leverage: opts.marketType === 'futures' ? opts.leverage : undefined,
               stopLoss: sig.stopLoss,

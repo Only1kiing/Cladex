@@ -257,11 +257,29 @@ router.post("/execute", requireVerified, async (req: Request, res: Response) => 
       }
     }
 
+    // Smart order type selection: if entry price provided and current price is
+    // within 0.5% → market (fill now). If further than 0.5% → limit at entry
+    // price (wait for the setup instead of chasing).
+    let finalOrderType: "market" | "limit" = body.type;
+    let limitPrice: number | undefined = body.price;
+
+    if (body.type === "market" && body.price && livePrice) {
+      const drift = Math.abs(livePrice - body.price) / body.price;
+      if (drift > 0.005) {
+        // Price moved too far from signal entry — use limit instead
+        finalOrderType = "limit";
+        limitPrice = body.price;
+        console.log(`Smart order: drift=${(drift * 100).toFixed(2)}% → using limit @ $${limitPrice}`);
+      } else {
+        console.log(`Smart order: drift=${(drift * 100).toFixed(2)}% → using market`);
+      }
+    }
+
     // Place the order on the real exchange
     let order;
     try {
-      if (body.type === "limit" && body.price) {
-        order = await exchange.createOrder(tradingSymbol, "limit", body.side, tradeAmount, body.price);
+      if (finalOrderType === "limit" && limitPrice) {
+        order = await exchange.createOrder(tradingSymbol, "limit", body.side, tradeAmount, limitPrice);
       } else {
         order = await exchange.createOrder(tradingSymbol, "market", body.side, tradeAmount);
       }
