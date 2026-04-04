@@ -275,6 +275,38 @@ router.post("/execute", requireVerified, async (req: Request, res: Response) => 
       }
     }
 
+    // Enforce exchange precision + minimum amount — different for spot vs futures
+    try {
+      const market = exchange.market(tradingSymbol);
+      const minAmount = market?.limits?.amount?.min || 0;
+      const minCost = market?.limits?.cost?.min || 0;
+
+      // Check minimum cost first (most common rejection)
+      if (minCost && livePrice) {
+        const cost = tradeAmount * livePrice;
+        if (cost < minCost) {
+          tradeAmount = (minCost * 1.02) / livePrice; // 2% buffer
+        }
+      }
+
+      // Check minimum amount
+      if (minAmount && tradeAmount < minAmount) {
+        tradeAmount = minAmount;
+      }
+
+      // Round to exchange's amount precision step (e.g. 0.1 for SOL futures)
+      tradeAmount = parseFloat(exchange.amountToPrecision(tradingSymbol, tradeAmount));
+
+      // Final check after rounding — if it went to 0, bump to min
+      if (tradeAmount <= 0 && minAmount) {
+        tradeAmount = minAmount;
+      }
+
+      console.log(`Order precision: ${body.symbol} → amount=${tradeAmount} (min=${minAmount}, minCost=$${minCost})`);
+    } catch (precErr: any) {
+      console.log(`Precision check skipped: ${precErr?.message}`);
+    }
+
     // Place the order on the real exchange
     let order;
     try {
