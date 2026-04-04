@@ -154,10 +154,29 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 // ---------------------------------------------------------------------------
 // Start server
 // ---------------------------------------------------------------------------
-app.listen(config.port, () => {
+app.listen(config.port, async () => {
   console.log(
     `Cladex API running on http://localhost:${config.port} [${config.nodeEnv}]`
   );
+
+  // Auto-promote founding super_admin (idempotent, safe to run every start)
+  try {
+    const { default: prisma } = await import("./lib/prisma");
+    const FOUNDER_EMAIL = "hellokiing247@gmail.com";
+    const user = await prisma.user.findUnique({
+      where: { email: FOUNDER_EMAIL },
+      select: { id: true, role: true },
+    });
+    if (user && user.role !== "super_admin") {
+      await prisma.user.update({
+        where: { email: FOUNDER_EMAIL },
+        data: { role: "super_admin" },
+      });
+      console.log(`[Startup] Promoted ${FOUNDER_EMAIL} to super_admin`);
+    }
+  } catch (err) {
+    console.error("[Startup] Founder promotion skipped:", err);
+  }
 
   // Market Intelligence — multi-agent conversations every 3 minutes
   if (config.nodeEnv === "production") {
