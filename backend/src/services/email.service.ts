@@ -15,7 +15,7 @@ export async function sendVerificationEmail(email: string, code: string, name: s
 
   try {
     await resend.emails.send({
-      from: "Cladex <noreply@cladex.xyz>",
+      from: config.resendFromEmail || "Cladex <onboarding@resend.dev>",
       to: email,
       subject: "Verify your Cladex account",
       html: `
@@ -51,7 +51,7 @@ export async function sendPasswordResetEmail(email: string, code: string, name: 
 
   try {
     await resend.emails.send({
-      from: "Cladex <noreply@cladex.xyz>",
+      from: config.resendFromEmail || "Cladex <onboarding@resend.dev>",
       to: email,
       subject: "Reset your Cladex password",
       html: `
