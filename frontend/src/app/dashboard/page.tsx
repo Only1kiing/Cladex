@@ -285,18 +285,20 @@ function AgentsAtWork() {
           </div>
         </div>
 
-        {/* Live price ticker */}
+        {/* Live price ticker — marquee scroll */}
         {livePrices.length > 0 && (
-          <div className="flex items-center gap-5 px-4 py-2.5 border-b border-white/[0.04] overflow-x-auto no-scrollbar">
-            {livePrices.map(p => (
-              <div key={p.symbol} className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[10px] font-semibold text-gray-400">{p.symbol.replace('/USDT', '')}</span>
-                <span className="text-[11px] font-bold text-white tabular-nums">${p.price.toLocaleString()}</span>
-                <span className={`text-[10px] font-semibold tabular-nums ${p.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {p.change >= 0 ? '+' : ''}{p.change?.toFixed(1)}%
-                </span>
-              </div>
-            ))}
+          <div className="relative border-b border-white/[0.04] overflow-hidden">
+            <div className="ticker-track flex items-center gap-8 py-2.5 whitespace-nowrap">
+              {[...livePrices, ...livePrices].map((p, i) => (
+                <div key={`${p.symbol}-${i}`} className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[10px] font-semibold text-gray-400">{p.symbol.replace('/USDT', '')}</span>
+                  <span className="text-[11px] font-bold text-white tabular-nums">${p.price.toLocaleString()}</span>
+                  <span className={`text-[10px] font-semibold tabular-nums ${p.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {p.change >= 0 ? '+' : ''}{p.change?.toFixed(1)}%
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
