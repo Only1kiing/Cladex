@@ -186,7 +186,7 @@ router.post("/", async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const hasSubscription = body.subscriptionPrice && body.subscriptionPrice > 0;
 
-    // If subscription agent, check gas balance and charge first month
+    // If subscription agent, pre-check gas balance (atomic check inside transaction below)
     if (hasSubscription) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -219,14 +219,19 @@ router.post("/", async (req: Request, res: Response) => {
     };
 
     if (hasSubscription) {
-      // Atomic: create agent + deduct gas
-      const [agent] = await prisma.$transaction([
-        prisma.agent.create({ data: agentData }),
-        prisma.user.update({
+      // Atomic: re-check balance, create agent + deduct gas inside transaction
+      const [agent] = await prisma.$transaction(async (tx) => {
+        const freshUser = await tx.user.findUnique({ where: { id: userId }, select: { gasBalance: true } });
+        if (!freshUser || freshUser.gasBalance < body.subscriptionPrice!) {
+          throw new Error(`Insufficient gas balance. You need $${body.subscriptionPrice!.toFixed(2)} but have $${(freshUser?.gasBalance || 0).toFixed(2)}. Top up in Settings.`);
+        }
+        const newAgent = await tx.agent.create({ data: agentData });
+        await tx.user.update({
           where: { id: userId },
           data: { gasBalance: { decrement: body.subscriptionPrice! } },
-        }),
-      ]);
+        });
+        return [newAgent] as const;
+      });
 
       await prisma.activityLog.create({
         data: {
@@ -360,6 +365,7 @@ router.post("/:id/resubscribe", async (req: Request, res: Response) => {
     return;
   }
 
+  // Pre-check gas balance (atomic check inside transaction below)
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { gasBalance: true },
@@ -372,27 +378,32 @@ router.post("/:id/resubscribe", async (req: Request, res: Response) => {
     return;
   }
 
-  await prisma.$transaction([
-    prisma.user.update({
+  // Atomic: re-check balance and deduct inside transaction to prevent race condition
+  await prisma.$transaction(async (tx) => {
+    const freshUser = await tx.user.findUnique({ where: { id: userId }, select: { gasBalance: true } });
+    if (!freshUser || freshUser.gasBalance < agent.subscriptionPrice!) {
+      throw new Error(`Insufficient gas balance. You need $${agent.subscriptionPrice!.toFixed(2)} but have $${(freshUser?.gasBalance || 0).toFixed(2)}.`);
+    }
+    await tx.user.update({
       where: { id: userId },
-      data: { gasBalance: { decrement: agent.subscriptionPrice } },
-    }),
-    prisma.agent.update({
+      data: { gasBalance: { decrement: agent.subscriptionPrice! } },
+    });
+    await tx.agent.update({
       where: { id: agentId },
       data: {
         subscriptionStatus: "active",
         nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       },
-    }),
-    prisma.activityLog.create({
+    });
+    await tx.activityLog.create({
       data: {
         userId,
         agentId,
         type: "INSIGHT",
-        message: `Subscription reactivated for "${agent.name}" — $${agent.subscriptionPrice.toFixed(2)} deducted`,
+        message: `Subscription reactivated for "${agent.name}" — $${agent.subscriptionPrice!.toFixed(2)} deducted`,
       },
-    }),
-  ]);
+    });
+  });
 
   const updated = await prisma.agent.findUnique({ where: { id: agentId } });
   res.json({ agent: updated });

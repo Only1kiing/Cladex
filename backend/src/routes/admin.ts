@@ -1,22 +1,39 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import ccxt from "ccxt";
 import prisma from "../lib/prisma";
+import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
 
-// Simple admin auth using a shared secret
-function adminAuth(req: Request, res: Response, next: Function) {
-  const adminSecret = process.env.ADMIN_SECRET;
-  const provided = req.headers["x-admin-secret"] as string;
-
-  if (!adminSecret || provided !== adminSecret) {
-    res.status(403).json({ error: "Forbidden" });
+// ---------------------------------------------------------------------------
+// Admin authorization middleware
+// Requires the user to be authenticated (JWT) AND have role === "admin".
+// This replaces the old shared-secret approach which allowed any caller with
+// the secret to access admin routes regardless of user identity.
+// ---------------------------------------------------------------------------
+async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    res.status(401).json({ error: "Authentication required" });
     return;
   }
+
+  // Double-check role from the database to prevent stale JWT data
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { role: true },
+  });
+
+  if (!user || user.role !== "admin") {
+    res.status(403).json({ error: "Forbidden: admin access required" });
+    return;
+  }
+
   next();
 }
 
-router.use(adminAuth);
+// All admin routes require JWT authentication first, then admin role check
+router.use(authMiddleware);
+router.use(requireAdmin);
 
 // GET /api/admin/users — list all users
 router.get("/users", async (_req: Request, res: Response) => {
@@ -88,7 +105,8 @@ router.delete("/agents/:userId", async (req: Request, res: Response) => {
 
 // POST /api/admin/seed-agents — create official Cladex team agents
 router.post("/seed-agents", async (req: Request, res: Response) => {
-  // Find or create a system user for Cladex team agents
+  // Find or create a system user for Cladex team agents.
+  // NOTE: system@cladex.xyz is designated as a built-in admin account.
   let systemUser = await prisma.user.findUnique({ where: { email: "system@cladex.xyz" } });
   if (!systemUser) {
     systemUser = await prisma.user.create({
@@ -96,7 +114,14 @@ router.post("/seed-agents", async (req: Request, res: Response) => {
         email: "system@cladex.xyz",
         password: "not-a-real-login",
         name: "Cladex Team",
+        role: "admin",
       },
+    });
+  } else if (systemUser.role !== "admin") {
+    // Ensure the system user always has admin role
+    systemUser = await prisma.user.update({
+      where: { id: systemUser.id },
+      data: { role: "admin" },
     });
   }
 

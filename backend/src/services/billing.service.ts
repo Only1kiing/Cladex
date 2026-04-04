@@ -23,52 +23,65 @@ export async function processSubscriptionBilling() {
     const price = agent.subscriptionPrice!;
     const user = agent.user;
 
-    if (user.gasBalance >= price) {
-      // Charge: decrement gas and advance billing date by 30 days
-      const nextDate = new Date(agent.nextBillingDate!);
-      nextDate.setDate(nextDate.getDate() + 30);
+    // Use interactive transaction to atomically re-check balance and deduct
+    try {
+      await prisma.$transaction(async (tx) => {
+        const freshUser = await tx.user.findUnique({
+          where: { id: user.id },
+          select: { gasBalance: true },
+        });
 
-      await prisma.$transaction([
-        prisma.user.update({
+        if (!freshUser || freshUser.gasBalance < price) {
+          throw new Error("INSUFFICIENT_GAS");
+        }
+
+        const nextDate = new Date(agent.nextBillingDate!);
+        nextDate.setDate(nextDate.getDate() + 30);
+
+        await tx.user.update({
           where: { id: user.id },
           data: { gasBalance: { decrement: price } },
-        }),
-        prisma.agent.update({
+        });
+        await tx.agent.update({
           where: { id: agent.id },
           data: { nextBillingDate: nextDate },
-        }),
-        prisma.activityLog.create({
+        });
+        await tx.activityLog.create({
           data: {
             userId: user.id,
             agentId: agent.id,
             type: "INSIGHT",
             message: `Subscription renewed for "${agent.name}": -$${price.toFixed(2)} from gas balance`,
           },
-        }),
-      ]);
+        });
+      });
 
       console.log(`[Billing] Renewed "${agent.name}" for user ${user.id} — $${price.toFixed(2)}`);
-    } else {
-      // Insufficient gas — pause agent
-      await prisma.$transaction([
-        prisma.agent.update({
-          where: { id: agent.id },
-          data: {
-            subscriptionStatus: "paused_no_gas",
-            status: "PAUSED",
-          },
-        }),
-        prisma.activityLog.create({
-          data: {
-            userId: user.id,
-            agentId: agent.id,
-            type: "ALERT",
-            message: `Agent "${agent.name}" paused — insufficient gas for $${price.toFixed(2)} subscription. Top up to resume.`,
-          },
-        }),
-      ]);
+    } catch (err: any) {
+      if (err?.message === "INSUFFICIENT_GAS") {
+        // Insufficient gas — pause agent
+        await prisma.$transaction([
+          prisma.agent.update({
+            where: { id: agent.id },
+            data: {
+              subscriptionStatus: "paused_no_gas",
+              status: "PAUSED",
+            },
+          }),
+          prisma.activityLog.create({
+            data: {
+              userId: user.id,
+              agentId: agent.id,
+              type: "ALERT",
+              message: `Agent "${agent.name}" paused — insufficient gas for $${price.toFixed(2)} subscription. Top up to resume.`,
+            },
+          }),
+        ]);
 
-      console.log(`[Billing] Paused "${agent.name}" for user ${user.id} — insufficient gas ($${user.gasBalance.toFixed(2)} < $${price.toFixed(2)})`);
+        console.log(`[Billing] Paused "${agent.name}" for user ${user.id} — insufficient gas ($${user.gasBalance.toFixed(2)} < $${price.toFixed(2)})`);
+      } else {
+        throw err;
+      }
     }
   }
 }

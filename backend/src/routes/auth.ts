@@ -5,7 +5,7 @@ import { z } from "zod";
 import prisma from "../lib/prisma";
 import { config } from "../config";
 import { authMiddleware } from "../middleware/auth";
-import { generateVerificationCode, sendVerificationEmail } from "../services/email.service";
+import { generateVerificationCode, sendVerificationEmail, sendPasswordResetEmail } from "../services/email.service";
 
 const router = Router();
 
@@ -255,6 +255,101 @@ router.post("/resend-code", authMiddleware, async (req: Request, res: Response) 
     await sendVerificationEmail(user.email, code, user.name);
 
     res.json({ message: "Verification code sent" });
+  } catch (err) {
+    throw err;
+  }
+});
+
+// POST /api/auth/forgot-password
+router.post("/forgot-password", async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== "string") {
+      res.status(400).json({ error: "Email is required" });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, name: true },
+    });
+
+    // Always return 200 to avoid leaking user existence
+    if (!user) {
+      res.json({ message: "If that email is registered, a reset code has been sent." });
+      return;
+    }
+
+    const code = generateVerificationCode();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetCode: code,
+        resetCodeExpiry: expiry,
+      },
+    });
+
+    await sendPasswordResetEmail(email, code, user.name);
+
+    res.json({ message: "If that email is registered, a reset code has been sent." });
+  } catch (err) {
+    throw err;
+  }
+});
+
+// POST /api/auth/reset-password
+router.post("/reset-password", async (req: Request, res: Response) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || typeof email !== "string") {
+      res.status(400).json({ error: "Email is required" });
+      return;
+    }
+    if (!code || typeof code !== "string") {
+      res.status(400).json({ error: "Reset code is required" });
+      return;
+    }
+    if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
+      res.status(400).json({ error: "Password must be at least 8 characters" });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, resetCode: true, resetCodeExpiry: true },
+    });
+
+    if (!user || !user.resetCode || !user.resetCodeExpiry) {
+      res.status(400).json({ error: "Invalid or expired reset code" });
+      return;
+    }
+
+    if (new Date() > user.resetCodeExpiry) {
+      res.status(400).json({ error: "Reset code has expired. Please request a new one." });
+      return;
+    }
+
+    if (user.resetCode !== code) {
+      res.status(400).json({ error: "Invalid reset code" });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetCode: null,
+        resetCodeExpiry: null,
+      },
+    });
+
+    res.json({ message: "Password has been reset successfully" });
   } catch (err) {
     throw err;
   }

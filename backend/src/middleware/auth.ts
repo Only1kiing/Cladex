@@ -14,6 +14,7 @@ declare global {
         id: string;
         email: string;
         name: string;
+        role: string;
       };
     }
   }
@@ -36,7 +37,7 @@ export async function authMiddleware(
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, name: true, role: true },
     });
 
     if (!user) {

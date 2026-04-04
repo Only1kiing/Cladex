@@ -24,9 +24,12 @@ model User {
   gasBalance      Float        @default(0)
   referredBy    String?
   referralCode  String?   @unique
+  role             String   @default("user")   // "user" or "admin"
   emailVerified    Boolean  @default(false)
   verificationCode String?
   verificationExp  DateTime?
+  resetCode        String?
+  resetCodeExpiry  DateTime?
 
   // Risk management
   maxRiskPerTrade Float    @default(0.02)   // Max % of balance per trade (0.02 = 2%)

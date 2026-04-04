@@ -152,11 +152,11 @@ router.post("/execute", async (req: Request, res: Response) => {
       }
     }
 
-    // Check gas balance
+    // Pre-check gas balance (final atomic check happens after trade execution)
     const GAS_FEE = 0.50; // $0.50 per trade
-    const user = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { gasBalance: true } });
-    if (!user || user.gasBalance < GAS_FEE) {
-      res.status(400).json({ error: `Insufficient gas balance ($${user?.gasBalance?.toFixed(2) || '0.00'}). You need at least $${GAS_FEE} gas to execute a trade. Top up in Settings.` });
+    const userPreCheck = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { gasBalance: true } });
+    if (!userPreCheck || userPreCheck.gasBalance < GAS_FEE) {
+      res.status(400).json({ error: `Insufficient gas balance ($${userPreCheck?.gasBalance?.toFixed(2) || '0.00'}). You need at least $${GAS_FEE} gas to execute a trade. Top up in Settings.` });
       return;
     }
 
@@ -331,10 +331,16 @@ router.post("/execute", async (req: Request, res: Response) => {
       },
     });
 
-    // Deduct gas fee
-    await prisma.user.update({
-      where: { id: req.user!.id },
-      data: { gasBalance: { decrement: GAS_FEE } },
+    // Atomically deduct gas fee — re-check balance inside transaction to prevent race condition
+    await prisma.$transaction(async (tx) => {
+      const freshUser = await tx.user.findUnique({ where: { id: req.user!.id }, select: { gasBalance: true } });
+      if (!freshUser || freshUser.gasBalance < GAS_FEE) {
+        throw new Error("Insufficient gas balance");
+      }
+      await tx.user.update({
+        where: { id: req.user!.id },
+        data: { gasBalance: { decrement: GAS_FEE } },
+      });
     });
 
     // ---- RISK ENGINE: post-trade check ----
