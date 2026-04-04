@@ -342,8 +342,16 @@ router.post("/generate-signal", async (_req: Request, res: Response) => {
   try {
     const { generateSignals, expireSignals } = await import("../services/signal.service");
     await expireSignals();
-    const count = await generateSignals();
-    res.json({ generated: count });
+
+    const runningAgents = await prisma.agent.count({ where: { status: "RUNNING" } });
+    const activeSignals = await prisma.signal.count({ where: { status: "active" } });
+
+    const count = await generateSignals({ force: true });
+
+    res.json({
+      generated: count,
+      debug: { runningAgents, activeSignalsBefore: activeSignals, forced: true },
+    });
   } catch (err: any) {
     res.status(500).json({ error: err?.message || "Signal generation failed" });
   }

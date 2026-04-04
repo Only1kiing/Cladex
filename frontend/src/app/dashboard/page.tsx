@@ -369,6 +369,11 @@ export default function DashboardPage() {
   const [executingTrade, setExecutingTrade] = useState<string | null>(null);
   const [selectedSignal, setSelectedSignal] = useState<TradeSignal | null>(null);
   const [showTradeModal, setShowTradeModal] = useState(false);
+  const [askingSignalId, setAskingSignalId] = useState<string | null>(null);
+  const [askQuestion, setAskQuestion] = useState('');
+  const [askResponse, setAskResponse] = useState('');
+  const [isAsking, setIsAsking] = useState(false);
+  const [skippedSignals, setSkippedSignals] = useState<Set<string>>(new Set());
 
 
   // Load deployed agents
@@ -650,14 +655,14 @@ export default function DashboardPage() {
       )}
 
       {/* ── Active Signal — top priority when present ─────────── */}
-      {liveSignals.length > 0 && (
+      {liveSignals.filter(s => !skippedSignals.has(s.id)).length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-[#B8FF3C] animate-pulse" />
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Signals</h2>
           </div>
           <div className="space-y-3">
-            {liveSignals.map((sig) => {
+            {liveSignals.filter(s => !skippedSignals.has(s.id)).map((sig) => {
               const pColor = sig.agent.personality === 'APEX' ? 'text-red-400' : sig.agent.personality === 'ECHO' ? 'text-violet-400' : sig.agent.personality === 'NOVA' ? 'text-emerald-400' : 'text-cyan-400';
               const pBorderColor = sig.agent.personality === 'APEX' ? 'border-red-500/20' : sig.agent.personality === 'ECHO' ? 'border-violet-500/20' : sig.agent.personality === 'NOVA' ? 'border-emerald-500/20' : 'border-cyan-500/20';
               const isBuy = sig.side === 'buy';
@@ -748,6 +753,76 @@ export default function DashboardPage() {
                     >
                       Connect Exchange to Trade
                     </button>
+                  )}
+
+                  {/* Skip + Ask row */}
+                  <div className="flex border-t border-white/[0.04]">
+                    <button
+                      onClick={() => {
+                        setSkippedSignals(prev => new Set(prev).add(sig.id));
+                      }}
+                      className="flex-1 py-2.5 text-[11px] font-medium text-gray-500 hover:text-gray-300 hover:bg-white/[0.02] transition-all"
+                    >
+                      Skip
+                    </button>
+                    <div className="w-px bg-white/[0.04]" />
+                    <button
+                      onClick={() => {
+                        setAskingSignalId(askingSignalId === sig.id ? null : sig.id);
+                        setAskQuestion('');
+                        setAskResponse('');
+                      }}
+                      className="flex-1 py-2.5 text-[11px] font-medium text-gray-500 hover:text-[#B8FF3C] hover:bg-white/[0.02] transition-all"
+                    >
+                      Ask AI
+                    </button>
+                  </div>
+
+                  {/* Ask panel */}
+                  {askingSignalId === sig.id && (
+                    <div className="border-t border-white/[0.04] bg-white/[0.02] p-3 space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={askQuestion}
+                          onChange={e => setAskQuestion(e.target.value)}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter' && askQuestion.trim() && !isAsking) {
+                              setIsAsking(true);
+                              setAskResponse('');
+                              try {
+                                const data = await api.post<{ response: string }>('/ai/chat', {
+                                  message: `About the signal: ${sig.agent.name} says ${sig.side.toUpperCase()} ${sig.symbol} at $${sig.entryPrice} (SL: $${sig.stopLoss}, TP: $${sig.takeProfit}, ${sig.confidence}% confidence). Reasoning: ${sig.reason}. User question: ${askQuestion}`,
+                                  history: [],
+                                  exchangeConnected,
+                                });
+                                setAskResponse(data.response);
+                              } catch {
+                                setAskResponse('Failed to get a response. Try again.');
+                              }
+                              setIsAsking(false);
+                            }
+                          }}
+                          placeholder="Ask about this signal..."
+                          className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#B8FF3C]/40"
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => setAskingSignalId(null)}
+                          className="px-2 text-gray-500 hover:text-gray-300 text-xs"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      {isAsking && (
+                        <p className="text-[10px] text-gray-500">Thinking...</p>
+                      )}
+                      {askResponse && (
+                        <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2">
+                          <p className="text-[11px] text-gray-300 leading-relaxed">{askResponse}</p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               );

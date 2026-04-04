@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Prisma, Personality } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
+import { requireVerified } from "../middleware/requireVerified";
 import { decrypt } from "../lib/crypto";
 
 const router = Router();
@@ -180,7 +181,7 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // POST /api/agents
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", requireVerified, async (req: Request, res: Response) => {
   try {
     const body = createAgentSchema.parse(req.body);
     const userId = req.user!.id;

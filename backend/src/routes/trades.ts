@@ -3,6 +3,7 @@ import { z } from "zod";
 import ccxt from "ccxt";
 import prisma from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
+import { requireVerified } from "../middleware/requireVerified";
 import { validateTrade, postTradeCheck } from "../risk/riskEngine";
 
 const SUPPORTED_EXCHANGES: Record<string, string> = {
@@ -137,7 +138,7 @@ const executeTradeSchema = z.object({
 });
 
 // POST /api/trades/execute — execute a real trade on the exchange
-router.post("/execute", async (req: Request, res: Response) => {
+router.post("/execute", requireVerified, async (req: Request, res: Response) => {
   try {
     const body = executeTradeSchema.parse(req.body);
 

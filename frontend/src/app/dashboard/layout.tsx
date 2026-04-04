@@ -322,17 +322,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {user && !isEmailVerified && !verifyBannerDismissed && (
-          <div className="flex items-center justify-between px-4 py-2.5 bg-amber-500/15 border-b border-amber-500/20">
-            <p className="text-sm text-amber-300">
-              Please verify your email to secure your account.
-            </p>
+          <div className="flex items-center justify-between px-4 py-3 bg-amber-500/90 border-b-2 border-amber-400">
+            <div className="flex items-center gap-3">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0 text-black">
+                <path d="M10 2l8 15H2L10 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10 8v4M10 15h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <p className="text-sm font-semibold text-black">
+                Email verification required — you cannot trade or create agents until you verify your email.
+              </p>
+            </div>
             <button
               onClick={() => setVerifyBannerDismissed(true)}
-              className="ml-4 text-amber-400 hover:text-amber-200 transition-colors shrink-0"
+              className="ml-4 text-black/70 hover:text-black transition-colors shrink-0"
               aria-label="Dismiss"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
           </div>

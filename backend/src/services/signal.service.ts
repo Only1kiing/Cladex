@@ -99,7 +99,8 @@ async function fetchMarketData(): Promise<MarketData[]> {
   }
 }
 
-export async function generateSignals(): Promise<number> {
+export async function generateSignals(opts: { force?: boolean } = {}): Promise<number> {
+  const force = opts.force || false;
   // Get team agents — try system user first, fallback to any user with running agents
   let systemUser = await prisma.user.findUnique({ where: { email: "system@cladex.xyz" } });
 
@@ -120,9 +121,11 @@ export async function generateSignals(): Promise<number> {
     return 0;
   }
 
-  // Check if there are already active signals (don't flood)
-  const activeSignals = await prisma.signal.count({ where: { status: "active" } });
-  if (activeSignals >= 5) return 0;
+  // Check if there are already active signals (don't flood) — skip in force mode
+  if (!force) {
+    const activeSignals = await prisma.signal.count({ where: { status: "active" } });
+    if (activeSignals >= 5) return 0;
+  }
 
   // Fetch real market data
   const marketData = await fetchMarketData();
@@ -183,7 +186,9 @@ If YES, respond with ONLY this JSON:
 If NO good setup exists right now, respond with:
 {"signal": false}
 
-You should generate a signal most of the time — users are waiting for actionable insights. Find the best opportunity from the data available. Only return signal:false if the market is truly flat with zero movement.`;
+${force
+  ? "YOU MUST GENERATE A SIGNAL. Pick the best opportunity from the data above, even if not perfect. Do NOT return signal:false."
+  : "You should generate a signal most of the time — users are waiting for actionable insights. Find the best opportunity from the data available. Only return signal:false if the market is truly flat with zero movement."}`;
 
   try {
     const response = await openai.chat.completions.create({

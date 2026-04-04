@@ -1,6 +1,7 @@
 interface ApiError {
   message: string;
   status: number;
+  code?: string;
   errors?: Record<string, string[]>;
 }
 
@@ -55,8 +56,17 @@ class ApiClient {
         const error: ApiError = {
           message: errorBody.message || errorBody.error || 'Request failed',
           status: response.status,
+          code: errorBody.code,
           errors: errorBody.errors,
         };
+
+        // Surface email verification gate with a clear message so callers
+        // can show the right UI. Do not redirect — just propagate.
+        if (response.status === 403 && errorBody.code === 'EMAIL_NOT_VERIFIED') {
+          error.message =
+            'Please verify your email before trading or creating agents. Check your inbox for the verification link.';
+          throw error;
+        }
 
         if (response.status === 401) {
           if (typeof window !== 'undefined') {
