@@ -23,8 +23,32 @@ async function requireAdmin(req: Request, res: Response, next: NextFunction) {
     select: { role: true },
   });
 
-  if (!user || user.role !== "admin") {
+  if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
     res.status(403).json({ error: "Forbidden: admin access required" });
+    return;
+  }
+
+  next();
+}
+
+// ---------------------------------------------------------------------------
+// Super-admin authorization middleware
+// Only users with role === "super_admin" may pass. Used for role-management
+// endpoints that could otherwise be used to escalate privileges.
+// ---------------------------------------------------------------------------
+async function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { role: true },
+  });
+
+  if (!user || user.role !== "super_admin") {
+    res.status(403).json({ error: "Forbidden: super_admin access required" });
     return;
   }
 
@@ -43,6 +67,7 @@ router.get("/users", async (_req: Request, res: Response) => {
       id: true,
       email: true,
       name: true,
+      role: true,
       emailVerified: true,
       createdAt: true,
       _count: { select: { agents: true, trades: true, paymentReceipts: true } },
@@ -50,6 +75,87 @@ router.get("/users", async (_req: Request, res: Response) => {
   });
 
   res.json({ users, total: users.length });
+});
+
+// POST /api/admin/users/:id/role — change a user's role (super_admin only).
+// Body: { role: "user" | "admin" | "super_admin" }. Cannot demote yourself.
+router.post("/users/:id/role", requireSuperAdmin, async (req: Request, res: Response) => {
+  const targetId = req.params.id as string;
+  const { role } = req.body as { role?: string };
+
+  const allowed = ["user", "admin", "super_admin"] as const;
+  if (!role || !allowed.includes(role as (typeof allowed)[number])) {
+    res.status(400).json({ error: "role must be one of: user, admin, super_admin" });
+    return;
+  }
+
+  if (req.user && req.user.id === targetId && role !== "super_admin") {
+    res.status(400).json({ error: "You cannot demote yourself" });
+    return;
+  }
+
+  const target = await prisma.user.findUnique({ where: { id: targetId } });
+  if (!target) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: targetId },
+    data: { role },
+    select: { id: true, email: true, name: true, role: true },
+  });
+
+  res.json({ user: updated });
+});
+
+// GET /api/admin/stats — platform-wide stats
+router.get("/stats", async (_req: Request, res: Response) => {
+  const [totalUsers, totalAgents, totalTrades, adminsCount, volumeAgg] = await Promise.all([
+    prisma.user.count(),
+    prisma.agent.count(),
+    prisma.trade.count(),
+    prisma.user.count({ where: { role: { in: ["admin", "super_admin"] } } }),
+    prisma.trade.aggregate({ _sum: { amount: true } }),
+  ]);
+
+  res.json({
+    totalUsers,
+    totalAgents,
+    totalTrades,
+    totalVolume: volumeAgg._sum.amount || 0,
+    admins: adminsCount,
+  });
+});
+
+// GET /api/admin/signals — last 50 signals (active + expired)
+router.get("/signals", async (_req: Request, res: Response) => {
+  const signals = await prisma.signal.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: {
+      agent: { select: { id: true, name: true, personality: true } },
+    },
+  });
+  res.json({ signals, total: signals.length });
+});
+
+// POST /api/admin/signals/:id/expire — force-expire a signal
+router.post("/signals/:id/expire", async (req: Request, res: Response) => {
+  const signalId = req.params.id as string;
+
+  const signal = await prisma.signal.findUnique({ where: { id: signalId } });
+  if (!signal) {
+    res.status(404).json({ error: "Signal not found" });
+    return;
+  }
+
+  const updated = await prisma.signal.update({
+    where: { id: signalId },
+    data: { status: "expired" },
+  });
+
+  res.json({ signal: updated });
 });
 
 // GET /api/admin/receipts — list all payment receipts

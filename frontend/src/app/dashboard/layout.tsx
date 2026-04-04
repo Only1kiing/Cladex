@@ -85,6 +85,29 @@ const navItems = [
   },
 ];
 
+const adminNavItem = {
+  label: 'Admin',
+  href: '/dashboard/admin',
+  icon: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path
+        d="M10 2l6 3v5c0 3.5-2.7 6.5-6 7.5-3.3-1-6-4-6-7.5V5l6-3z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7.5 10l1.8 1.8L13 8.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+};
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -100,6 +123,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [isLoading, isAuthenticated, router]);
 
   const userInitial = user?.name?.charAt(0)?.toUpperCase() || 'U';
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  const visibleNavItems = isAdmin ? [...navItems, adminNavItem] : navItems;
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
@@ -117,7 +142,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Navigation */}
       <nav className="flex-1 px-3 space-y-1">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const active = isActive(item.href);
           const isDisabled = 'disabled' in item && item.disabled;
           const badge = 'badge' in item ? (item as any).badge : undefined;

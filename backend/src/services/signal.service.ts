@@ -5,8 +5,6 @@ import prisma from "../lib/prisma";
 
 const openai = new OpenAI({ apiKey: config.openaiApiKey });
 
-const WATCHED_PAIRS = ["SOL/USDT", "LINK/USDT", "AVAX/USDT", "ETH/USDT", "BTC/USDT"];
-
 interface MarketData {
   symbol: string;
   price: number;
@@ -16,64 +14,87 @@ interface MarketData {
   volume: number;
 }
 
-async function fetchMarketData(): Promise<MarketData[]> {
-  // Try CoinGecko first (free, no auth)
-  try {
-    const ids = "bitcoin,ethereum,solana,chainlink,avalanche-2";
-    const resp = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`);
-    const json = await resp.json() as Record<string, any>;
+// Cache for top 100 Bybit symbols (30 min TTL)
+let top100Cache: { symbols: string[]; fetchedAt: number } | null = null;
+const TOP100_TTL_MS = 30 * 60 * 1000;
 
-    const map: Record<string, { symbol: string; id: string }> = {
-      bitcoin: { symbol: "BTC/USDT", id: "bitcoin" },
-      ethereum: { symbol: "ETH/USDT", id: "ethereum" },
-      solana: { symbol: "SOL/USDT", id: "solana" },
-      chainlink: { symbol: "LINK/USDT", id: "chainlink" },
-      "avalanche-2": { symbol: "AVAX/USDT", id: "avalanche-2" },
-    };
-
-    const data: MarketData[] = [];
-    for (const [id, info] of Object.entries(map)) {
-      const coin = json[id];
-      if (coin) {
-        data.push({
-          symbol: info.symbol,
-          price: coin.usd || 0,
-          change24h: coin.usd_24h_change || 0,
-          high24h: coin.usd * 1.02, // approximate
-          low24h: coin.usd * 0.98,
-          volume: coin.usd_24h_vol || 0,
-        });
-      }
-    }
-
-    return data;
-  } catch (err) {
-    console.error("[Signals] CoinGecko failed, trying ccxt:", err);
+/**
+ * Fetch the top 100 most-traded USDT spot pairs on Bybit by 24h quote volume.
+ * Cached for 30 minutes to avoid hammering the public API.
+ */
+export async function fetchBybitTop100(): Promise<string[]> {
+  if (top100Cache && Date.now() - top100Cache.fetchedAt < TOP100_TTL_MS) {
+    return top100Cache.symbols;
   }
 
-  // Fallback to ccxt
   try {
-    const exchange = new (ccxt as any).bybit({ enableRateLimit: true, timeout: 15000 });
+    const exchange = new (ccxt as any).bybit({
+      enableRateLimit: true,
+      timeout: 20000,
+      options: { defaultType: "spot" },
+    });
     await exchange.loadMarkets();
-    const tickers = await exchange.fetchTickers(WATCHED_PAIRS);
+
+    const tickers = await exchange.fetchTickers();
+    const rows: { symbol: string; quoteVolume: number }[] = [];
+
+    for (const [symbol, t] of Object.entries(tickers as Record<string, any>)) {
+      // USDT-quoted spot pairs only
+      if (!symbol.endsWith("/USDT")) continue;
+      const market = exchange.markets?.[symbol];
+      if (market && market.spot === false) continue;
+      const quoteVolume =
+        (t.quoteVolume as number) ||
+        ((t.last as number) || 0) * ((t.baseVolume as number) || 0);
+      if (!quoteVolume || quoteVolume <= 0) continue;
+      rows.push({ symbol, quoteVolume });
+    }
+
+    rows.sort((a, b) => b.quoteVolume - a.quoteVolume);
+    const symbols = rows.slice(0, 100).map((r) => r.symbol);
+
+    top100Cache = { symbols, fetchedAt: Date.now() };
+    console.log(`[Signals] Cached top ${symbols.length} Bybit USDT pairs by quote volume`);
+    return symbols;
+  } catch (err) {
+    console.error("[Signals] fetchBybitTop100 failed:", err);
+    // Fall back to stale cache if available, otherwise a safe default list
+    if (top100Cache) return top100Cache.symbols;
+    return ["BTC/USDT", "ETH/USDT", "SOL/USDT", "LINK/USDT", "AVAX/USDT"];
+  }
+}
+
+async function fetchMarketData(): Promise<MarketData[]> {
+  try {
+    const top100 = await fetchBybitTop100();
+    const exchange = new (ccxt as any).bybit({
+      enableRateLimit: true,
+      timeout: 20000,
+      options: { defaultType: "spot" },
+    });
+    await exchange.loadMarkets();
+    const tickers = await exchange.fetchTickers(top100);
     const data: MarketData[] = [];
 
-    for (const symbol of WATCHED_PAIRS) {
+    for (const symbol of top100) {
       const t = tickers[symbol];
-      if (t) {
-        data.push({
-          symbol,
-          price: t.last || 0,
-          change24h: t.percentage || 0,
-          high24h: t.high || 0,
-          low24h: t.low || 0,
-          volume: t.baseVolume || 0,
-        });
-      }
+      if (!t) continue;
+      const price = (t.last as number) || (t.close as number) || 0;
+      if (!price) continue;
+      const baseVol = (t.baseVolume as number) || 0;
+      const quoteVol = (t.quoteVolume as number) || price * baseVol;
+      data.push({
+        symbol,
+        price,
+        change24h: (t.percentage as number) || 0,
+        high24h: (t.high as number) || price,
+        low24h: (t.low as number) || price,
+        volume: quoteVol,
+      });
     }
     return data;
   } catch (err) {
-    console.error("[Signals] ccxt also failed:", err);
+    console.error("[Signals] Bybit ccxt fetchMarketData failed:", err);
     return [];
   }
 }
@@ -105,21 +126,31 @@ export async function generateSignals(): Promise<number> {
 
   // Fetch real market data
   const marketData = await fetchMarketData();
-  console.log(`[Signals] Market data: ${marketData.length} pairs fetched`, marketData.map(m => `${m.symbol}=$${m.price}`).join(', '));
+  console.log(`[Signals] Market data: ${marketData.length} pairs fetched from Bybit`);
   if (marketData.length === 0) { console.log("[Signals] No market data!"); return 0; }
 
   // Pick a random agent
   const agent = agents[Math.floor(Math.random() * agents.length)];
 
-  // Filter to agent's watched assets
-  const agentPairs = marketData.filter(m =>
-    agent.assets.some(a => m.symbol.startsWith(a))
-  );
-  console.log(`[Signals] Agent ${agent.name} (${agent.personality}) assets: ${agent.assets}, matched pairs: ${agentPairs.length}`);
+  // Filter to agent's watched assets — empty list means scan all top 100
+  const agentPairs = agent.assets && agent.assets.length > 0
+    ? marketData.filter(m => agent.assets.some(a => m.symbol.startsWith(`${a}/`)))
+    : marketData;
+  console.log(`[Signals] Agent ${agent.name} (${agent.personality}) assets: ${JSON.stringify(agent.assets)}, candidate pairs: ${agentPairs.length}`);
   if (agentPairs.length === 0) { console.log("[Signals] No matching pairs for agent"); return 0; }
 
-  const marketSummary = agentPairs.map(m =>
-    `${m.symbol}: $${m.price.toLocaleString()} (24h: ${m.change24h > 0 ? '+' : ''}${m.change24h.toFixed(2)}%, High: $${m.high24h.toLocaleString()}, Low: $${m.low24h.toLocaleString()}, Vol: ${m.volume.toLocaleString()})`
+  // Rank candidates by volatility * log(liquidity) and keep only top 25 for GPT-4o
+  const ranked = [...agentPairs]
+    .map(m => ({
+      m,
+      score: Math.abs(m.change24h || 0) * Math.log10(Math.max(10, m.volume || 0)),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 25)
+    .map(x => x.m);
+
+  const marketSummary = ranked.map(m =>
+    `${m.symbol}: $${m.price.toLocaleString()} (24h: ${m.change24h > 0 ? '+' : ''}${m.change24h.toFixed(2)}%, High: $${m.high24h.toLocaleString()}, Low: $${m.low24h.toLocaleString()}, Vol: $${Math.round(m.volume).toLocaleString()})`
   ).join("\n");
 
   const personalityGuide: Record<string, string> = {
@@ -132,7 +163,7 @@ export async function generateSignals(): Promise<number> {
   const prompt = `You are ${agent.name}, a crypto trading AI with ${agent.personality} personality.
 ${personalityGuide[agent.personality] || personalityGuide.SAGE}
 
-Current market data:
+Top volatility-weighted opportunities from the Bybit top-100 by volume (all symbols below are tradeable on Bybit spot and futures):
 ${marketSummary}
 
 Based on this REAL market data, decide if there is a trade signal worth sharing RIGHT NOW.

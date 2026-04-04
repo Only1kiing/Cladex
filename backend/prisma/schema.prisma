@@ -24,7 +24,7 @@ model User {
   gasBalance      Float        @default(0)
   referredBy    String?
   referralCode  String?   @unique
-  role             String   @default("user")   // "user" or "admin"
+  role             String   @default("user")   // "user" | "admin" | "super_admin"
   emailVerified    Boolean  @default(false)
   verificationCode String?
   verificationExp  DateTime?

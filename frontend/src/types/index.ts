@@ -16,11 +16,15 @@ export type ExchangeId = 'binance' | 'coinbase' | 'kraken' | 'bybit' | 'okx';
 
 // ---- User ----
 
+export type UserRole = 'user' | 'admin' | 'super_admin';
+
 export interface User {
   id: string;
   email: string;
   name: string;
   avatar?: string;
+  role?: UserRole;
+  emailVerified?: boolean;
   createdAt: string;
   updatedAt: string;
 }

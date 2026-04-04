@@ -65,7 +65,7 @@ router.post("/signup", async (req: Request, res: Response) => {
         referralCode: undefined as any, // will be set after we have the id
         ...(referrerId ? { referredBy: referrerId } : {}),
       },
-      select: { id: true, email: true, name: true, createdAt: true },
+      select: { id: true, email: true, name: true, createdAt: true, role: true },
     });
 
     // Set referral code to first 8 chars of the user's cuid ID
@@ -135,6 +135,7 @@ router.post("/login", async (req: Request, res: Response) => {
         email: user.email,
         name: user.name,
         createdAt: user.createdAt,
+        role: user.role,
       },
       token,
     });
@@ -158,6 +159,7 @@ router.get("/me", authMiddleware, async (req: Request, res: Response) => {
       createdAt: true,
       updatedAt: true,
       emailVerified: true,
+      role: true,
     },
   });
 
