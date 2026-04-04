@@ -263,7 +263,30 @@ router.post("/execute", async (req: Request, res: Response) => {
       return;
     }
 
-    const executedPrice = order.average || order.price || body.price || 0;
+    // Get the actual fill price — market orders on Bybit often don't return
+    // price immediately, so we try multiple sources
+    let executedPrice = order.average || order.price || 0;
+
+    // If no fill price from order response, fetch the order status
+    if (!executedPrice && order.id) {
+      try {
+        const fetched = await exchange.fetchOrder(order.id, tradingSymbol);
+        executedPrice = fetched.average || fetched.price || 0;
+      } catch { /* fallback below */ }
+    }
+
+    // Last resort: use the live ticker price
+    if (!executedPrice) {
+      executedPrice = livePrice || body.price || 0;
+    }
+
+    // If we STILL don't have a price, fetch ticker now
+    if (!executedPrice) {
+      try {
+        const ticker = await exchange.fetchTicker(body.symbol);
+        executedPrice = ticker?.last || 0;
+      } catch { /* give up */ }
+    }
 
     // Save trade to database
     const trade = await prisma.trade.create({
@@ -471,16 +494,32 @@ router.get("/pnl", async (req: Request, res: Response) => {
     } catch { /* skip */ }
   }));
 
+  // Backfill missing entry prices — trades stored with price=0
+  for (const trade of openTrades) {
+    if (!trade.price || trade.price === 0) {
+      const livePrice = prices[trade.symbol];
+      if (livePrice) {
+        // Use current price as entry (best approximation for market orders)
+        await prisma.trade.update({
+          where: { id: trade.id },
+          data: { price: livePrice },
+        });
+        (trade as any).price = livePrice;
+      }
+    }
+  }
+
   let totalPnl = 0;
   const updated = openTrades.map((trade) => {
     const currentPrice = prices[trade.symbol] || 0;
     let pnl = trade.profit;
+    const entryPrice = trade.price || 0;
 
-    if (currentPrice && trade.price) {
+    if (currentPrice && entryPrice) {
       if (trade.side === "BUY") {
-        pnl = (currentPrice - trade.price) * trade.amount;
+        pnl = (currentPrice - entryPrice) * trade.amount;
       } else {
-        pnl = (trade.price - currentPrice) * trade.amount;
+        pnl = (entryPrice - currentPrice) * trade.amount;
       }
       pnl = Math.round(pnl * 100) / 100;
 
@@ -519,10 +558,10 @@ router.get("/pnl", async (req: Request, res: Response) => {
       symbol: trade.symbol,
       side: trade.side,
       amount: trade.amount,
-      entryPrice: trade.price,
-      currentPrice: currentPrice || trade.price,
+      entryPrice: entryPrice,
+      currentPrice: currentPrice || entryPrice,
       profit: pnl,
-      pnlPercent: trade.price ? ((currentPrice - trade.price) / trade.price * 100 * (trade.side === "BUY" ? 1 : -1)) : 0,
+      pnlPercent: entryPrice ? ((currentPrice - entryPrice) / entryPrice * 100 * (trade.side === "BUY" ? 1 : -1)) : 0,
       stopLoss: trade.stopLoss,
       takeProfit: trade.takeProfit,
       agent: trade.agent,
