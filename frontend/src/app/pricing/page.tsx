@@ -1,39 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { DeploymentModal } from '@/components/dashboard/DeploymentModal';
+import { useState } from 'react';
 import { Logo } from '@/components/ui/Logo';
 
 /* ------------------------------------------------------------------ */
 /*  Inline SVG Icons                                                    */
 /* ------------------------------------------------------------------ */
-
-function ShieldIcon({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  );
-}
-
-function ZapIcon({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-    </svg>
-  );
-}
-
-function CrownIcon({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 4l3 12h14l3-12-5 4-5-4-5 4-5-4z" />
-      <path d="M5 16h14v2H5z" />
-    </svg>
-  );
-}
 
 function CheckIcon({ className = '' }: { className?: string }) {
   return (
@@ -43,11 +16,10 @@ function CheckIcon({ className = '' }: { className?: string }) {
   );
 }
 
-function LockIcon({ className = '' }: { className?: string }) {
+function ShieldIcon({ className = '' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
 }
@@ -60,6 +32,32 @@ function KeyIcon({ className = '' }: { className?: string }) {
   );
 }
 
+function SlidersIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
+    </svg>
+  );
+}
+
+function XCircleIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="15" y1="9" x2="9" y2="15" />
+      <line x1="9" y1="9" x2="15" y2="15" />
+    </svg>
+  );
+}
+
 function ChevronDownIcon({ className = '' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -68,120 +66,137 @@ function ChevronDownIcon({ className = '' }: { className?: string }) {
   );
 }
 
-function ChainIcon({ className = '' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-    </svg>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /*  Data                                                                */
 /* ------------------------------------------------------------------ */
 
-interface DeploymentPlan {
+interface PricingPlan {
   name: string;
-  icon: React.ReactNode;
   price: string;
-  oldPrice: string;
+  label?: string;
+  badge: string;
+  badgeHighlight?: boolean;
   features: string[];
   cta: string;
-  ctaStyle: 'ghost' | 'primary' | 'purple';
-  popular: boolean;
-  iconColor: string;
-  glowColor: string;
-  borderGlow: string;
+  ctaHref: string;
+  ctaStyle: 'primary-green' | 'ghost' | 'primary' | 'ghost-purple';
+  highlighted?: boolean;
 }
 
-const deploymentPlans: DeploymentPlan[] = [
+const plans: PricingPlan[] = [
   {
-    name: 'Trader',
-    icon: <ZapIcon className="w-6 h-6" />,
-    price: '$25',
-    oldPrice: '$99',
+    name: 'Free',
+    price: '$0',
+    badge: 'Start here',
     features: [
-      'Deploy up to 2 agents',
-      'Basic AI model',
-      'Limited visibility',
-      'Airdrop eligible',
-      'Base points',
+      '1 agent',
+      'Basic strategies',
+      'Demo + live mode',
+      'Earns Cladex points',
     ],
-    cta: 'Get Trader',
+    cta: 'Start Free',
+    ctaHref: '/signup',
+    ctaStyle: 'primary-green',
+    highlighted: true,
+  },
+  {
+    name: 'Deploy More',
+    price: '$20',
+    label: 'per additional agent',
+    badge: 'One-time',
+    features: [
+      'Add agents one at a time',
+      'All strategies available',
+      'Full live trading',
+    ],
+    cta: 'Add Agent',
+    ctaHref: '/signup',
     ctaStyle: 'ghost',
-    popular: false,
-    iconColor: 'text-gray-400',
-    glowColor: 'from-emerald-500/10 to-emerald-500/0',
-    borderGlow: 'group-hover:shadow-emerald-500/20',
   },
   {
     name: 'Builder',
-    icon: <ZapIcon className="w-6 h-6" />,
     price: '$80',
-    oldPrice: '$199',
+    label: 'one-time',
+    badge: 'Popular',
+    badgeHighlight: true,
     features: [
-      'Deploy up to 5 agents',
-      'Deploy & Earn',
-      'Smarter AI model',
-      'Marketplace visibility boost',
-      'Basic analytics',
-      'Higher airdrop eligibility',
-      'Bonus points',
+      'Up to 5 agents',
+      'Marketplace access',
+      'Earn from your agents',
+      'Better visibility',
     ],
-    cta: 'Get Builder — Recommended',
+    cta: 'Get Builder',
+    ctaHref: '/signup',
     ctaStyle: 'primary',
-    popular: true,
-    iconColor: 'text-[#B8FF3C]',
-    glowColor: 'from-[#B8FF3C]/10 to-[#B8FF3C]/0',
-    borderGlow: 'group-hover:shadow-[#B8FF3C]/15',
   },
   {
     name: 'Pro Creator',
-    icon: <CrownIcon className="w-6 h-6" />,
     price: '$200',
-    oldPrice: '$499',
+    label: 'one-time',
+    badge: 'Best value',
     features: [
-      'Deploy 10\u201315 agents',
-      'Premium AI models',
+      '10\u201315 agents',
       'Priority ranking',
-      'Featured placement',
       'Higher revenue share',
       'Advanced analytics',
-      'Max airdrop eligibility',
-      'Premium points',
+      'Early feature access',
     ],
-    cta: 'Get Pro Creator',
-    ctaStyle: 'purple',
-    popular: false,
-    iconColor: 'text-purple-400',
-    glowColor: 'from-purple-500/10 to-purple-500/0',
-    borderGlow: 'group-hover:shadow-purple-500/20',
+    cta: 'Go Pro',
+    ctaHref: '/signup',
+    ctaStyle: 'ghost-purple',
   },
+];
+
+const trustPoints = [
+  { icon: ShieldIcon, label: 'Non-custodial', desc: 'We never hold your funds' },
+  { icon: KeyIcon, label: 'Trade-only API', desc: 'Read and trade permissions only' },
+  { icon: SlidersIcon, label: 'Full control', desc: 'Configure everything your way' },
+  { icon: XCircleIcon, label: 'Cancel anytime', desc: 'Disconnect whenever you want' },
 ];
 
 const faqs = [
   {
-    q: 'Do I need a subscription to trade?',
-    a: 'No. Deploy an agent and start trading. One-time payment, no recurring fees.',
+    q: 'Is Cladex free?',
+    a: 'Yes, you get 1 free agent to start trading right away. No credit card required.',
   },
   {
-    q: 'What exchanges are supported?',
-    a: 'Bybit, Binance, and more coming soon.',
+    q: 'Are payments recurring?',
+    a: 'No. All payments are one-time. You pay once and keep your agents forever.',
   },
   {
-    q: 'Can I cancel anytime?',
-    a: 'Yes. Disconnect your exchange anytime. Your deployment is permanent.',
+    q: 'Can I cancel?',
+    a: 'You own your agents. Disconnect your exchange anytime and stop trading instantly.',
   },
   {
-    q: 'What is airdrop eligibility?',
-    a: 'All deployment plans are eligible for future token airdrops. Higher plans get higher allocation.',
-  },
-  {
-    q: 'What does non-custodial mean?',
-    a: 'Cladex never holds your funds. Your assets stay on your exchange at all times.',
+    q: 'Where are my funds?',
+    a: 'On your exchange. We never hold funds. Cladex only uses trade-only API access.',
   },
 ];
+
+/* ------------------------------------------------------------------ */
+/*  CTA button styles                                                   */
+/* ------------------------------------------------------------------ */
+
+const ctaStyles: Record<PricingPlan['ctaStyle'], string> = {
+  'primary-green': [
+    'bg-[#B8FF3C] text-black font-bold',
+    'shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25',
+    'hover:brightness-110',
+  ].join(' '),
+  ghost: [
+    'border border-[#1e1e2e] bg-transparent text-gray-300',
+    'hover:bg-white/5 hover:border-gray-500 hover:text-white',
+  ].join(' '),
+  primary: [
+    'bg-[#B8FF3C] text-black font-bold',
+    'shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25',
+    'hover:brightness-110',
+  ].join(' '),
+  'ghost-purple': [
+    'border border-purple-500/30 bg-transparent text-purple-300',
+    'hover:bg-purple-500/10 hover:border-purple-400/50 hover:text-purple-200',
+  ].join(' '),
+};
 
 /* ------------------------------------------------------------------ */
 /*  FAQ Item Component                                                  */
@@ -220,57 +235,19 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 /*  Main Page                                                           */
 /* ------------------------------------------------------------------ */
 
-const planData: Record<string, { name: string; price: number; agents: number }> = {
-  'Trader': { name: 'Trader', price: 25, agents: 2 },
-  'Builder': { name: 'Builder', price: 80, agents: 5 },
-  'Pro Creator': { name: 'Pro Creator', price: 200, agents: 15 },
-};
-
-function PricingPageContent() {
-  const searchParams = useSearchParams();
-  const returnTo = searchParams.get('return');
-  const [deployModalOpen, setDeployModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<{ name: string; price: number; agents: number } | null>(null);
-
-  const handlePlanClick = (planName: string) => {
-    setSelectedPlan(planData[planName] || null);
-    setDeployModalOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setDeployModalOpen(false);
-    // If user came from build page, redirect back after closing modal
-    if (returnTo === 'build') {
-      window.location.href = '/dashboard/build';
-    }
-  };
-
-  const deployCta: Record<string, string> = {
-    ghost: [
-      'border border-[#1e1e2e] bg-transparent text-gray-300',
-      'hover:bg-white/5 hover:border-gray-500 hover:text-white',
-    ].join(' '),
-    primary: [
-      'bg-[#B8FF3C] text-black font-bold',
-      'shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25',
-      'hover:brightness-110',
-    ].join(' '),
-    purple: [
-      'bg-purple-600 text-white font-bold',
-      'shadow-lg shadow-purple-600/15 hover:shadow-purple-600/25',
-      'hover:brightness-110',
-    ].join(' '),
-  };
-
+export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-gray-100">
       {/* Nav */}
       <nav className="sticky top-0 z-40 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <Link href="/dashboard">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <Link href="/">
             <Logo size="sm" />
           </Link>
-          <Link href="/dashboard" className="text-xs font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-1.5">
+          <Link
+            href="/dashboard"
+            className="text-xs font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-1.5"
+          >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
@@ -279,64 +256,63 @@ function PricingPageContent() {
         </div>
       </nav>
 
-      {/* ---- Hero ---- */}
+      {/* Hero */}
       <section className="relative pt-12 pb-10 sm:pt-20 sm:pb-16 text-center px-4">
-        {/* Subtle radial glow */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[200px] sm:w-[500px] sm:h-[350px] lg:w-[800px] lg:h-[500px] bg-[#B8FF3C]/5 rounded-full blur-[120px]" />
         </div>
 
         <div className="relative max-w-3xl mx-auto">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
-            <span className="text-[#B8FF3C]">Deployment Plans</span>
+            Simple pricing
           </h1>
           <p className="text-gray-400 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Deploy AI agents that trade for you. One-time payment, no hidden fees.
+            Start free. Pay only when you need more agents.
           </p>
         </div>
       </section>
 
-      {/* ---- Deployment Plans ---- */}
-      <section className="max-w-5xl mx-auto px-4 pb-16 sm:pb-24 pt-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
-          {deploymentPlans.map((plan) => (
+      {/* Pricing Cards */}
+      <section className="max-w-6xl mx-auto px-4 pb-16 sm:pb-24 pt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6 items-start">
+          {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`group relative flex flex-col rounded-2xl border transition-all duration-300 ${
-                plan.popular
-                  ? 'border-[#B8FF3C]/30 bg-[#111118] lg:scale-105 z-10'
-                  : 'border-[#1e1e2e] bg-[#111118] hover:border-[#2a2a3e]'
-              } hover:-translate-y-1 ${plan.borderGlow} hover:shadow-xl`}
+              className={`group relative flex flex-col rounded-2xl border transition-all duration-300 bg-[#111118] hover:-translate-y-1 hover:shadow-xl ${
+                plan.highlighted
+                  ? 'border-[#B8FF3C]/40 shadow-lg shadow-[#B8FF3C]/5'
+                  : plan.badgeHighlight
+                  ? 'border-[#B8FF3C]/20 hover:border-[#B8FF3C]/30'
+                  : 'border-[#1e1e2e] hover:border-[#2a2a3e]'
+              }`}
             >
-              {/* Glow background */}
-              <div
-                className={`absolute inset-0 rounded-2xl bg-gradient-to-b ${plan.glowColor} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
-              />
+              {/* Badge */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                    plan.badgeHighlight
+                      ? 'bg-[#B8FF3C]/15 text-[#B8FF3C] border border-[#B8FF3C]/30'
+                      : plan.highlighted
+                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-white/5 text-gray-400 border border-white/10'
+                  }`}
+                >
+                  {plan.badge}
+                </span>
+              </div>
 
-              {/* Most Popular badge */}
-              {plan.popular && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20">
-                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-[#B8FF3C]/10 text-[#B8FF3C] border border-[#B8FF3C]/30">
-                    <ZapIcon className="w-3 h-3" />
-                    Recommended
-                  </span>
-                </div>
-              )}
-
-              <div className="relative flex flex-col flex-1 p-6 sm:p-8">
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-6">
-                  <div className={plan.iconColor}>{plan.icon}</div>
-                  <h3 className="text-gray-100 font-semibold text-lg">{plan.name}</h3>
-                </div>
+              <div className="relative flex flex-col flex-1 p-6 sm:p-7 pt-8">
+                {/* Plan name */}
+                <h3 className="text-gray-100 font-semibold text-lg mb-5">{plan.name}</h3>
 
                 {/* Price */}
                 <div className="mb-6">
-                  <div className="flex items-baseline gap-2 justify-start">
+                  <div className="flex items-baseline gap-1.5">
                     <span className="text-4xl font-bold text-gray-100">{plan.price}</span>
-                    <span className="text-base text-gray-400 line-through decoration-red-400/60">{plan.oldPrice}</span>
                   </div>
-                  <span className="text-gray-500 text-xs">one-time payment</span>
+                  {plan.label && (
+                    <span className="text-gray-500 text-xs mt-1 block">{plan.label}</span>
+                  )}
                 </div>
 
                 {/* Divider */}
@@ -353,32 +329,29 @@ function PricingPageContent() {
                 </ul>
 
                 {/* CTA */}
-                <button
-                  onClick={() => handlePlanClick(plan.name)}
-                  className={`block w-full text-center py-3 px-6 rounded-xl font-semibold text-sm transition-all duration-200 ${deployCta[plan.ctaStyle]}`}
+                <Link
+                  href={plan.ctaHref}
+                  className={`block w-full text-center py-3 px-6 rounded-xl font-semibold text-sm transition-all duration-200 ${ctaStyles[plan.ctaStyle]}`}
                 >
                   {plan.cta}
-                </button>
+                </Link>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ---- Trust Section ---- */}
-      <section className="max-w-3xl mx-auto px-4 pb-16 sm:pb-24">
+      {/* Trust Section */}
+      <section className="max-w-4xl mx-auto px-4 pb-16 sm:pb-24">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-100 mb-10">
           Your funds stay yours
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { icon: <ShieldIcon className="w-6 h-6" />, label: 'Non-custodial', desc: 'Cladex never holds funds' },
-            { icon: <KeyIcon className="w-6 h-6" />, label: 'Trade-only API access', desc: 'Read and trade permissions only' },
-            { icon: <LockIcon className="w-6 h-6" />, label: 'Withdrawals disabled', desc: 'No withdrawal permissions ever' },
-            { icon: <ChainIcon className="w-6 h-6" />, label: 'Disconnect anytime', desc: 'Revoke access whenever you want' },
-          ].map(({ icon, label, desc }) => (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {trustPoints.map(({ icon: Icon, label, desc }) => (
             <div key={label} className="flex flex-col items-center text-center gap-3 p-4">
-              <div className="text-[#B8FF3C]">{icon}</div>
+              <div className="text-[#B8FF3C]">
+                <Icon className="w-6 h-6" />
+              </div>
               <span className="text-gray-100 text-sm font-semibold">{label}</span>
               <span className="text-gray-500 text-xs">{desc}</span>
             </div>
@@ -386,7 +359,7 @@ function PricingPageContent() {
         </div>
       </section>
 
-      {/* ---- FAQ ---- */}
+      {/* FAQ */}
       <section className="max-w-2xl mx-auto px-4 pb-16 sm:pb-24">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-100 mb-10">
           Frequently Asked Questions
@@ -398,51 +371,15 @@ function PricingPageContent() {
         </div>
       </section>
 
-      {/* ---- Final CTA ---- */}
-      <section className="relative pb-24 sm:pb-32 text-center px-4">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[250px] h-[150px] sm:w-[400px] sm:h-[200px] lg:w-[600px] lg:h-[300px] bg-[#B8FF3C]/5 rounded-full blur-[100px]" />
+      {/* Footer disclaimer */}
+      <footer className="border-t border-white/[0.06] py-8 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-gray-600 text-xs leading-relaxed">
+            Cladex is not a financial advisor. Trading cryptocurrencies involves significant risk of loss.
+            Past performance does not guarantee future results. Only trade with funds you can afford to lose.
+          </p>
         </div>
-
-        <div className="relative max-w-xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 mb-3">
-            Deploy your first agent today.
-          </h2>
-          <div className="flex items-center justify-center gap-3">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm bg-[#B8FF3C] text-black shadow-lg shadow-[#B8FF3C]/15 hover:shadow-[#B8FF3C]/25 hover:brightness-110 transition-all duration-200"
-            >
-              Go to Dashboard
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-6 py-3.5 rounded-xl text-sm font-medium text-gray-400 border border-white/[0.08] hover:text-white hover:border-white/[0.15] transition-all"
-            >
-              Cancel
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Deployment Modal */}
-      <DeploymentModal
-        isOpen={deployModalOpen}
-        onClose={handleModalClose}
-        plan={selectedPlan}
-      />
+      </footer>
     </div>
-  );
-}
-
-export default function PricingPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0f]" />}>
-      <PricingPageContent />
-    </Suspense>
   );
 }
