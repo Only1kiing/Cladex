@@ -142,14 +142,21 @@ router.post("/execute", requireVerified, async (req: Request, res: Response) => 
   try {
     const body = executeTradeSchema.parse(req.body);
 
-    // Verify agent belongs to user if provided
+    // Verify agent exists (signals come from system agents, so we don't
+    // require ownership here — the user is just acting on the signal)
+    let tradeAgentId: string | null = body.agentId || null;
     if (body.agentId) {
-      const agent = await prisma.agent.findFirst({
-        where: { id: body.agentId, userId: req.user!.id },
+      const agent = await prisma.agent.findUnique({
+        where: { id: body.agentId },
+        select: { id: true, userId: true },
       });
       if (!agent) {
-        res.status(404).json({ error: "Agent not found" });
-        return;
+        // Agent doesn't exist at all — drop the ID rather than blocking the trade
+        tradeAgentId = null;
+      } else if (agent.userId !== req.user!.id) {
+        // System or other user's agent — trade is still valid, just don't
+        // attribute it to the user's own agent
+        tradeAgentId = null;
       }
     }
 
@@ -204,7 +211,7 @@ router.post("/execute", requireVerified, async (req: Request, res: Response) => 
     const sideMap: Record<string, "BUY" | "SELL"> = { buy: "BUY", sell: "SELL" };
     const riskCheck = await validateTrade({
       userId: req.user!.id,
-      agentId: body.agentId,
+      agentId: tradeAgentId ?? undefined,
       symbol: body.symbol,
       side: sideMap[body.side] || "BUY",
       amount: tradeAmount,
@@ -293,7 +300,7 @@ router.post("/execute", requireVerified, async (req: Request, res: Response) => 
     const trade = await prisma.trade.create({
       data: {
         userId: req.user!.id,
-        agentId: body.agentId ?? null,
+        agentId: tradeAgentId,
         symbol: body.symbol,
         side: sideMap[body.side] || "BUY",
         amount: tradeAmount,
@@ -316,7 +323,7 @@ router.post("/execute", requireVerified, async (req: Request, res: Response) => 
     await prisma.activityLog.create({
       data: {
         userId: req.user!.id,
-        agentId: body.agentId ?? null,
+        agentId: tradeAgentId,
         type: "TRADE",
         message: `${body.side.toUpperCase()} ${body.amount} ${body.symbol} @ $${executedPrice.toLocaleString()} on ${exchangeName}`,
         data: {
