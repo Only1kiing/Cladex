@@ -6,6 +6,10 @@ import prisma from "../lib/prisma";
  * verified their email. Must be used AFTER authMiddleware so `req.user`
  * is populated.
  */
+// TEMPORARY: Email enforcement disabled until Resend DNS is verified.
+// Set REQUIRE_EMAIL_VERIFICATION=true in env once email delivery works.
+const ENFORCE_EMAIL_VERIFICATION = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+
 export async function requireVerified(
   req: Request,
   res: Response,
@@ -14,6 +18,11 @@ export async function requireVerified(
   try {
     if (!req.user) {
       res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    if (!ENFORCE_EMAIL_VERIFICATION) {
+      next();
       return;
     }
 
