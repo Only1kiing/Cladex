@@ -79,18 +79,29 @@ async function fetchMarketData(): Promise<MarketData[]> {
 }
 
 export async function generateSignals(): Promise<number> {
-  // Get team agents
-  const systemUser = await prisma.user.findUnique({ where: { email: "system@cladex.xyz" } });
-  if (!systemUser) return 0;
+  // Get team agents — try system user first, fallback to any user with running agents
+  let systemUser = await prisma.user.findUnique({ where: { email: "system@cladex.xyz" } });
 
-  const agents = await prisma.agent.findMany({
-    where: { userId: systemUser.id, status: "RUNNING" },
-  });
-  if (agents.length === 0) return 0;
+  let agents = systemUser
+    ? await prisma.agent.findMany({ where: { userId: systemUser.id, status: "RUNNING" } })
+    : [];
+
+  // Fallback: if no system agents, use any running agents
+  if (agents.length === 0) {
+    agents = await prisma.agent.findMany({
+      where: { status: "RUNNING" },
+      take: 10,
+    });
+  }
+
+  if (agents.length === 0) {
+    console.log("[Signals] No running agents found — skipping signal generation");
+    return 0;
+  }
 
   // Check if there are already active signals (don't flood)
   const activeSignals = await prisma.signal.count({ where: { status: "active" } });
-  if (activeSignals >= 3) return 0;
+  if (activeSignals >= 5) return 0;
 
   // Fetch real market data
   const marketData = await fetchMarketData();
@@ -180,7 +191,7 @@ You should generate a signal most of the time — users are waiting for actionab
     // Also log as activity
     await prisma.activityLog.create({
       data: {
-        userId: systemUser.id,
+        userId: systemUser?.id || agent.userId,
         agentId: agent.id,
         type: "TRADE",
         message: `${result.side.toUpperCase()} ${result.symbol} @ $${result.entryPrice.toLocaleString()} — ${result.reason}`,

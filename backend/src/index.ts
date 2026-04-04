@@ -422,9 +422,9 @@ app.listen(config.port, () => {
       }
     };
 
-    // First signal after 1 minute, then every 15 minutes
-    setTimeout(runSignals, 60000);
-    setInterval(runSignals, 15 * 60 * 1000);
+    // First signal after 30 seconds, then every 5 minutes
+    setTimeout(runSignals, 30000);
+    setInterval(runSignals, 5 * 60 * 1000);
 
     // Process subscription billing daily
     const runBilling = async () => {
