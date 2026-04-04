@@ -18,6 +18,7 @@ interface IntelMessage {
 interface MarketIntelligenceProps {
   compact?: boolean;
   className?: string;
+  hideHeader?: boolean;
 }
 
 const personalityColors: Record<string, { text: string; border: string; bg: string }> = {
@@ -71,7 +72,7 @@ function highlightMentions(text: string, messages: IntelMessage[]): React.ReactN
   return parts;
 }
 
-export default function MarketIntelligence({ compact = false, className = '' }: MarketIntelligenceProps) {
+export default function MarketIntelligence({ compact = false, className = '', hideHeader = false }: MarketIntelligenceProps) {
   const [messages, setMessages] = useState<IntelMessage[]>([]);
   const [viewers, setViewers] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -164,7 +165,7 @@ export default function MarketIntelligence({ compact = false, className = '' }: 
 
   return (
     <div className={`bg-[#111118] border border-[#1e1e2e] rounded-xl flex flex-col ${className}`}>
-      <div className={`flex items-center justify-between shrink-0 border-b border-[#1e1e2e] ${compact ? 'px-3 py-2.5' : 'px-5 py-4'}`}>
+      {!hideHeader && <div className={`flex items-center justify-between shrink-0 border-b border-[#1e1e2e] ${compact ? 'px-3 py-2.5' : 'px-5 py-4'}`}>
         <div className="flex items-center gap-2">
           <div className="relative">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -187,7 +188,7 @@ export default function MarketIntelligence({ compact = false, className = '' }: 
           )}
           <span className={`text-zinc-600 uppercase tracking-widest ${compact ? 'text-[9px]' : 'text-[10px]'}`}>Live</span>
         </div>
-      </div>
+      </div>}
 
       <div
         ref={scrollRef}

@@ -224,37 +224,10 @@ interface LivePrice {
   change: number;
 }
 
-function AIMarketScanner() {
-  const [stepIdx, setStepIdx] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [activeAgentIdx, setActiveAgentIdx] = useState(0);
+function AgentsAtWork() {
   const [livePrices, setLivePrices] = useState<LivePrice[]>([]);
 
-  const agents = [
-    { name: 'Raze', personality: 'apex', color: 'text-red-400', status: 'Hunting breakouts' },
-    { name: 'Knox', personality: 'nova', color: 'text-emerald-400', status: 'Checking risk levels' },
-    { name: 'Iris', personality: 'echo', color: 'text-violet-400', status: 'Pattern matching' },
-    { name: 'Byte', personality: 'sage', color: 'text-cyan-400', status: 'Crunching data' },
-  ];
-
-  const scanSteps = livePrices.length > 0 ? [
-    { label: `Scanning BTC/USDT — $${livePrices.find(p => p.symbol === 'BTC/USDT')?.price.toLocaleString() || '...'}`, icon: '📊' },
-    { label: `Analyzing ETH — $${livePrices.find(p => p.symbol === 'ETH/USDT')?.price.toLocaleString() || '...'}`, icon: '📈' },
-    { label: `Checking SOL — $${livePrices.find(p => p.symbol === 'SOL/USDT')?.price.toLocaleString() || '...'}`, icon: '🔍' },
-    { label: 'Running RSI divergence scan', icon: '⚡' },
-    { label: 'Evaluating support/resistance levels', icon: '🎯' },
-    { label: 'Cross-referencing whale wallets', icon: '🐋' },
-    { label: 'Computing risk/reward ratios', icon: '🧮' },
-    { label: `Scanning LINK — $${livePrices.find(p => p.symbol === 'LINK/USDT')?.price.toLocaleString() || '...'}`, icon: '🔗' },
-    { label: 'Checking liquidation heatmaps', icon: '🔥' },
-    { label: 'Evaluating market sentiment', icon: '🧠' },
-  ] : [
-    { label: 'Connecting to markets...', icon: '📊' },
-    { label: 'Loading price data...', icon: '📈' },
-  ];
-
   useEffect(() => {
-    // Fetch real prices
     const fetchPrices = async () => {
       try {
         const pairs = ['BTC-USDT', 'ETH-USDT', 'SOL-USDT', 'LINK-USDT', 'AVAX-USDT'];
@@ -265,72 +238,39 @@ function AIMarketScanner() {
             if (data?.price) {
               prices.push({ symbol: data.symbol, price: data.price, change: data.change || 0 });
             }
-          } catch { /* skip this pair */ }
+          } catch { /* skip */ }
         }
         if (prices.length > 0) setLivePrices(prices);
-      } catch { /* no prices */ }
+      } catch { /* */ }
     };
-
     fetchPrices();
-    const priceInterval = setInterval(fetchPrices, 30000);
-
-    const stepInterval = setInterval(() => {
-      setStepIdx(prev => (prev + 1) % Math.max(scanSteps.length, 1));
-    }, 3000);
-
-    const progressInterval = setInterval(() => {
-      setProgress(prev => prev >= 100 ? 0 : prev + Math.random() * 8 + 2);
-    }, 500);
-
-    const agentInterval = setInterval(() => {
-      setActiveAgentIdx(prev => (prev + 1) % agents.length);
-    }, 4000);
-
-    return () => {
-      clearInterval(priceInterval);
-      clearInterval(stepInterval);
-      clearInterval(progressInterval);
-      clearInterval(agentInterval);
-    };
+    const id = setInterval(fetchPrices, 30000);
+    return () => clearInterval(id);
   }, []);
-
-  const currentStep = scanSteps[stepIdx % scanSteps.length];
-  const activeAgent = agents[activeAgentIdx];
 
   return (
     <section>
-      <div className="flex items-center gap-3 mb-3">
-        <h2 className="text-sm font-semibold text-gray-100">Market Intelligence</h2>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#B8FF3C] animate-pulse" />
-          <span className="text-[10px] text-[#B8FF3C] font-medium">AI Scanning</span>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] p-5 overflow-hidden">
-        {/* Main scanner visual */}
-        <div className="flex items-center gap-4 mb-4">
-          <div className="relative w-12 h-12 shrink-0">
-            <div className="absolute inset-0 rounded-full border-2 border-[#B8FF3C]/20 animate-spin" style={{ animationDuration: '3s' }} />
-            <div className="absolute inset-1 rounded-full border-2 border-t-[#B8FF3C] border-r-transparent border-b-transparent border-l-transparent animate-spin" style={{ animationDuration: '1.5s' }} />
-            <div className="absolute inset-3 rounded-full bg-[#B8FF3C]/10 flex items-center justify-center">
-              <span className="text-sm">{currentStep.icon}</span>
+      <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
+        {/* Header with live status */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.04]">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 block" />
+              <span className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             </div>
+            <h2 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">Agents at Work</h2>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white mb-1">Agents at work</p>
-            <p className="text-xs text-gray-400 truncate">{currentStep.label}</p>
-          </div>
+          <span className="text-[9px] text-gray-600 uppercase tracking-widest">Live</span>
         </div>
 
-        {/* Live prices ticker */}
+        {/* Live price ticker */}
         {livePrices.length > 0 && (
-          <div className="flex items-center gap-4 mb-4 overflow-x-auto no-scrollbar py-1">
+          <div className="flex items-center gap-5 px-4 py-2.5 border-b border-white/[0.04] overflow-x-auto no-scrollbar">
             {livePrices.map(p => (
-              <div key={p.symbol} className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-semibold text-gray-300">{p.symbol.replace('/USDT', '')}</span>
+              <div key={p.symbol} className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] font-semibold text-gray-400">{p.symbol.replace('/USDT', '')}</span>
                 <span className="text-[11px] font-bold text-white tabular-nums">${p.price.toLocaleString()}</span>
-                <span className={`text-[10px] font-semibold ${p.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                <span className={`text-[10px] font-semibold tabular-nums ${p.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                   {p.change >= 0 ? '+' : ''}{p.change?.toFixed(1)}%
                 </span>
               </div>
@@ -338,47 +278,8 @@ function AIMarketScanner() {
           </div>
         )}
 
-        {/* Progress bar */}
-        <div className="mb-4">
-          <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[#B8FF3C]/60 to-[#B8FF3C] transition-all duration-500"
-              style={{ width: `${Math.min(progress, 100)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Active agents row */}
-        <div className="flex items-center gap-3 mb-3">
-          {agents.map((agent, i) => (
-            <div
-              key={agent.name}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all duration-500 ${
-                i === activeAgentIdx ? 'bg-white/[0.06] border border-white/[0.08]' : ''
-              }`}
-            >
-              <AgentAvatar personality={agent.personality as AgentPersonality} size={16} active={i === activeAgentIdx} />
-              <span className={`text-[11px] font-medium ${i === activeAgentIdx ? agent.color : 'text-gray-600'}`}>
-                {agent.name}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Current agent action */}
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-          <span className={`text-xs font-semibold ${activeAgent.color}`}>{activeAgent.name}:</span>
-          <span className="text-xs text-gray-400">{activeAgent.status}</span>
-          <span className="ml-auto flex items-center gap-1">
-            <span className="w-1 h-1 rounded-full bg-[#B8FF3C] animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-1 h-1 rounded-full bg-[#B8FF3C] animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-1 h-1 rounded-full bg-[#B8FF3C] animate-bounce" style={{ animationDelay: '300ms' }} />
-          </span>
-        </div>
-
-        <p className="text-[10px] text-gray-600 text-center mt-3">
-          Market intelligence updated every 15 min from real data + AI analysis
-        </p>
+        {/* Agent conversation feed — uses existing component */}
+        <MarketIntelligence compact hideHeader className="border-0 rounded-none" />
       </div>
     </section>
   );
@@ -959,12 +860,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Agents at Work — full width ──────────────────────── */}
-      {liveSignals.length === 0 && <AIMarketScanner />}
-
-      <section>
-        <MarketIntelligence compact />
-      </section>
+      {/* ── Unified Agents at Work — prices + conversation ─── */}
+      <AgentsAtWork />
 
 
       {/* ============================================ */}
