@@ -226,6 +226,7 @@ interface LivePrice {
 
 function AgentsAtWork() {
   const [livePrices, setLivePrices] = useState<LivePrice[]>([]);
+  const [scanIdx, setScanIdx] = useState(0);
 
   useEffect(() => {
     const fetchPrices = async () => {
@@ -245,22 +246,43 @@ function AgentsAtWork() {
     };
     fetchPrices();
     const id = setInterval(fetchPrices, 30000);
-    return () => clearInterval(id);
+    const scanInterval = setInterval(() => setScanIdx(i => i + 1), 2800);
+    return () => { clearInterval(id); clearInterval(scanInterval); };
   }, []);
+
+  const scanSteps = livePrices.length > 0 ? [
+    { icon: '◐', text: `Scanning BTC/USDT — $${livePrices.find(p => p.symbol === 'BTC/USDT')?.price.toLocaleString() || '...'}` },
+    { icon: '◓', text: `Analyzing ETH momentum — $${livePrices.find(p => p.symbol === 'ETH/USDT')?.price.toLocaleString() || '...'}` },
+    { icon: '◑', text: 'Running RSI divergence scan' },
+    { icon: '◒', text: `Evaluating SOL support — $${livePrices.find(p => p.symbol === 'SOL/USDT')?.price.toLocaleString() || '...'}` },
+    { icon: '◐', text: 'Computing risk/reward ratios' },
+    { icon: '◓', text: 'Cross-referencing whale wallets' },
+    { icon: '◑', text: 'Checking liquidation heatmaps' },
+    { icon: '◒', text: 'Evaluating market sentiment' },
+  ] : [
+    { icon: '◐', text: 'Connecting to markets...' },
+  ];
+  const currentScan = scanSteps[scanIdx % scanSteps.length];
 
   return (
     <section>
       <div className="rounded-xl border border-[#1e1e2e] bg-[#111118] overflow-hidden">
-        {/* Header with live status */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.04]">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 block" />
-              <span className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            </div>
+        {/* Header with title + scanner */}
+        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.04] bg-gradient-to-r from-[#B8FF3C]/[0.03] to-transparent">
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm text-[#B8FF3C] animate-spin inline-block" style={{ animationDuration: '2s' }}>
+              {currentScan.icon}
+            </span>
             <h2 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">Agents at Work</h2>
           </div>
-          <span className="text-[9px] text-gray-600 uppercase tracking-widest">Live</span>
+          <span className="text-[11px] text-gray-400 truncate flex-1 hidden sm:inline">· {currentScan.text}</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div className="relative">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 block" />
+              <span className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            </div>
+            <span className="text-[9px] text-gray-600 uppercase tracking-widest">Live</span>
+          </div>
         </div>
 
         {/* Live price ticker */}

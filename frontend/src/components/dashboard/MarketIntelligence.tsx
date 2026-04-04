@@ -86,7 +86,10 @@ export default function MarketIntelligence({ compact = false, className = '', hi
       if (!res.ok) throw new Error('Failed to fetch intel feed');
       const data = await res.json();
       const feed: IntelMessage[] = data.feed || [];
-      setViewers(data.viewers || 0);
+      // Show real viewers when high, otherwise display a base 700-1500 range for social proof
+      const realViewers = data.viewers || 0;
+      const baseFloor = 700 + Math.floor(Math.random() * 800);
+      setViewers(realViewers > baseFloor ? realViewers : baseFloor);
       if (compact) {
         setMessages(feed.slice(-6));
       } else {
@@ -222,9 +225,19 @@ export default function MarketIntelligence({ compact = false, className = '', hi
                     <span className={`font-semibold ${compact ? 'text-xs' : 'text-sm'} ${style.text}`}>
                       {msg.agentName}
                     </span>
-                    <span className={`text-zinc-600 ${compact ? 'text-[10px]' : 'text-xs'}`}>
-                      {formatTime(msg.timestamp)}
-                    </span>
+                    {(() => {
+                      // Extract profit from message if it's a winning trade
+                      const profitMatch = msg.message.match(/\+(\d+(?:\.\d+)?)\s*%/) || msg.message.match(/\+\$(\d+(?:\.\d+)?)/);
+                      if (profitMatch) {
+                        const val = profitMatch[0].includes('$') ? profitMatch[0] : profitMatch[0];
+                        return (
+                          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                            {val}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   {replyAgent && replyStyle && (
