@@ -383,6 +383,7 @@ export default function DashboardPage() {
   const [askResponse, setAskResponse] = useState('');
   const [isAsking, setIsAsking] = useState(false);
   const [skippedSignals, setSkippedSignals] = useState<Set<string>>(new Set());
+  const [showMoreSignals, setShowMoreSignals] = useState(false);
 
 
   // Load deployed agents
@@ -661,15 +662,20 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Active Signal — top priority when present ─────────── */}
+      {/* ── Active Signal — show 1 primary, rest in dropdown ─── */}
       {liveSignals.filter(s => !skippedSignals.has(s.id)).length > 0 && (
         <section>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-2 h-2 rounded-full bg-[#B8FF3C] animate-pulse" />
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Signals</h2>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#B8FF3C] animate-pulse" />
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Signals</h2>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.06] text-gray-400">
+                {liveSignals.filter(s => !skippedSignals.has(s.id)).length}
+              </span>
+            </div>
           </div>
           <div className="space-y-3">
-            {liveSignals.filter(s => !skippedSignals.has(s.id)).map((sig) => {
+            {liveSignals.filter(s => !skippedSignals.has(s.id)).slice(0, showMoreSignals ? undefined : 1).map((sig) => {
               const pColor = sig.agent.personality === 'APEX' ? 'text-red-400' : sig.agent.personality === 'ECHO' ? 'text-violet-400' : sig.agent.personality === 'NOVA' ? 'text-emerald-400' : 'text-cyan-400';
               const pBorderColor = sig.agent.personality === 'APEX' ? 'border-red-500/20' : sig.agent.personality === 'ECHO' ? 'border-violet-500/20' : sig.agent.personality === 'NOVA' ? 'border-emerald-500/20' : 'border-cyan-500/20';
               const isBuy = sig.side === 'buy';
@@ -835,6 +841,20 @@ export default function DashboardPage() {
               );
             })}
           </div>
+          {/* Show more dropdown */}
+          {liveSignals.filter(s => !skippedSignals.has(s.id)).length > 1 && (
+            <button
+              onClick={() => setShowMoreSignals(!showMoreSignals)}
+              className="w-full mt-2 py-2 rounded-lg border border-[#1e1e2e] bg-white/[0.02] text-[11px] font-medium text-gray-400 hover:text-white hover:border-white/[0.1] transition-all flex items-center justify-center gap-1.5"
+            >
+              {showMoreSignals
+                ? 'Collapse'
+                : `${liveSignals.filter(s => !skippedSignals.has(s.id)).length - 1} more signal${liveSignals.filter(s => !skippedSignals.has(s.id)).length - 1 > 1 ? 's' : ''}`}
+              <svg className={`w-3 h-3 transition-transform duration-200 ${showMoreSignals ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          )}
         </section>
       )}
 

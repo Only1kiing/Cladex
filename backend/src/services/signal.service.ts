@@ -101,6 +101,19 @@ async function fetchMarketData(): Promise<MarketData[]> {
 
 export async function generateSignals(opts: { force?: boolean } = {}): Promise<number> {
   const force = opts.force || false;
+
+  // Pause generation when no user activity in the last 10 minutes (unless forced)
+  if (!force) {
+    try {
+      const { getLastDashboardActivity } = await import("../routes/dashboard");
+      const lastActivity = getLastDashboardActivity();
+      const quietThresholdMs = 10 * 60 * 1000;
+      if (lastActivity === 0 || Date.now() - lastActivity > quietThresholdMs) {
+        console.log("[Signals] No user activity in last 10 min — pausing generation");
+        return 0;
+      }
+    } catch { /* fall through if import fails */ }
+  }
   // Get team agents — try system user first, fallback to any user with running agents
   let systemUser = await prisma.user.findUnique({ where: { email: "system@cladex.xyz" } });
 
@@ -192,7 +205,7 @@ ${force
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
       response_format: { type: "json_object" },

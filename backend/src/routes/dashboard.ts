@@ -173,7 +173,15 @@ const router = Router();
 router.use(authMiddleware);
 
 // GET /api/dashboard/stats
+// Track last dashboard load — signals service checks this to avoid generating
+// when nobody's online.
+let _lastDashboardActivityAt = 0;
+export function getLastDashboardActivity(): number {
+  return _lastDashboardActivityAt;
+}
+
 router.get("/stats", async (req: Request, res: Response) => {
+  _lastDashboardActivityAt = Date.now();
   const userId = req.user!.id;
 
   const [profitAgg, activeAgentCount, totalTrades, recentActivity, exchangeRecord] =
