@@ -170,9 +170,9 @@ app.listen(config.port, async () => {
     if (user && user.role !== "super_admin") {
       await prisma.user.update({
         where: { email: FOUNDER_EMAIL },
-        data: { role: "super_admin" },
+        data: { role: "super_admin", emailVerified: true },
       });
-      console.log(`[Startup] Promoted ${FOUNDER_EMAIL} to super_admin`);
+      console.log(`[Startup] Promoted ${FOUNDER_EMAIL} to super_admin + verified`);
     }
   } catch (err) {
     console.error("[Startup] Founder promotion skipped:", err);
