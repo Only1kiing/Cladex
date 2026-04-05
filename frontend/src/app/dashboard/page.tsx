@@ -618,14 +618,16 @@ export default function DashboardPage() {
               ? exchangeBalance.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
               : dashStats?.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </p>
-          <p className={`text-xs font-semibold tabular-nums ${
-            (livePnl.totalPnl || dashStats?.totalProfit || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
-          }`}>
-            {(() => {
-              const pnl = livePnl.totalPnl || dashStats?.totalProfit || 0;
-              return `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} P&L`;
-            })()}
-          </p>
+          {(() => {
+            // Use live P&L when any open trades exist, else fall back to historical total
+            const hasLivePnl = livePnl.trades && livePnl.trades.length > 0;
+            const pnl = hasLivePnl ? livePnl.totalPnl : (dashStats?.totalProfit ?? 0);
+            return (
+              <p className={`text-xs font-semibold tabular-nums ${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {pnl >= 0 ? '+' : ''}${pnl.toFixed(2)} P&L
+              </p>
+            );
+          })()}
         </div>
       </div>
 
@@ -641,7 +643,8 @@ export default function DashboardPage() {
         </div>
         <div className="rounded-xl bg-[#111118] border border-[#1e1e2e] p-3 text-center">
           {(() => {
-            const pnl = livePnl.totalPnl !== 0 ? livePnl.totalPnl : (dashStats?.totalProfit ?? 0);
+            const hasLivePnl = livePnl.trades && livePnl.trades.length > 0;
+            const pnl = hasLivePnl ? livePnl.totalPnl : (dashStats?.totalProfit ?? 0);
             return <p className={`text-lg font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {`${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`}
             </p>;
