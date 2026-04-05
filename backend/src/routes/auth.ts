@@ -196,11 +196,16 @@ router.post("/google", async (req: Request, res: Response) => {
     });
 
     if (user) {
-      // Existing user - ensure googleId is stored for future lookups
-      if (!user.googleId) {
+      // Existing user — backfill googleId AND mark email verified (Google pre-verified it)
+      if (!user.googleId || !user.emailVerified) {
         user = await prisma.user.update({
           where: { id: user.id },
-          data: { googleId },
+          data: {
+            googleId: user.googleId || googleId,
+            emailVerified: true,
+            verificationCode: null,
+            verificationExp: null,
+          },
         });
       }
     } else {
