@@ -232,10 +232,10 @@ router.post("/seed-agents", async (req: Request, res: Response) => {
   }
 
   const teamAgents = [
-    { name: "Raze", personality: "APEX" as const, riskLevel: "HIGH" as const, assets: ["SOL", "AVAX", "LINK"], strategy: { description: "Aggressive momentum hunter. Chases breakouts and rides volatility." } },
-    { name: "Knox", personality: "NOVA" as const, riskLevel: "LOW" as const, assets: ["SOL", "LINK", "ETH"], strategy: { description: "Capital guardian. Protects portfolios and minimizes drawdown." } },
-    { name: "Iris", personality: "ECHO" as const, riskLevel: "MEDIUM" as const, assets: ["SOL", "LINK", "AVAX"], strategy: { description: "Predictive analyst. Uses pattern recognition and cycle theory." } },
-    { name: "Byte", personality: "SAGE" as const, riskLevel: "MEDIUM" as const, assets: ["LINK", "AVAX", "SOL"], strategy: { description: "Data-driven strategist. Multi-indicator technical analysis." } },
+    { name: "Raze", personality: "APEX" as const, riskLevel: "HIGH" as const, assets: [], strategy: { description: "Aggressive momentum hunter. Chases breakouts and rides volatility across the entire Bybit top 100." } },
+    { name: "Knox", personality: "NOVA" as const, riskLevel: "LOW" as const, assets: [], strategy: { description: "Capital guardian. Protects portfolios and minimizes drawdown across the Bybit top 100." } },
+    { name: "Iris", personality: "ECHO" as const, riskLevel: "MEDIUM" as const, assets: [], strategy: { description: "Predictive analyst. Uses pattern recognition and cycle theory on the Bybit top 100." } },
+    { name: "Byte", personality: "SAGE" as const, riskLevel: "MEDIUM" as const, assets: [], strategy: { description: "Data-driven strategist. Multi-indicator technical analysis across the Bybit top 100." } },
   ];
 
   const created = [];

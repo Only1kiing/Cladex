@@ -178,6 +178,23 @@ app.listen(config.port, async () => {
     console.error("[Startup] Founder promotion skipped:", err);
   }
 
+  // Expand system agents to scan all Bybit top 100 (set assets=[])
+  try {
+    const { default: prisma } = await import("./lib/prisma");
+    const systemUser = await prisma.user.findUnique({ where: { email: "system@cladex.xyz" } });
+    if (systemUser) {
+      const updated = await prisma.agent.updateMany({
+        where: { userId: systemUser.id, NOT: { assets: { equals: [] } } },
+        data: { assets: [] },
+      });
+      if (updated.count > 0) {
+        console.log(`[Startup] Expanded ${updated.count} system agents to scan all top 100 Bybit pairs`);
+      }
+    }
+  } catch (err) {
+    console.error("[Startup] Agent asset expansion skipped:", err);
+  }
+
   // Market Intelligence — multi-agent conversations every 3 minutes
   if (config.nodeEnv === "production") {
     const generateIntel = async () => {
