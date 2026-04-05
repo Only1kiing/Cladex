@@ -365,7 +365,16 @@ export default function DashboardPage() {
     reason: string;
     expiresAt: string;
     agent: { id: string; name: string; personality: string };
-  }[]>([]);
+  }[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const cached = localStorage.getItem('cladex_signals');
+      if (!cached) return [];
+      const parsed = JSON.parse(cached);
+      // Filter out expired signals from cache
+      return parsed.filter((s: { expiresAt: string }) => new Date(s.expiresAt).getTime() > Date.now());
+    } catch { return []; }
+  });
   const [executingTrade, setExecutingTrade] = useState<string | null>(null);
   const [selectedSignal, setSelectedSignal] = useState<TradeSignal | null>(null);
   const [showTradeModal, setShowTradeModal] = useState(false);
@@ -394,11 +403,17 @@ export default function DashboardPage() {
     return () => clearTimeout(timeout);
   }, [deployedAgents]);
 
-  // Fetch dashboard data from backend
+  // Fetch dashboard data from backend — all 3 calls in parallel
   const fetchDashboardData = useCallback(async () => {
-    // Fetch dashboard stats + exchange balance
-    try {
-      const data = await api.get<{ stats: DashboardStats; exchangeConnected?: boolean; exchangeBalances?: { asset: string; free: number; total: number; usdValue?: number }[] }>('/dashboard/stats');
+    const [statsRes, gasRes, signalsRes] = await Promise.allSettled([
+      api.get<{ stats: DashboardStats; exchangeConnected?: boolean; exchangeBalances?: { asset: string; free: number; total: number; usdValue?: number }[] }>('/dashboard/stats'),
+      api.get<{ gasBalance: number }>('/dashboard/gas'),
+      api.get<{ signals: typeof liveSignals }>('/trades/signals'),
+    ]);
+
+    // Dashboard stats + exchange balance
+    if (statsRes.status === 'fulfilled') {
+      const data = statsRes.value;
       if (data?.stats) {
         setDashStats(data.stats);
         localStorage.setItem('cladex_dash_stats', JSON.stringify(data.stats));
@@ -416,30 +431,19 @@ export default function DashboardPage() {
         localStorage.removeItem('cladex_exchange_connected');
         localStorage.removeItem('cladex_exchange_balance');
       }
-    } catch {
-      // Backend unreachable
     }
 
-    // Fetch gas balance
-    try {
-      const data = await api.get<{ gasBalance: number }>('/dashboard/gas');
-      if (data) {
-        setGasBalance(data.gasBalance);
-        localStorage.setItem('cladex_gas_balance', String(data.gasBalance));
-      }
-    } catch { /* */ }
-
-    // Fetch live signals
-    try {
-      const data = await api.get<{ signals: typeof liveSignals }>('/trades/signals');
-      if (data?.signals) {
-        setLiveSignals(data.signals);
-      }
-    } catch {
-      // No signals
+    // Gas balance
+    if (gasRes.status === 'fulfilled' && gasRes.value) {
+      setGasBalance(gasRes.value.gasBalance);
+      localStorage.setItem('cladex_gas_balance', String(gasRes.value.gasBalance));
     }
 
-    // Market Intelligence now handled by its own component
+    // Live signals
+    if (signalsRes.status === 'fulfilled' && signalsRes.value?.signals) {
+      setLiveSignals(signalsRes.value.signals);
+      localStorage.setItem('cladex_signals', JSON.stringify(signalsRes.value.signals));
+    }
   }, []);
 
   // Fetch on mount + auto-refresh every 30 seconds
