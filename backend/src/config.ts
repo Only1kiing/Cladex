@@ -18,5 +18,6 @@ export const config = {
   resendApiKey: process.env.RESEND_API_KEY || "",
   resendFromEmail: process.env.RESEND_FROM_EMAIL || "",
   adminSecret: process.env.ADMIN_SECRET || "cladex-admin-2026",
+  googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   nodeEnv: process.env.NODE_ENV || "development",
 } as const;

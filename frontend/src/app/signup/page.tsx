@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -610,7 +611,8 @@ function ConnectExchangeStep() {
 }
 
 function SignupContent() {
-  const { signup } = useAuth();
+  const { signup, loginWithGoogle } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const ref = searchParams.get('ref') || undefined;
 
@@ -684,6 +686,24 @@ function SignupContent() {
 
   const handleVerified = () => {
     setStep('claim-points');
+  };
+
+  const handleGoogleSuccess = async (credential: string) => {
+    setError('');
+    setLoading(true);
+    try {
+      const result = await loginWithGoogle(credential);
+      if (result.success) {
+        // Google sign-ups bypass email verification entirely - go straight to dashboard
+        router.push('/dashboard');
+      } else {
+        setError(result.error || 'Google sign-in failed. Please try again.');
+      }
+    } catch {
+      setError('Google sign-in failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const stepSubtitle = {
@@ -806,6 +826,23 @@ function SignupContent() {
                     Create Account
                   </Button>
                 </form>
+
+                {/* Divider */}
+                <div className="relative my-5">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-[#1e1e2e]" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-[#111118] px-3 text-gray-500">or</span>
+                  </div>
+                </div>
+
+                {/* Google Sign-In */}
+                <GoogleSignInButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={(msg) => setError(msg)}
+                  text="signup_with"
+                />
 
                 <div className="mt-6 text-center text-sm text-gray-500">
                   Already have an account?{' '}

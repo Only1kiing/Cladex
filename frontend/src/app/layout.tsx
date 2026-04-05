@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth';
 import { KeepAlive } from '@/components/KeepAlive';
+import { GoogleAuthProvider } from '@/components/GoogleAuthProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -45,10 +46,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} dark`}>
       <body className="font-sans min-h-screen bg-background dot-grid">
-        <AuthProvider>
-          <KeepAlive />
-          {children}
-        </AuthProvider>
+        <GoogleAuthProvider>
+          <AuthProvider>
+            <KeepAlive />
+            {children}
+          </AuthProvider>
+        </GoogleAuthProvider>
       </body>
     </html>
   );

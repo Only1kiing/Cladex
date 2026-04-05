@@ -1,11 +1,15 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { z } from "zod";
+import { OAuth2Client } from "google-auth-library";
 import prisma from "../lib/prisma";
 import { config } from "../config";
 import { authMiddleware } from "../middleware/auth";
 import { generateVerificationCode, sendVerificationEmail, sendPasswordResetEmail } from "../services/email.service";
+
+const googleClient = new OAuth2Client(config.googleClientId);
 
 const router = Router();
 
@@ -145,6 +149,98 @@ router.post("/login", async (req: Request, res: Response) => {
       return;
     }
     throw err;
+  }
+});
+
+// POST /api/auth/google
+router.post("/google", async (req: Request, res: Response) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential || typeof credential !== "string") {
+      res.status(400).json({ error: "Google credential is required" });
+      return;
+    }
+
+    if (!config.googleClientId) {
+      res.status(500).json({ error: "Google Sign-In is not configured on the server" });
+      return;
+    }
+
+    // Verify the Google ID token
+    let ticket;
+    try {
+      ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: config.googleClientId,
+      });
+    } catch {
+      res.status(401).json({ error: "Invalid Google credential" });
+      return;
+    }
+
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email || !payload.sub) {
+      res.status(401).json({ error: "Invalid Google credential payload" });
+      return;
+    }
+
+    const email = payload.email;
+    const googleId = payload.sub;
+    const name = payload.name || email.split("@")[0];
+    const emailVerified = payload.email_verified === true;
+
+    // Look up user by email
+    let user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (user) {
+      // Existing user - ensure googleId is stored for future lookups
+      if (!user.googleId) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { googleId },
+        });
+      }
+    } else {
+      // New user - create with random password, emailVerified true, founding points
+      const randomPassword = crypto.randomBytes(32).toString("hex");
+      const hashedPassword = await bcrypt.hash(randomPassword, 12);
+
+      user = await prisma.user.create({
+        data: {
+          email,
+          name,
+          password: hashedPassword,
+          googleId,
+          emailVerified: emailVerified || true,
+          foundingPoints: 10000,
+        },
+      });
+
+      // Set referral code to first 8 chars of the user's cuid ID
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { referralCode: user.id.slice(0, 8) },
+      });
+    }
+
+    const token = generateToken(user.id);
+
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt,
+        role: user.role,
+      },
+      token,
+    });
+  } catch (err) {
+    console.error("Google sign-in error:", err);
+    res.status(500).json({ error: "Google sign-in failed" });
   }
 });
 

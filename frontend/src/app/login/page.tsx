@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,7 +34,7 @@ function ExchangeIcon() {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, connectExchange } = useAuth();
+  const { login, loginWithGoogle, connectExchange } = useAuth();
 
   // Step: 'login' | 'connect-exchange'
   const [step, setStep] = useState<'login' | 'connect-exchange'>('login');
@@ -118,6 +119,23 @@ export default function LoginPage() {
 
   const handleSkipDemo = () => {
     router.push('/dashboard');
+  };
+
+  const handleGoogleSuccess = async (credential: string) => {
+    setError('');
+    setLoading(true);
+    try {
+      const result = await loginWithGoogle(credential);
+      if (result.success) {
+        router.push('/dashboard');
+      } else {
+        setError(result.error || 'Google sign-in failed. Please try again.');
+      }
+    } catch {
+      setError('Google sign-in failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectedExchangeData = EXCHANGES.find((e) => e.id === selectedExchange);
@@ -209,6 +227,23 @@ export default function LoginPage() {
                     Log In
                   </Button>
                 </form>
+
+                {/* Divider */}
+                <div className="relative my-5">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-[#1e1e2e]" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-[#111118] px-3 text-gray-500">or</span>
+                  </div>
+                </div>
+
+                {/* Google Sign-In */}
+                <GoogleSignInButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={(msg) => setError(msg)}
+                  text="signin_with"
+                />
 
                 <div className="mt-4 text-center">
                   <Link

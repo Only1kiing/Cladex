@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.4",
     "@solana/web3.js": "^1.98.4",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.400.0",

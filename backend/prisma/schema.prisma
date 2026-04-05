@@ -30,6 +30,7 @@ model User {
   verificationExp  DateTime?
   resetCode        String?
   resetCodeExpiry  DateTime?
+  googleId         String?  @unique
 
   // Risk management
   maxRiskPerTrade Float    @default(0.02)   // Max % of balance per trade (0.02 = 2%)
